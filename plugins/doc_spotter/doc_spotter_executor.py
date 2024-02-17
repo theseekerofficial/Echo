@@ -28,42 +28,38 @@ def get_doc_spotter_plugin_enabled():
         doc_spotter_plugin_enabled = doc_spotter_plugin_enabled_str.lower() == 'true' if doc_spotter_plugin_enabled_str else False
     return doc_spotter_plugin_enabled
 
-def has_user_started_bot(update, user_id):
-    chat_id = update.message.chat.id
-    
-    if not db["Listening_Groups"].find_one({"group_id": str(chat_id)}):
-        # If the group is not registered, simply return and do nothing
-        return
+def has_user_started_bot(update, message_sender_user_id):
 
-    user_record = echo_db["user_and_chat_data"].find_one({"user_id": user_id})
+    user_record = echo_db["user_and_chat_data"].find_one({"user_id": message_sender_user_id})
     return bool(user_record)
+
+def prompt_user_to_start_bot_in_pm(update: Update, context: CallbackContext):
+    bot_username = context.bot.get_me().username
+    start_bot_url = f"https://t.me/{bot_username}?start=welcome"
+    keyboard = [[InlineKeyboardButton("Start Echo ❄️", url=start_bot_url)]]
+    reply_markup = InlineKeyboardMarkup(keyboard)
+    update.message.reply_text("Hmm... Looks like you didn't start me in PM (Private Message). Please go and start me in PM, so we can start your file-seeking journey!💥", reply_markup=reply_markup)
 
 def listen_to_groups(update: Update, context: CallbackContext):
     if not get_doc_spotter_plugin_enabled():
         update.message.reply_text("Doc Spotter Plugin Disabled by the person who deployed this Echo variant💔")
         return
 
-    # Check if the user has started the bot
-    if not has_user_started_bot(update, update.message.from_user.id):
-        # Obtain the bot's username dynamically
-        bot_username = context.bot.get_me().username
-        
-        # Create the URL to start a conversation with the bot
-        start_bot_url = f"https://t.me/{bot_username}?start=welcome"
-        
-        # Create an InlineKeyboardMarkup with the URL button
-        keyboard = [[InlineKeyboardButton("Start Echo ❄️", url=start_bot_url)]]
-        reply_markup = InlineKeyboardMarkup(keyboard)
-        
-        # Reply with the message and the URL button
-        update.message.reply_text("Hmm... Look like you didn't start me in PM(Privet Message). Please go and start me in PM, So we can start your file seeking journey!💥", reply_markup=reply_markup)
-        return
-    
     message_text = update.message.text.lower()
     chat_id = update.message.chat.id
     user_id = find_user_by_group(chat_id)
     message_sender_user_id = update.message.from_user.id
     m_user = update.message.from_user
+
+    if not db["Listening_Groups"].find_one({"group_id": str(chat_id)}):
+        # If the group is not registered, there's no need to proceed with this function.
+        return
+    
+    # Check if the user has started the bot
+    if not has_user_started_bot(update, message_sender_user_id):
+        # If the user hasn't started the bot in PM, prompt them to do so.
+        prompt_user_to_start_bot_in_pm(update, context)
+        return
 
     if not is_user_member_of_fsub_chats(message_sender_user_id, chat_id, client, context):
         prompt_to_join_fsub_chats(update, context, client)
