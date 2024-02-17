@@ -1,4 +1,4 @@
-# ECHO v1.0.0
+# ECHO v1.0.1
 
 <p align="center">
     <a href="https://github.com/theseekerofficial/Echo">

@@ -1,8 +1,10 @@
 import os
 import re
+import time
 import base64
 import logging
 import pymongo
+import threading
 from telegram import Update
 from dotenv import load_dotenv
 from mimetypes import guess_type
@@ -102,6 +104,15 @@ def format_html(text):
     
     return formatted_text
 
+def update_thinking_message(context, chat_id, message_id):
+    for i in range(60):  
+        if not getattr(update_thinking_message, "stop", False):
+            new_text = "`Echo is thinking" + "." * (i % 4) + "`"  # Cycle through 1 to 3 dots
+            context.bot.edit_message_text(chat_id=chat_id, message_id=message_id, text=new_text, parse_mode='MarkdownV2')
+            time.sleep(0.5)
+        else:
+            break
+
 # Handle the /gemini command
 def handle_gemini_command(update: Update, context: CallbackContext):
     
@@ -130,13 +141,30 @@ def handle_gemini_command(update: Update, context: CallbackContext):
     gemini_model = initialize_gemini_model()
     query = update.message.text.split('/gemini ', 1)[1]
 
+    # Send initial "Echo is thinking..." message
+    thinking_message = update.message.reply_text("`Echo X Gemini`", parse_mode='MarkdownV2')
+
+    # Start updating the "Echo is thinking..." message in a separate thread
+    update_thinking_message.stop = False
+    thinking_thread = threading.Thread(target=update_thinking_message, args=(context, update.effective_chat.id, thinking_message.message_id,))
+    thinking_thread.start()
+    
     try:
-        response = gemini_model.generate_content({"text": query})  
+        response = gemini_model.generate_content({"text": query})
         formatted_response = format_html(response.text)
-        update.message.reply_text(formatted_response, parse_mode='HTML')
+
+        # Stop the updating thread
+        update_thinking_message.stop = True
+        thinking_thread.join()
+
+        # Edit the final message to display the response
+        context.bot.edit_message_text(chat_id=update.effective_chat.id, message_id=thinking_message.message_id, text=formatted_response, parse_mode='HTML')
     except Exception as e:
         logging.error(f"Error using Gemini model: {e}")
-        update.message.reply_text("Sorry, there was an error processing your request. Please Try again")
+        # Ensure the thread is stopped in case of an error
+        update_thinking_message.stop = True
+        thinking_thread.join()
+        update.message.reply_text("Sorry, there was an error processing your request. Please try again.")
 
 # Handle the /mygapi command
 def handle_mygapi_command(update: Update, context: CallbackContext):
@@ -294,4 +322,3 @@ def analyze4to_handler(update: Update, context: CallbackContext):
 # Add additional logging for error handling
 def error_callback(update: Update, context: CallbackContext):
     logging.error(f"An error occurred: {context.error}")
-

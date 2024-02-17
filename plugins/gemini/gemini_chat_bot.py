@@ -1,6 +1,8 @@
 import os
+import time
 import logging
 import pymongo
+import threading
 from telegram import Update
 import google.generativeai as genai
 from telegram.ext import CallbackContext
@@ -37,6 +39,15 @@ def toggle_chatbot(update: Update, context: CallbackContext):
     else:
         update.message.reply_text("Echo Chatbot deactivated. I'll miss our conversations! 💔")
 
+def update_thinking_message(context, chat_id, message_id):
+    count = 0
+    while not getattr(update_thinking_message, "stop", False):
+        # Cycle through adding dots to simulate thinking
+        new_text = "`Echo is thinking" + "." * (count % 4) + "`" 
+        context.bot.edit_message_text(chat_id=chat_id, message_id=message_id, text=new_text, parse_mode='MarkdownV2')
+        count += 1
+        time.sleep(0.75) 
+
 # Function to handle messages when chatbot is active
 def handle_chat_message(update: Update, context: CallbackContext):
     if not chat_bot_plugin_enabled:
@@ -62,15 +73,32 @@ def handle_chat_message(update: Update, context: CallbackContext):
     # Configure the Gemini API with the user's API key
     genai.configure(api_key=user_api_key_entry['api_key'])
 
+    # Send initial "Echo is thinking..." message in monospace font
+    thinking_message = update.message.reply_text("`Echo X Gemini`", parse_mode='MarkdownV2')
+
+    # Reset the stop flag and start the "thinking" thread
+    update_thinking_message.stop = False
+    thinking_thread = threading.Thread(target=update_thinking_message, args=(context, update.effective_chat.id, thinking_message.message_id,))
+    thinking_thread.start()
+    
     try:
-        gemini_model = initialize_gemini_model()  
+        gemini_model = initialize_gemini_model()
         query = update.message.text
         response = gemini_model.generate_content({"text": query})
-        formatted_response = format_html(response.text) 
-        update.message.reply_text(formatted_response, parse_mode='HTML')
+        formatted_response = format_html(response.text)
 
+        # Stop the "thinking" thread
+        update_thinking_message.stop = True
+        thinking_thread.join()
+
+        # Edit the final message to display the response
+        context.bot.edit_message_text(chat_id=user_id, message_id=thinking_message.message_id, text=formatted_response, parse_mode='HTML')
+        
         # Logging the response sent to the user
         logging.info(f"Chat bot 🗨️🤖💬 response sent to user {user_id}")
+        
     except Exception as e:
         logging.error(f"Error using Gemini model: {e}")
+        update_thinking_message.stop = True
+        thinking_thread.join()
         update.message.reply_text("Sorry, there was an error processing your request. Please try again.")
