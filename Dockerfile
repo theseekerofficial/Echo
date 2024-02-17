@@ -11,4 +11,4 @@ COPY . /app/
 EXPOSE 8000
 
 # Run the bot
-CMD ["python3", "bot.py"]
+CMD ["bash", "start.sh"] 
