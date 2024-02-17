@@ -28,7 +28,13 @@ def get_doc_spotter_plugin_enabled():
         doc_spotter_plugin_enabled = doc_spotter_plugin_enabled_str.lower() == 'true' if doc_spotter_plugin_enabled_str else False
     return doc_spotter_plugin_enabled
 
-def has_user_started_bot(user_id):
+def has_user_started_bot(update, user_id):
+    chat_id = update.message.chat.id
+    
+    if not db["Listening_Groups"].find_one({"group_id": str(chat_id)}):
+        # If the group is not registered, simply return and do nothing
+        return
+
     user_record = echo_db["user_and_chat_data"].find_one({"user_id": user_id})
     return bool(user_record)
 
@@ -38,7 +44,7 @@ def listen_to_groups(update: Update, context: CallbackContext):
         return
 
     # Check if the user has started the bot
-    if not has_user_started_bot(update.message.from_user.id):
+    if not has_user_started_bot(update, update.message.from_user.id):
         # Obtain the bot's username dynamically
         bot_username = context.bot.get_me().username
         
@@ -336,4 +342,3 @@ def generate_buttons_for_page(results, page, user_id, message_sender_user_id):
 def setup_ds_executor_dispatcher(dispatcher):
     dispatcher.add_handler(MessageHandler(Filters.text & Filters.chat_type.groups & ~Filters.command, listen_to_groups), group=3)
     dispatcher.add_handler(CallbackQueryHandler(file_callback_handler, pattern=r'^(prev_\d+_\d+_\d+|next_\d+_\d+_\d+|noop|dse_[a-f0-9]+_\d+)$'))
-
