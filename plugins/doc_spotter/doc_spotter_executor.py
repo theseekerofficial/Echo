@@ -28,10 +28,11 @@ def get_doc_spotter_plugin_enabled():
         doc_spotter_plugin_enabled = doc_spotter_plugin_enabled_str.lower() == 'true' if doc_spotter_plugin_enabled_str else False
     return doc_spotter_plugin_enabled
 
-def has_user_started_bot(user_id):
+def has_user_started_bot(update, user_id):
     chat_id = update.message.chat.id
     
     if not db["Listening_Groups"].find_one({"group_id": str(chat_id)}):
+        # If the group is not registered, simply return and do nothing
         return
 
     user_record = echo_db["user_and_chat_data"].find_one({"user_id": user_id})
@@ -43,7 +44,7 @@ def listen_to_groups(update: Update, context: CallbackContext):
         return
 
     # Check if the user has started the bot
-    if not has_user_started_bot(update.message.from_user.id):
+    if not has_user_started_bot(update, update.message.from_user.id):
         # Obtain the bot's username dynamically
         bot_username = context.bot.get_me().username
         
