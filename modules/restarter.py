@@ -1,5 +1,6 @@
 import os
 import sys
+import shutil
 import logging
 import subprocess
 from pymongo import MongoClient
@@ -11,34 +12,54 @@ logger = logging.getLogger(__name__)
 def get_mongo_client():
     return MongoClient(os.getenv("MONGODB_URI"))
 
+def get_repo_root_path(start_path):
+    if os.path.isdir(os.path.join(start_path, '.git')):
+        return start_path
+    parent_dir = os.path.dirname(start_path)
+    if parent_dir == start_path:  # Reached the filesystem root
+        raise Exception("Failed to find .git directory. Are you sure this script is inside a git repository?")
+    return get_repo_root_path(parent_dir)
+
 def check_for_updates(repo_url):
     try:
-        # Check the current state
-        current_state = subprocess.run(['git', 'rev-parse', 'HEAD'], capture_output=True, text=True).stdout.strip()
+        script_dir = os.path.dirname(os.path.realpath(__file__))
+        repo_root_dir = get_repo_root_path(script_dir)
+        os.chdir(repo_root_dir)
+        logger.info(f"Changed working directory to repository root: {repo_root_dir}")
 
-        # Try to pull the latest changes from the repository
-        pull_result = subprocess.run(['git', 'pull', repo_url], capture_output=True, text=True, timeout=10)
+        config_env_path = os.path.join(repo_root_dir, 'config.env')
+        config_env_backup_path = os.path.join(repo_root_dir, 'config.env.backup')
 
-        # If pull command failed (e.g., private repo, wrong URL), handle it
-        if pull_result.returncode != 0:
-            logging.info("🔒 Repository inaccessible or private. Preparing for restart.")
-            raise Exception("Repository inaccessible or private")
+        # Backup config.env if it exists
+        if os.path.exists(config_env_path):
+            shutil.copy(config_env_path, config_env_backup_path)
+            logger.info("config.env backed up.")
 
-        # Check the state after pulling
-        new_state = subprocess.run(['git', 'rev-parse', 'HEAD'], capture_output=True, text=True).stdout.strip()
+        # Fetch changes from the remote repository
+        fetch_result = subprocess.run(['git', 'fetch', repo_url], capture_output=True, text=True, timeout=10)
+        if fetch_result.returncode != 0:
+            logger.info("Failed to fetch updates from remote. Preparing for restart.")
+            logger.info(f"Fetch failed: {fetch_result.stderr}")
+            return "fetch_failed"
 
-        # Return True if new updates were applied, False otherwise
-        is_updated = current_state != new_state
-        if is_updated:
-            logging.info("✅ Successfully pulled new updates.")
-        else:
-            logging.info("🔄 No new updates available. Preparing for restart.")
+        # Reset the local state to match that of the fetched remote branch
+        reset_result = subprocess.run(['git', 'reset', '--hard', 'FETCH_HEAD'], capture_output=True, text=True, timeout=10)
+        if reset_result.returncode != 0:
+            logger.info("Failed to reset local changes. Preparing for restart.")
+            logger.info(f"Reset failed: {reset_result.stderr}")
+            return "reset_failed"
 
-        return is_updated
+        # Restore config.env from backup if it was backed up
+        if os.path.exists(config_env_backup_path):
+            shutil.move(config_env_backup_path, config_env_path)
+            logger.info("config.env restored from backup.")
+
+        logger.info("✅ Successfully synchronized local repository with remote.")
+        return True
 
     except Exception as e:
-        logging.info("🔒 Repo is private or inaccessible. Preparing for restart.")
-        return "private_repo"
+        logging.info(f"Error during update check: {str(e)}. Preparing for restart.")
+        return "error"
         
 def write_update_status_to_mongo(status):
     client = get_mongo_client()
