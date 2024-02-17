@@ -29,11 +29,9 @@ def get_doc_spotter_plugin_enabled():
     return doc_spotter_plugin_enabled
 
 def has_user_started_bot(user_id):
-
     chat_id = update.message.chat.id
     
     if not db["Listening_Groups"].find_one({"group_id": str(chat_id)}):
-        # If the group is not registered, simply return and do nothing
         return
 
     user_record = echo_db["user_and_chat_data"].find_one({"user_id": user_id})
