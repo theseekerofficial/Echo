@@ -1,0 +1,15 @@
+pymongo[srv]
+python-telegram-bot>=13,<14
+python-dotenv
+pytz
+flask
+pycryptodome
+python-dateutil
+pyrogram
+TgCrypto
+telethon
+google-generativeai
+asteval
+gunicorn
+pillow
+IMDbPY
