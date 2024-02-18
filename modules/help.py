@@ -30,6 +30,7 @@ _Echo the Multifunctional User assistant has arrived to save your schedule and m
             InlineKeyboardButton("Info Commands", callback_data='info_help'),
         ],
         [
+            InlineKeyboardButton("Commit Detector Commands", callback_data='commit_detector_help'),
             InlineKeyboardButton("Misc Commands", callback_data='misc'),
         ],
     ]
@@ -175,7 +176,27 @@ _How to Use:_🪄
 You can always deactivate the chatbot feature when you want. Just use `/chatbot` command again.
 
 *Remember, Echo's Chat bot can reply to anything you send. I mean ANYTHING!*😉
-"""   
+
+[Echo-Verse♾️](https://t.me/Echo_AIO)
+""",
+   'commit_detector_help' : """*Commit Detector Feature Overview* 🔄
+
+The *Commit Detector* is an exclusive feature tailored for the Echo's deployment owners, offering real-time monitoring of GitHub repositories for new commits.
+
+🛠️ *Setup & Configuration:*
+- `GH_CD_URLS`: A comma-separated list of GitHub repository URLs. Format - `theseekerofficial/Echo`
+- `GH_CD_CHANNEL_IDS`: Telegram channel IDs where updates are sent, also comma-separated.
+- `GH_CD_PAT`: Optional Personal Access Token for GitHub to boost your API rate limit and use authenticated requests.
+
+🔄 *Operational Workflow:*
+1. *Fetching Commits*: The bot periodically checks for the latest commits in the specified repositories.
+2. *Commit Detection*: It detects new commits by comparing SHAs with the stored ones in the MongoDB `GH_Commit_Detector` collection.
+3. *Notification*: For any new commit found, it sends a detailed update to the specified Telegram channels.
+
+This feature is a powerful tool for staying updated with GitHub repository changes directly within Telegram
+
+[Echo-Verse♾️](https://t.me/Echo_AIO)
+"""
     }
 
     # Get the message for the clicked button
@@ -249,6 +270,7 @@ def get_inline_keyboard_for_category(category):
             InlineKeyboardButton("Info Commands", callback_data='info_help'),
         ],
         [
+            InlineKeyboardButton("Commit Detector Commands", callback_data='commit_detector_help'),
             InlineKeyboardButton("Misc Commands", callback_data='misc'),
         ],
     ]

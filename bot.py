@@ -39,6 +39,7 @@ from plugins.calculators.calculator import setup_calculator
 from plugins.logo_gen.logo_generator import handle_logogen, button
 from plugins.calculators.sci_calculator import setup_sci_calculator
 from plugins.doc_spotter.doc_spotter_indexer import setup_ds_dispatcher
+from plugins.commit_detector.commit_detector import setup_commit_detector
 from plugins.scheducast.scheducast_check import check_scheduled_broadcasts
 from plugins.gemini.gemini_chat_bot import toggle_chatbot, handle_chat_message
 from plugins.doc_spotter.doc_spotter_executor import setup_ds_executor_dispatcher
@@ -525,11 +526,13 @@ if __name__ == '__main__':
     dp.job_queue.run_repeating(check_reminders, interval=60, first=0)
     dp.job_queue.run_repeating(lambda context: check_scheduled_broadcasts(context.bot), interval=60, first=0)
     dp.bot.set_my_commands(bot_commands, scope=BotCommandScopeDefault())
-    dp.add_handler(CallbackQueryHandler(handle_help_button_click, pattern='^(basic|reminder|misc|brsc|gemini|calculator_help|tgphup|logogen_help|doc_spotter_help|info_help|chatbot_help)$'))
+    dp.add_handler(CallbackQueryHandler(handle_help_button_click, pattern='^(basic|reminder|misc|brsc|gemini|calculator_help|tgphup|logogen_help|doc_spotter_help|info_help|chatbot_help|commit_detector_help)$'))
     dp.add_handler(callback_query_handler)
     dp.add_handler(CallbackQueryHandler(handle_confirmation, pattern='^(yes|no):'))
     dp.add_handler(CallbackQueryHandler(handle_back_button_click, pattern='^back$'))
 
+    setup_commit_detector(updater)
+    
     register_id_command(dp)
      
     setup_telegraph_up(dp)

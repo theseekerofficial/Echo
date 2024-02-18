@@ -1,4 +1,4 @@
-# ECHO v1.0.1
+# ECHO v1.0.2 #NF (New Feature)
 
 <p align="center">
     <a href="https://github.com/theseekerofficial/Echo">
@@ -144,6 +144,10 @@
         - Find any other user Telegram ID
         - Find any other chat(Channel/Group) Telegram ID
 
+18. **Commit Detector Function**
+    - Keep updated about your fav GitHub repo within the telegram environment. This feature can detect new commits from any public repo and send them to your telegram channel🪄
+    - Exclusively for Echo deploying owners only 
+
 # Commands
 
 
@@ -244,7 +248,6 @@ This section provides detailed information on the required environment variables
    - Description: Set to `True` or `False` to Enable or Disable the Chatbot Plugin.
    - Example: `CHAT_BOT_PLUGIN=True`
 
-
 3. **GEMINI_IMAGE_PLUGIN**:
    - Description: Set to `True` or `False` to Enable or Disable the Gemini Image Analysis Plugin.
    - Example: `GEMINI_IMAGE_PLUGIN=True`
@@ -269,9 +272,21 @@ This section provides detailed information on the required environment variables
    - Description: Set to `True` or `False` to Enable or Disable the Logo Gen Plugin.
    - Example: `LOGOGEN_PLUGIN=True`
   
-7. **DOC_SPOTTER_PLUGIN**
+9. **DOC_SPOTTER_PLUGIN**
    - Description: Set to `True` or `False` to Enable or Disable the Doc Spotter Plugin.
    - Example: `DOC_SPOTTER_PLUGIN=True`
+  
+10. **GH_CD_URLS**
+   - Description: Fill in the repo URL in the format theseekerofficial/Echo.
+   - Example: `GH_CD_URLS=theseekerofficial/Echo`
+  
+11. **GH_CD_CHANNEL_IDS**
+   - Description: Add the Channel ID that you need to post-commit update.
+   - Example: `GH_CD_CHANNEL_IDS=-100123456789`
+
+12. **GH_CD_PAT**
+   - Description: Your GitHub Personal Authorization Token for 5000 requests per hour API calls.
+   - Example: `GH_CD_CHANNEL_IDS=ujb32uvb579g29824t89v245h8`
 
 Make sure to replace the placeholder values with your actual configuration settings. These environment variables are crucial for customizing and configuring the behavior of your Echo bot. Ensure that they are correctly set before running the bot to ensure its proper functionality.
 
