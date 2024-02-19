@@ -5,6 +5,8 @@ import requests
 from pytz import utc
 from dotenv import load_dotenv
 from pymongo import MongoClient
+from modules.configurator import get_env_var_from_db
+from telegram import InlineKeyboardButton, InlineKeyboardMarkup
 
 # Configure logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
@@ -15,11 +17,14 @@ dotenv_path = os.path.join(os.path.dirname(__file__), '..', 'config.env')
 load_dotenv(dotenv_path)
 
 MONGODB_URI = os.getenv("MONGODB_URI")
-GH_CD_PAT = os.getenv("GH_CD_PAT")
+GH_CD_PAT = get_env_var_from_db("GH_CD_PAT")
 
 # New validation for GH_CD_URLS and GH_CD_CHANNEL_IDS
-GH_CD_URLS = os.getenv("GH_CD_URLS", "").split(',') if os.getenv("GH_CD_URLS") else []
-GH_CD_CHANNEL_IDS = [int(cid) for cid in os.getenv("GH_CD_CHANNEL_IDS").split(',')] if os.getenv("GH_CD_CHANNEL_IDS") else []
+GH_CD_URLS_raw = get_env_var_from_db("GH_CD_URLS")
+GH_CD_URLS = GH_CD_URLS_raw.split(',') if GH_CD_URLS_raw else []
+
+GH_CD_CHANNEL_IDS_raw = get_env_var_from_db("GH_CD_CHANNEL_IDS")
+GH_CD_CHANNEL_IDS = [int(cid) for cid in GH_CD_CHANNEL_IDS_raw.split(',')] if GH_CD_CHANNEL_IDS_raw else []
 
 # Validate that both or neither GH_CD_URLS and GH_CD_CHANNEL_IDS are provided
 if bool(GH_CD_URLS) != bool(GH_CD_CHANNEL_IDS):
@@ -60,28 +65,30 @@ def check_and_update_commits(bot):
                                              upsert=True)
                 send_commit_update(bot, repo_url, latest_commit)
 
-def escape_markdown_v2(text):
-    """Escape MarkdownV2 special characters in the given text."""
-    escape_chars = '_*[]()~`>#+-=|{}.!'
-    return ''.join(f'\\{char}' if char in escape_chars else char for char in text)
-
 def send_commit_update(bot, repo_url, commit):
-    repo_url_escaped = escape_markdown_v2(repo_url)
-    commit_message_escaped = escape_markdown_v2(commit['commit']['message'])
-    author_name_escaped = escape_markdown_v2(commit['commit']['author']['name'])
-    
-    message = (
-        f"\\#Repo\\_Update\n🔔 *New Commit* 🔔\n\n"
-        f"🪃 *Repository*: *{repo_url_escaped}*\n\n"
-        f"📌 *Commit*: [{commit['sha'][:7]}]({commit['html_url']})\n"
-        f"✍️ *Message*: _{commit_message_escaped}_\n"
-        f"👤 *Author*: `{author_name_escaped}`\n"
-        f"🕒 *Date*: `{commit['commit']['author']['date']}`\n\n"
-        f"[🔍 View Commit]({commit['html_url']})"
+    full_repo_url = f"https://github.com/{repo_url}"
+
+    commit_message = commit['commit']['message']
+    author_name = commit['commit']['author']['name']
+
+    # Constructing the message using HTML formatting
+    message_text = (
+        f"<b>#Repo_Update</b>\n🔔 <b>New Commit</b> 🔔\n\n"
+        f"🪃 <b>Repository:</b> <a href='{full_repo_url}'>{repo_url}</a>\n\n"
+        f"📌 <b>Commit:</b> <a href='{commit['html_url']}'>{commit['sha'][:7]}</a>\n"
+        f"✍️ <b>Message:</b> {commit_message}\n\n"
+        f"👤 <b>Author:</b> <code>{author_name}</code>\n"
+        f"🕒 <b>Date:</b> <code>{commit['commit']['author']['date']}</code>\n\n<code>Powered by Echo</code>"
     )
+
+    # Inline button for "View Commit"
+    keyboard = [[InlineKeyboardButton("🔍 View Commit", url=commit['html_url'])]]
+    reply_markup = InlineKeyboardMarkup(keyboard)
+
     for channel_id in GH_CD_CHANNEL_IDS:
         try:
-            bot.send_message(chat_id=channel_id, text=message, parse_mode='MarkdownV2', disable_web_page_preview=True)
+            bot.send_message(chat_id=channel_id, text=message_text, parse_mode='HTML',
+                             reply_markup=reply_markup, disable_web_page_preview=True)
             logger.info(f"✅ Successfully sent commit update for {repo_url} to channel {channel_id}.")
         except Exception as e:
             logger.error(f"❌ Error sending to channel {channel_id}: {e}")

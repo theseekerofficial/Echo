@@ -85,7 +85,8 @@ def initialize_gemini_model():
     return model
 
 def format_html(text):
-    text = text.replace('&', '&amp;')  # Escape HTML special characters
+    # Escape HTML special characters
+    text = text.replace('&', '&amp;')
     text = text.replace('<', '&lt;')
     text = text.replace('>', '&gt;')
     text = text.replace('"', '&quot;')
@@ -95,13 +96,40 @@ def format_html(text):
     formatted_text = ''
     for i, part in enumerate(bold_parts):
         if i % 2 == 0:
-            # Replace Markdown code block with HTML preformatted text
-            part = part.replace('```python', '<pre>').replace('```', '</pre>')
-            formatted_text += part
+            # Handle code blocks (preformatted text)
+            part = re.sub(r'```(.*?)```', r'<pre>\1</pre>', part, flags=re.DOTALL)
+            # Handle inline code (monospace)
+            part = re.sub(r'`(.*?)`', r'<code>\1</code>', part)
         else:
             # Bold text
-            formatted_text += '<b>' + part + '</b>'
-    
+            part = '<b>' + part + '</b>'
+        formatted_text += part
+
+    # Initially handle italic text with placeholder to avoid confusion with underlined text
+    italic_placeholder = formatted_text.split('*')
+    formatted_text = ''
+    for i, part in enumerate(italic_placeholder):
+        if i % 2 == 0:
+            formatted_text += part
+        else:
+            # Italic text placeholder
+            part = '||i||' + part + '||/i||'
+            formatted_text += part
+
+    # Handle underlined text
+    underlined_parts = formatted_text.split('__')
+    formatted_text = ''
+    for i, part in enumerate(underlined_parts):
+        if i % 2 == 0:
+            formatted_text += part
+        else:
+            # Underlined text
+            part = '<u>' + part + '</u>'
+            formatted_text += part
+
+    # Replace italic placeholders with actual HTML italic tags
+    formatted_text = formatted_text.replace('||i||', '<i>').replace('||/i||', '</i>')
+
     return formatted_text
 
 def update_thinking_message(context, chat_id, message_id):
@@ -151,9 +179,14 @@ def handle_gemini_command(update: Update, context: CallbackContext):
     
     try:
         response = gemini_model.generate_content({"text": query})
-        formatted_response = format_html(response.text)
-
-        # Stop the updating thread
+        # Assuming all responses are text, directly format the response text
+        if hasattr(response, 'text'):
+            formatted_response = format_html(response.text)
+        else:
+            # If the response does not contain text directly, log an error or handle accordingly
+            logging.error("Response does not contain text.")
+            formatted_response = "Sorry, I couldn't process your request."
+        
         update_thinking_message.stop = True
         thinking_thread.join()
 

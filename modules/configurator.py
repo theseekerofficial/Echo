@@ -44,7 +44,10 @@ def load_and_store_env_vars():
         "UNIT_CONVERTER_PLUGIN": os.getenv("UNIT_CONVERTER_PLUGIN"),
         "TELEGRAPH_UP_PLUGIN": os.getenv("TELEGRAPH_UP_PLUGIN"),
         "LOGOGEN_PLUGIN": os.getenv("LOGOGEN_PLUGIN"),
-        "DOC_SPOTTER_PLUGIN": os.getenv("DOC_SPOTTER_PLUGIN")
+        "DOC_SPOTTER_PLUGIN": os.getenv("DOC_SPOTTER_PLUGIN"),
+        "GH_CD_URLS": os.getenv("GH_CD_URLS"),
+        "GH_CD_CHANNEL_IDS": os.getenv("GH_CD_CHANNEL_IDS"),
+        "GH_CD_PAT": os.getenv("GH_CD_PAT")
     }
 
     create_configs_collection()  # Create the "configs" collection if it doesn't exist
