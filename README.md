@@ -1,4 +1,4 @@
-# ECHO v1.0.3 #IM (Improvements and Patches)
+# ECHO v1.0.4 #IM (Improvements)
 
 <p align="center">
     <a href="https://github.com/theseekerofficial/Echo">
@@ -74,9 +74,11 @@
 
 6. **Meet Your Personal AI Assistant within Echo**
     - Echo can generate responses from Google's Most Powerful AI Modle aka Google Gemini. Simply put your API key in the Echo and meet Gemini! 🤖
+    - Global API setup or user's own API setup mechanism based on your preference.⚙️
 
 7. **Chatbot powered by Google Gemini**
     - Feeling bored? Chat with Echo! Play games with Echo!! Echo replies to anything you say with the support of Google's Gemini Pro.💬
+    - Global API setup or user's own API setup mechanism based on your preference.⚙️
   
 8. **Image analysis module powered up with Google Gemini**
     - Analyse or get descriptions about any of your images using Echo! 🔎
@@ -240,6 +242,28 @@ This section provides detailed information on the required environment variables
 
 ## Optional Environment Variables (🟩)
 
+### Feature Configurations and Others
+
+1. **GH_CD_URLS** [🟩 (Required if GH_CD_CHANNEL_IDS ENV was Filled)]
+   - Description: Fill in the repo URL in the format theseekerofficial/Echo.
+   - Example: `GH_CD_URLS=theseekerofficial/Echo`
+  
+2. **GH_CD_CHANNEL_IDS** [🟩 (Required if GH_CD_URLS ENV was Filled)]
+   - Description: Add the Channel ID that you need to post-commit update.
+   - Example: `GH_CD_CHANNEL_IDS=-100123456789`
+
+3. **GH_CD_PAT** [🟩]
+   - Description: Your GitHub Personal Authorization Token for 5000 requests per hour API calls.
+   - Example: `GH_CD_CHANNEL_IDS=ujb32uvb579g29824t89v245h8`
+
+4. **ENABLE_GLOBAL_G_API** [🟩]
+   - Description: Enable Global API for AI-related features (True or False)
+   - Example: `ENABLE_GLOBAL_G_API=True`
+  
+5. **GLOBAL_G_API** [🟩]
+   - Description: Add your API key from [Google AI Studios](https://aistudio.google.com/app/apikey)
+   - Example: `GLOBAL_G_API=urwgui598t42598bgt589t5`
+
 ### Plugin On/Off
 
 1. **GEMINI_PLUGIN** [🟩]
@@ -277,18 +301,6 @@ This section provides detailed information on the required environment variables
 9. **DOC_SPOTTER_PLUGIN** [🟩]
    - Description: Set to `True` or `False` to Enable or Disable the Doc Spotter Plugin.
    - Example: `DOC_SPOTTER_PLUGIN=True`
-  
-10. **GH_CD_URLS** [🟩 (Required if GH_CD_CHANNEL_IDS ENV was Filled)]
-   - Description: Fill in the repo URL in the format theseekerofficial/Echo.
-   - Example: `GH_CD_URLS=theseekerofficial/Echo`
-  
-11. **GH_CD_CHANNEL_IDS** [🟩 (Required if GH_CD_URLS ENV was Filled)]
-   - Description: Add the Channel ID that you need to post-commit update.
-   - Example: `GH_CD_CHANNEL_IDS=-100123456789`
-
-12. **GH_CD_PAT** [🟩]
-   - Description: Your GitHub Personal Authorization Token for 5000 requests per hour API calls.
-   - Example: `GH_CD_CHANNEL_IDS=ujb32uvb579g29824t89v245h8`
 
 Make sure to replace the placeholder values with your actual configuration settings. These environment variables are crucial for customizing and configuring the behavior of your Echo bot. Ensure that they are correctly set before running the bot to ensure its proper functionality.
 

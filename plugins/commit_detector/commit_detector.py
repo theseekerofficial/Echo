@@ -73,10 +73,10 @@ def send_commit_update(bot, repo_url, commit):
 
     # Constructing the message using HTML formatting
     message_text = (
-        f"<b>#Repo_Update</b>\n🔔 <b>New Commit</b> 🔔\n\n"
+        f"<b>#Repo_Update</b>\n🔔 <b><u>New Commit</u></b> 🔔\n\n"
         f"🪃 <b>Repository:</b> <a href='{full_repo_url}'>{repo_url}</a>\n\n"
         f"📌 <b>Commit:</b> <a href='{commit['html_url']}'>{commit['sha'][:7]}</a>\n"
-        f"✍️ <b>Message:</b> {commit_message}\n\n"
+        f"✍️ <b>Message:</b> <code>{commit_message}</code>\n\n"
         f"👤 <b>Author:</b> <code>{author_name}</code>\n"
         f"🕒 <b>Date:</b> <code>{commit['commit']['author']['date']}</code>\n\n<code>Powered by Echo</code>"
     )

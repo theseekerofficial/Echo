@@ -1,5 +1,6 @@
 import os
 import re
+import sys
 import time
 import base64
 import logging
@@ -17,6 +18,18 @@ from telegram.ext import Updater, CommandHandler, CallbackContext, MessageHandle
 # Load environment variables from config.env file
 dotenv_path = os.path.join(os.path.dirname(__file__), 'config.env')
 load_dotenv(dotenv_path)
+
+global_g_api = get_env_var_from_db("GLOBAL_G_API")
+enable_global_g_api = get_env_var_from_db("ENABLE_GLOBAL_G_API")
+if enable_global_g_api:
+    enable_global_g_api = enable_global_g_api.lower() == "true"
+else:
+    enable_global_g_api = False
+
+# Check if both or neither of GLOBAL_G_API and ENABLE_GLOBAL_G_API are set
+if (enable_global_g_api and not global_g_api) or (not enable_global_g_api and global_g_api):
+    logging.warning("⚠️Go and fill both values for ENABLE_GLOBAL_G_API and GLOBAL_G_API if needed  or Keep them both empty if didn't need!")
+    sys.exit("Missing one of the required environment variables: GLOBAL_G_API or ENABLE_GLOBAL_G_API")
 
 # Read the GEMINI_PLUGIN environment variable
 def is_gemini_plugin_enabled():
@@ -141,6 +154,15 @@ def update_thinking_message(context, chat_id, message_id):
         else:
             break
 
+def update_image_analyze_message(context, chat_id, message_id):
+    for i in range(60):  
+        if not getattr(update_image_analyze_message, "stop", False):
+            new_text = "`Echo is analyzing your image" + "." * (i % 4) + "`"  # Cycle through 1 to 3 dots
+            context.bot.edit_message_text(chat_id=chat_id, message_id=message_id, text=new_text, parse_mode='MarkdownV2')
+            time.sleep(0.5)
+        else:
+            break
+
 # Handle the /gemini command
 def handle_gemini_command(update: Update, context: CallbackContext):
     
@@ -149,23 +171,29 @@ def handle_gemini_command(update: Update, context: CallbackContext):
         return
         
     user_id = update.effective_user.id
-    logging.info(f"User {user_id} invoked /gemini command")
-    user_id = update.effective_user.id
-
+    
     # Check if the user has provided any text input
     if not update.message.text or len(update.message.text.split()) < 2:
         update.message.reply_text("Please send the command with a text message 💬")
         return
 
-    # Check if the user has an API key set
-    user_api_key = api_keys_collection.find_one({"user_id": user_id})
-    if not user_api_key:
-        update.message.reply_text("You need to set your API key first using /mygapi command.")
+    # Attempt to fetch the user's API key from the database
+    user_api_key_entry = api_keys_collection.find_one({"user_id": user_id})
+    api_key = user_api_key_entry['api_key'] if user_api_key_entry else None
+
+    # Use the global API key if a user-specific API key is not found and global API is enabled
+    if not api_key and enable_global_g_api and global_g_api:
+        api_key = global_g_api
+        logging.info("Using global API key for Gemini model.")
+    elif not api_key:
+        update.message.reply_text("Please set your API key using /myapi first. Refer /help cmd for more 📖 (Like how to get an API Key and more)\n\nSo hurry up! We have a journey to complete!✨")
         return
 
     # Configure the API key for the Google Generative AI library
-    genai.configure(api_key=user_api_key['api_key'])
+    genai.configure(api_key=api_key)
 
+    logging.info(f"User {user_id} invoked /gemini command")
+    
     gemini_model = initialize_gemini_model()
     query = update.message.text.split('/gemini ', 1)[1]
 
@@ -292,19 +320,30 @@ def analyze4to_handler(update: Update, context: CallbackContext):
 
     user_id = update.effective_user.id
 
-    # Fetch the user's API key from the database
+    # Attempt to fetch the user's API key from the database
     user_api_key_entry = api_keys_collection.find_one({"user_id": user_id})
-    if not user_api_key_entry or "api_key" not in user_api_key_entry:
+    api_key = user_api_key_entry['api_key'] if user_api_key_entry else None
+
+    # Use the global API key if a user-specific API key is not found and global API is enabled
+    if not api_key and enable_global_g_api and global_g_api:
+        api_key = global_g_api
+        logging.info("Using global API key for image processing.")
+    elif not api_key:
         update.message.reply_text("Please set your API key using /myapi first. Refer /help cmd for more 📖 (Like how to get an API Key and more)\n\nSo hurry up! We have a journey to complete!✨")
         return
 
-    logging.info(f"Using {user_id}'s API key for image processing⚙️")
-    
-    # Configure the Gemini API with the user's API key
-    user_api_key = user_api_key_entry["api_key"]
-    genai.configure(api_key=user_api_key)
+    # Configure the Gemini API with the chosen API key
+    genai.configure(api_key=api_key)
 
     if update.message.reply_to_message and update.message.reply_to_message.photo:
+
+        thinking_message = update.message.reply_text("`Echo X Gemini`", parse_mode='MarkdownV2')
+
+        # Reset the stop flag and start the "thinking" thread
+        update_image_analyze_message.stop = False
+        thinking_thread = threading.Thread(target=update_image_analyze_message, args=(context, update.effective_chat.id, thinking_message.message_id,))
+        thinking_thread.start()
+        
         photo_id = update.message.reply_to_message.photo[-1].file_id
         photo_file = update.message.reply_to_message.photo[-1].get_file()
 
@@ -337,16 +376,26 @@ def analyze4to_handler(update: Update, context: CallbackContext):
             # Send the content to the Gemini model for analysis
             response = gemini_image_model.generate_content(contents=contents)
             formatted_response = format_html(response.text)
-            update.message.reply_text(formatted_response, parse_mode='HTML')
+
+            # Stop the "thinking" thread and join
+            update_image_analyze_message.stop = True
+            thinking_thread.join()
+            
+            context.bot.edit_message_text(chat_id=update.effective_chat.id, 
+                                          message_id=thinking_message.message_id, 
+                                          text=formatted_response, 
+                                          parse_mode='HTML')
 
             logging.info(f"Gemini's Respond sent to {user_id} successfully ✅")
             
             # After sending the response, delete the image file
             if os.path.exists(file_path):
                 os.remove(file_path)
-
+        
         except Exception as e:
             logging.error(f"Error using Gemini model with image: {e}")
+            update_thinking_message.stop = True
+            thinking_thread.join()
             update.message.reply_text("Sorry 💔, there was an error processing your request: {str(e)}.\n\n 💁Tips: Try using different API, Try after few hours, Try to analyze different image")
 
     else:

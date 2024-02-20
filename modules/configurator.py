@@ -10,6 +10,24 @@ from telegram.ext import CallbackContext, CallbackQueryHandler, CommandHandler
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=logging.INFO)
 logger = logging.getLogger(__name__)
 
+class DatabaseConfig:
+    _client = None
+    _db = None
+
+    @classmethod
+    def get_db(cls):
+        if cls._client is None:
+            try:
+                mongo_uri = os.getenv("MONGODB_URI")
+                if mongo_uri is None:
+                    raise Exception("MONGODB_URI is not set in environment variables")
+                cls._client = MongoClient(mongo_uri)
+                cls._db = cls._client.get_database("Echo")
+            except Exception as e:
+                logger.error(f"Failed to connect to database: {e}")
+                cls._db = None
+        return cls._db
+
 def create_configs_collection():
     client = MongoClient(os.getenv("MONGODB_URI"))
     db = client.get_database("Echo")
@@ -47,7 +65,9 @@ def load_and_store_env_vars():
         "DOC_SPOTTER_PLUGIN": os.getenv("DOC_SPOTTER_PLUGIN"),
         "GH_CD_URLS": os.getenv("GH_CD_URLS"),
         "GH_CD_CHANNEL_IDS": os.getenv("GH_CD_CHANNEL_IDS"),
-        "GH_CD_PAT": os.getenv("GH_CD_PAT")
+        "GH_CD_PAT": os.getenv("GH_CD_PAT"),
+        "ENABLE_GLOBAL_G_API": os.getenv("ENABLE_GLOBAL_G_API"),
+        "GLOBAL_G_API": os.getenv("GLOBAL_G_API")
     }
 
     create_configs_collection()  # Create the "configs" collection if it doesn't exist
@@ -224,8 +244,19 @@ def close_config_callback(update: Update, context: CallbackContext):
         logger.error(f"Error deleting message: {e}")
 
 def get_env_var_from_db(key_name):
-    client = MongoClient(os.getenv("MONGODB_URI"))
-    db = client.get_database("Echo")
-    configs_collection = db["configs"]
-    env_var_record = configs_collection.find_one({"key": key_name})
-    return env_var_record["value"] if env_var_record else None
+    db = DatabaseConfig.get_db()
+    if db is None:
+        logger.error("Database connection is not available.")
+        return None
+
+    try:
+        configs_collection = db["configs"]
+        env_var_record = configs_collection.find_one({"key": key_name})
+        if env_var_record and "value" in env_var_record:
+            return env_var_record["value"]
+        else:
+            logger.warning(f"Environment variable {key_name} not found in database.")
+            return None
+    except Exception as e:
+        logger.error(f"Error fetching environment variable {key_name} from database: {e}")
+        return None
