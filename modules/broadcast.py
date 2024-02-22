@@ -10,7 +10,7 @@ from pymongo import MongoClient
 from telegram.ext import CallbackContext
 from modules.configurator import get_env_var_from_db
 from telegram.ext import CallbackQueryHandler, MessageHandler, Filters
-from telegram import InlineKeyboardMarkup, InlineKeyboardButton, InputMediaPhoto, InputMediaDocument, InputMediaAudio, InputMediaVideo, InputFile
+from telegram import InlineKeyboardMarkup, InlineKeyboardButton, InputMediaPhoto, InputMediaDocument, InputMediaAudio, InputMediaVideo, InputFile, ParseMode
 
 
 # Access the environment variables from config.env file
@@ -45,37 +45,75 @@ def set_bot_variables(user_and_chat_data_collection, REMINDER_CHECK_TIMEZONE):
 def start_broadcast(update: Update, context: CallbackContext) -> None:
     user_id = update.message.from_user.id
     if not is_authorized_user(user_id):
-        update.message.reply_text("""You are not authorized to use this command. 🚫 Only pre-authorized user(s) added during deployment can utilize this command or module.
-
-If you want to create your own Echo, please visit the official repository at [https://github.com/theseekerofficial/Echo] and deploy it on the Render platform or a VPS.""")
+        update.message.reply_text("You are not authorized to use this command.")
         return
 
     # Path to the existing photo
     photo_path = 'assets/broadcast.jpg'
-
-    # Prepare inline keyboard for broadcast options
+    
+    # Ask about setting up URL buttons
     keyboard = [
-        [
-            InlineKeyboardButton("PM(s) Only", callback_data='broadcast_pm'),
-            InlineKeyboardButton("Group(s) Only", callback_data='broadcast_group'),
-        ],
+        [InlineKeyboardButton("Yes", callback_data='setup_url_buttons_yes')],
+        [InlineKeyboardButton("No", callback_data='setup_url_buttons_no')]
+    ]
+    reply_markup = InlineKeyboardMarkup(keyboard)
+
+    # Send the existing photo with the question as caption and inline buttons
+    with open(photo_path, 'rb') as photo:
+        message = update.message.reply_photo(
+            photo=photo,
+            caption="Do you want to setup URL Buttons for this Broadcast message?",
+            reply_markup=reply_markup
+        )
+
+    # Save the original message ID for later editing
+    context.user_data['original_message_id'] = message.message_id
+
+def handle_url_buttons_setup_response(update: Update, context: CallbackContext) -> None:
+    query = update.callback_query
+    user_id = query.from_user.id
+
+    if not is_authorized_user(user_id):
+        query.answer("You are not authorized to use this command.")
+        return
+
+    photo_path = 'assets/broadcast.jpg'
+    
+    if query.data == 'setup_url_buttons_yes':
+        # User wants to setup URL buttons
+        context.user_data['setting_up_url_buttons'] = True
+        new_caption = "_Now Send Your Buttons List_\n\n📝 *How to Setup Buttons* 📝\n\nPlease send your button list in this format. Each button and its corresponding URL should be enclosed in square brackets `[]`, with the button text and URL separated by ` - `.\n\nFor buttons on the same row, place them side by side within the brackets. For buttons on new lines, separate them with a newline.\n\nExample:\n`[Button1 - Link1][Button2 - Link2]`\n`[Button3 - Link3]`\n\nThis will create two buttons on the first row and one button on the second row. You can add as many as you like following this pattern. ✨"
+        query.edit_message_caption(caption=new_caption, reply_markup=None, parse_mode=ParseMode.MARKDOWN)
+        logger.info("URL buttons setup initiated.")
+    elif query.data == 'setup_url_buttons_no':
+        proceed_to_broadcast_method_choice(update, context, photo_path)
+
+    context.user_data['awaiting_broadcast_message'] = True
+    logger.info("Awaiting broadcast message after URL button setup.")
+
+def proceed_to_broadcast_method_choice(update: Update, context: CallbackContext, photo_path=None) -> None:
+    keyboard = [
+        [InlineKeyboardButton("PM(s) Only", callback_data='broadcast_pm')],
+        [InlineKeyboardButton("Group(s) Only", callback_data='broadcast_group')],
         [InlineKeyboardButton("All Chat", callback_data='broadcast_all')],
     ]
     reply_markup = InlineKeyboardMarkup(keyboard)
 
-    # Send the existing photo with the caption and inline buttons
-    with open(photo_path, 'rb') as photo:
-        message = update.message.reply_photo(
-            photo=photo,
-            caption="""🎯Choose a method to proceed broadcast module (To what target you need to send your scheducast)""",
+    # Assuming the photo_path argument is used to indicate that we need to edit the caption of an existing photo message
+    if photo_path:
+        # Edit the photo message to update the caption for the broadcast method choice
+        context.bot.edit_message_caption(
+            chat_id=update.effective_chat.id,
+            message_id=context.user_data['original_message_id'],
+            caption="🎯Choose a method to proceed broadcast module (To what target you need to send your scheducast)",
             reply_markup=reply_markup
         )
+    else:
+        # This block can be used to handle an unexpected scenario or simply conclude without action.
+        # For clarity in this context, we'll assume no action is needed if there's no photo_path.
+        # Log or handle any necessary fallbacks here.
+        pass
 
-    # Update the message to handle button clicks
-    context.user_data['broadcast_message'] = "Need to broadcast message"
-    context.user_data['broadcast_target'] = None
-    context.user_data['original_message'] = message.message_id
-    
 def handle_broadcast_button_click(update: Update, context: CallbackContext) -> None:
     query = update.callback_query
     user_id = query.from_user.id
@@ -98,13 +136,77 @@ def handle_broadcast_button_click(update: Update, context: CallbackContext) -> N
         reply_markup=None  # Remove the inline keyboard
     )
 
-
 # Function to handle broadcast message
 def handle_broadcast_message(update: Update, context: CallbackContext) -> None:
+
+    if not context.user_data.get('awaiting_broadcast_message', False):
+        logger.info("Not ready for broadcast message, ignoring.")
+        return 
+
+    logger.info("Processing broadcast message.")
+    
+    if context.user_data.get('setting_up_url_buttons'):
+        input_text = update.message.text.strip()
+        rows = input_text.split('\n')
+        buttons = []
+
+        try:
+            for row in rows:
+                if row.startswith('[') and row.endswith(']'):
+                    button_defs = row[1:-1].split('][')
+                    button_row = []
+                    for button_def in button_defs:
+                        # Using partition to ensure only the first occurrence of ' - ' is used for splitting
+                        name, separator, url = button_def.partition(' - ')
+                        if separator != ' - ' or not name or not url:
+                            raise ValueError("Invalid button format detected.")
+                        button_row.append(InlineKeyboardButton(text=name.strip(), url=url.strip()))
+                    buttons.append(button_row)
+                else:
+                    raise ValueError("Each button definition must be enclosed in square brackets.")
+
+            # Store the structured list of buttons in user_data
+            context.user_data['url_buttons'] = buttons
+            context.user_data.pop('setting_up_url_buttons')  # No longer setting up URL buttons
+
+        except ValueError as e:
+            error_message = "⚠️ <b>Invalid Button Format Detected!</b> ⚠️\n\n" \
+                            "Please ensure each button and its URL are correctly formatted and enclosed in square brackets <code>[]</code>, " \
+                            "with the button text and URL separated by <code> - </code>.\n\n" \
+                            "For example:\n" \
+                            "<code>[Button1 - Link1][Button2 - Link2]</code>\n" \
+                            "<code>[Button3 - Link3]</code>\n\n" \
+                            "For buttons on the same row, place them side by side within the brackets. " \
+                            "Separate buttons on new lines with a newline (<code>\\n</code>).\n\n" \
+                            "Please try again with the correct format. ✨"
+
+            context.bot.send_message(chat_id=update.effective_chat.id, text=error_message, parse_mode='HTML')
+            return
+
+
+        # Define the keyboard for choosing the broadcast method
+        keyboard = [
+            [InlineKeyboardButton("PM(s) Only", callback_data='broadcast_pm')],
+            [InlineKeyboardButton("Group(s) Only", callback_data='broadcast_group')],
+            [InlineKeyboardButton("All Chat", callback_data='broadcast_all')],
+        ]
+        reply_markup = InlineKeyboardMarkup(keyboard)
+
+        # Send the image with the caption
+        photo_path = 'assets/broadcast.jpg'
+        with open(photo_path, 'rb') as photo:
+            update.message.reply_photo(
+                photo=photo,
+                caption="🎯Choose a method to proceed with the broadcast module (To what target do you need to send your broadcast?)",
+                reply_markup=reply_markup
+            )
+
+        return
+        
     # Check if the broadcast command is active
     if 'broadcast_target' not in context.user_data:
         return
-
+    
     # Access necessary variables through the bot module
     from bot import user_and_chat_data_collection, REMINDER_CHECK_TIMEZONE
     user_and_chat_data_collection = user_and_chat_data_collection
@@ -181,20 +283,25 @@ def handle_broadcast_message(update: Update, context: CallbackContext) -> None:
             if broadcast_target == 'pm':
                 # Broadcast to bot started PM users only
                 pm_users = user_and_chat_data_collection.find({'chat_id': {'$gt': 0}})
+                if 'url_buttons' in context.user_data:
+                    reply_markup = InlineKeyboardMarkup(context.user_data['url_buttons'])
+                else:
+                    reply_markup = None
                 for pm_user in pm_users:
                     try:
                         if video_file_id:
-                            context.bot.send_video(chat_id=pm_user['chat_id'], video=video_file_id, caption=video_caption)
+                            context.bot.send_video(chat_id=pm_user['chat_id'], video=video_file_id, caption=video_caption, reply_markup=reply_markup)
                         elif audio_file_id:
-                            context.bot.send_audio(chat_id=pm_user['chat_id'], audio=audio_file_id, caption=audio_caption)
+                            context.bot.send_audio(chat_id=pm_user['chat_id'], audio=audio_file_id, caption=audio_caption, reply_markup=reply_markup)
                         elif document_file_id:
-                            context.bot.send_document(chat_id=pm_user['chat_id'], document=document_file_id, caption=document_caption)
+                            context.bot.send_document(chat_id=pm_user['chat_id'], document=document_file_id, caption=document_caption, reply_markup=reply_markup)
                         elif photo_file_id:
-                            context.bot.send_photo(chat_id=pm_user['chat_id'], photo=photo_file_id, caption=photo_caption)
+                            context.bot.send_photo(chat_id=pm_user['chat_id'], photo=photo_file_id, caption=photo_caption, reply_markup=reply_markup)
                         else:
-                            context.bot.send_message(chat_id=pm_user['chat_id'], text=message_text)
+                            context.bot.send_message(chat_id=pm_user['chat_id'], text=message_text, reply_markup=reply_markup)
                         received_pm_users_count += 1
                     except Exception as e:
+                        logger.error(f"Failed to send broadcast to chat_id {pm_user['chat_id']}: {e}")
                         not_received_pm_users_count += 1
 
                 context.user_data.clear()  # Clear user_data after broadcasting
@@ -202,20 +309,25 @@ def handle_broadcast_message(update: Update, context: CallbackContext) -> None:
             elif broadcast_target == 'group':
                 # Broadcast to bot added group chats only
                 group_chats = user_and_chat_data_collection.find({'chat_id': {'$lt': 0}})
+                if 'url_buttons' in context.user_data:
+                    reply_markup = InlineKeyboardMarkup(context.user_data['url_buttons'])
+                else:
+                    reply_markup = None
                 for group_chat in group_chats:
                     try:
                         if video_file_id:
-                            context.bot.send_video(chat_id=group_chat['chat_id'], video=video_file_id, caption=video_caption)
+                            context.bot.send_video(chat_id=group_chat['chat_id'], video=video_file_id, caption=video_caption, reply_markup=reply_markup)
                         elif audio_file_id:
-                            context.bot.send_audio(chat_id=group_chat['chat_id'], audio=audio_file_id, caption=audio_caption)
+                            context.bot.send_audio(chat_id=group_chat['chat_id'], audio=audio_file_id, caption=audio_caption, reply_markup=reply_markup)
                         elif document_file_id:
-                            context.bot.send_document(chat_id=group_chat['chat_id'], document=document_file_id, caption=document_caption)
+                            context.bot.send_document(chat_id=group_chat['chat_id'], document=document_file_id, caption=document_caption, reply_markup=reply_markup)
                         elif photo_file_id:
-                            context.bot.send_photo(chat_id=group_chat['chat_id'], photo=photo_file_id, caption=photo_caption)
+                            context.bot.send_photo(chat_id=group_chat['chat_id'], photo=photo_file_id, caption=photo_caption, reply_markup=reply_markup)
                         else:
-                            context.bot.send_message(chat_id=group_chat['chat_id'], text=message_text)
+                            context.bot.send_message(chat_id=group_chat['chat_id'], text=message_text, reply_markup=reply_markup)
                         received_group_chat_count += 1
                     except Exception as e:
+                        logger.error(f"Failed to send broadcast to chat_id {group_chat['chat_id']}: {e}")
                         not_received_group_chat_count += 1
 
                 context.user_data.clear()  # Clear user_data after broadcasting
@@ -223,18 +335,22 @@ def handle_broadcast_message(update: Update, context: CallbackContext) -> None:
             elif broadcast_target == 'all':
                 # Broadcast to both bot started PM users and bot added group chats
                 all_chats = user_and_chat_data_collection.find({})
+                if 'url_buttons' in context.user_data:
+                    reply_markup = InlineKeyboardMarkup(context.user_data['url_buttons'])
+                else:
+                    reply_markup = None
                 for chat in all_chats:
                     try:
                         if video_file_id:
-                            context.bot.send_video(chat_id=chat['chat_id'], video=video_file_id, caption=video_caption)
+                            context.bot.send_video(chat_id=chat['chat_id'], video=video_file_id, caption=video_caption, reply_markup=reply_markup)
                         elif audio_file_id:
-                            context.bot.send_audio(chat_id=chat['chat_id'], audio=audio_file_id, caption=audio_caption)
+                            context.bot.send_audio(chat_id=chat['chat_id'], audio=audio_file_id, caption=audio_caption, reply_markup=reply_markup)
                         elif document_file_id:
-                            context.bot.send_document(chat_id=chat['chat_id'], document=document_file_id, caption=document_caption)
+                            context.bot.send_document(chat_id=chat['chat_id'], document=document_file_id, caption=document_caption, reply_markup=reply_markup)
                         elif photo_file_id:
-                            context.bot.send_photo(chat_id=chat['chat_id'], photo=photo_file_id, caption=photo_caption)
+                            context.bot.send_photo(chat_id=chat['chat_id'], photo=photo_file_id, caption=photo_caption, reply_markup=reply_markup)
                         else:
-                            context.bot.send_message(chat_id=chat['chat_id'], text=message_text)
+                            context.bot.send_message(chat_id=chat['chat_id'], text=message_text, reply_markup=reply_markup)
 
                         if chat['chat_id'] > 0:
                             received_pm_users_count += 1
@@ -242,8 +358,10 @@ def handle_broadcast_message(update: Update, context: CallbackContext) -> None:
                             received_group_chat_count += 1
                     except Exception as e:
                         if chat['chat_id'] > 0:
+                            logger.error(f"Failed to send broadcast to PM chat_id {chat['chat_id']}: {e}")
                             not_received_pm_users_count += 1
                         else:
+                            logger.error(f"Failed to send broadcast to group chat_id {chat['chat_id']}: {e}")
                             not_received_group_chat_count += 1
 
                 context.user_data.clear()  # Clear user_data after broadcasting
@@ -282,11 +400,13 @@ def handle_broadcast_message(update: Update, context: CallbackContext) -> None:
             # Reset user_data
             context.user_data.pop('broadcast_target', None)
             context.user_data.pop('broadcast_message', None)
+    context.user_data.pop('awaiting_broadcast_message', None)  # Reset the state
     
 # Register the handlers
 def register_handlers(dp):
     dp.add_handler(MessageHandler(Filters.command & Filters.regex(r'^/broadcast'), start_broadcast))
     dp.add_handler(CallbackQueryHandler(handle_broadcast_button_click, pattern='^broadcast_(pm|group|all)$'))
+    dp.add_handler(CallbackQueryHandler(handle_url_buttons_setup_response, pattern='^setup_url_buttons_(yes|no)$'))
     dp.add_handler(MessageHandler(Filters.text & ~Filters.command & Filters.chat_type.private, handle_broadcast_message), group=1)
     dp.add_handler(MessageHandler(Filters.photo & ~Filters.command & Filters.chat_type.private, handle_broadcast_message))
     dp.add_handler(MessageHandler(Filters.document & ~Filters.command & Filters.chat_type.private, handle_broadcast_message))

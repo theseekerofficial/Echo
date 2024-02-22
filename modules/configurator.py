@@ -1,10 +1,10 @@
 # configurator.py
 import os
 import logging
-from pymongo import MongoClient
 from dotenv import load_dotenv
-from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update, ParseMode
+from pymongo import MongoClient
 from telegram.ext import CallbackContext, CallbackQueryHandler, CommandHandler
+from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update, ParseMode
 
 # Set up logging
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=logging.INFO)
