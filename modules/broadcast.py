@@ -22,7 +22,6 @@ logging.basicConfig(
     level=logging.INFO
 )
 
-# Initialize the logger
 logger = logging.getLogger(__name__)
 
 # MongoDB setup
@@ -48,17 +47,14 @@ def start_broadcast(update: Update, context: CallbackContext) -> None:
         update.message.reply_text("You are not authorized to use this command.")
         return
 
-    # Path to the existing photo
     photo_path = 'assets/broadcast.jpg'
     
-    # Ask about setting up URL buttons
     keyboard = [
         [InlineKeyboardButton("Yes", callback_data='setup_url_buttons_yes')],
         [InlineKeyboardButton("No", callback_data='setup_url_buttons_no')]
     ]
     reply_markup = InlineKeyboardMarkup(keyboard)
 
-    # Send the existing photo with the question as caption and inline buttons
     with open(photo_path, 'rb') as photo:
         message = update.message.reply_photo(
             photo=photo,
@@ -66,7 +62,6 @@ def start_broadcast(update: Update, context: CallbackContext) -> None:
             reply_markup=reply_markup
         )
 
-    # Save the original message ID for later editing
     context.user_data['original_message_id'] = message.message_id
 
 def handle_url_buttons_setup_response(update: Update, context: CallbackContext) -> None:
@@ -99,9 +94,7 @@ def proceed_to_broadcast_method_choice(update: Update, context: CallbackContext,
     ]
     reply_markup = InlineKeyboardMarkup(keyboard)
 
-    # Assuming the photo_path argument is used to indicate that we need to edit the caption of an existing photo message
     if photo_path:
-        # Edit the photo message to update the caption for the broadcast method choice
         context.bot.edit_message_caption(
             chat_id=update.effective_chat.id,
             message_id=context.user_data['original_message_id'],
@@ -109,9 +102,6 @@ def proceed_to_broadcast_method_choice(update: Update, context: CallbackContext,
             reply_markup=reply_markup
         )
     else:
-        # This block can be used to handle an unexpected scenario or simply conclude without action.
-        # For clarity in this context, we'll assume no action is needed if there's no photo_path.
-        # Log or handle any necessary fallbacks here.
         pass
 
 def handle_broadcast_button_click(update: Update, context: CallbackContext) -> None:
@@ -122,7 +112,6 @@ def handle_broadcast_button_click(update: Update, context: CallbackContext) -> N
         query.answer("You are not authorized to use this command.")
         return
 
-    # Set the broadcast target based on the button clicked
     if query.data == 'broadcast_pm':
         context.user_data['broadcast_target'] = 'pm'
     elif query.data == 'broadcast_group':
@@ -130,7 +119,6 @@ def handle_broadcast_button_click(update: Update, context: CallbackContext) -> N
     elif query.data == 'broadcast_all':
         context.user_data['broadcast_target'] = 'all'
 
-    # Update the original message to request the broadcast message
     query.edit_message_caption(
         caption="""🏹Now Send or Forward your message to broadcast (Text, Photo, Document, Audio, Gif)""",
         reply_markup=None  # Remove the inline keyboard
@@ -156,7 +144,6 @@ def handle_broadcast_message(update: Update, context: CallbackContext) -> None:
                     button_defs = row[1:-1].split('][')
                     button_row = []
                     for button_def in button_defs:
-                        # Using partition to ensure only the first occurrence of ' - ' is used for splitting
                         name, separator, url = button_def.partition(' - ')
                         if separator != ' - ' or not name or not url:
                             raise ValueError("Invalid button format detected.")
@@ -184,7 +171,6 @@ def handle_broadcast_message(update: Update, context: CallbackContext) -> None:
             return
 
 
-        # Define the keyboard for choosing the broadcast method
         keyboard = [
             [InlineKeyboardButton("PM(s) Only", callback_data='broadcast_pm')],
             [InlineKeyboardButton("Group(s) Only", callback_data='broadcast_group')],
@@ -203,7 +189,6 @@ def handle_broadcast_message(update: Update, context: CallbackContext) -> None:
 
         return
         
-    # Check if the broadcast command is active
     if 'broadcast_target' not in context.user_data:
         return
     
@@ -232,7 +217,6 @@ def handle_broadcast_message(update: Update, context: CallbackContext) -> None:
         video_caption = None
 
         if update.message.photo:
-            # Get the highest resolution photo
             photo = update.message.photo[-1]
             photo_file_id = photo.file_id
 
@@ -267,7 +251,6 @@ def handle_broadcast_message(update: Update, context: CallbackContext) -> None:
             if update.message.caption:
                 video_caption = update.message.caption
         
-        # Get the user's choice from context.user_data
         broadcast_target = context.user_data.get('broadcast_target')
 
         try:
