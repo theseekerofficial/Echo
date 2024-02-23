@@ -114,7 +114,9 @@ Because the person (Not the Creator) who deployed the bot can disable certain pl
 *Admins:*
 1. *Setup*: Add Echo bot as admin in your channel/group.
 2. *Activate*: Send the unique channel/group ID to Echo.
-3. *Command*: Main cmd is /docspotter
+3. *Command*: /docspotter main cmd
+            : /erasefiles for delete files
+            : /stop for stop deletion
 
 *Users:*
 *Search*: Just type any document/media name or keywords in the configured group.

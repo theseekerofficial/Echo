@@ -145,6 +145,7 @@
         - Button dashboard only has access to the user who searches keyword
         - Requested file received in Bot PM
         - Indexing any file type in telegram
+        - Delete Indexed Files Easily
 
 17. **Info & Utility Modules**
     - Minor Modules that cloud be help to you in day-to-day telegram usage 📅
@@ -174,6 +175,7 @@
 - `/uptotgph`: Upload any telegram image to Telegraph and get instant direct link 🚀
 - `/logogen`: Craft your own logo with endless possibilities. (with Support for adding your own graphics, frames and more) 🎨🖌️
 - `/docspotter`: Advanced auto filter feature packed with all feature you need for file managing 🗃️
+- `/erasefiles`: Delete indexed files easily ♻️
 - `/setreminder`: Set a reminder for a specific date and time.🗓️
 - `/myreminders`: To see all your active reminders.📃
 - `/editreminders`: Edit Your reminders✍️

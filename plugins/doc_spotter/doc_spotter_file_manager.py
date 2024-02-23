@@ -14,11 +14,17 @@ db = client["Echo_Doc_Spotter"]
 
 last_process_time_per_user = {}
 
+# Function to handle the /erasefiles command
+def start_file_deletion(update: Update, context: CallbackContext) -> None:
+    text = "Okay, now forward me the file(s) you want to delete from your file collection.\n\n<b>🚨 To prevent Echo from being rate-limited on Telegram, there is a one-second delay implemented for the deletion of multiple files.</b>\n\n<u><b>⚠️Remember to send /stop when you are done deleting files from the database.</b></u>"
+    update.message.reply_text(text=text, parse_mode='HTML')
+    context.user_data['expecting_file_for_deletion'] = True
+
 # Handler for "Delete Indexed Files" button
 def delete_indexed_files_callback(update: Update, context: CallbackContext) -> None:
     query = update.callback_query
     query.answer()
-    text = "Okay, now forward me the file(s) you want to delete from your file collection.\n\n<b>🚨 To prevent Echo from being rate-limited on Telegram, there is a one-second delay implemented for the deletion of multiple files.</b>\n\n<u><b>⚠️Remember to send /sdsfd when you are done deleting files from the database.</b></u>"
+    text = "Okay, now forward me the file(s) you want to delete from your file collection.\n\n<b>🚨 To prevent Echo from being rate-limited on Telegram, there is a one-second delay implemented for the deletion of multiple files.</b>\n\n<u><b>⚠️Remember to send /stop when you are done deleting files from the database.</b></u>"
     query.edit_message_text(text=text, parse_mode='HTML')
     context.user_data['expecting_file_for_deletion'] = True
 

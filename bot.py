@@ -444,6 +444,7 @@ bot_commands = [
     BotCommand("uptotgph", "Upload any telegram image to telegraph ⤴️"),
     BotCommand("logogen", "[Beta] Craft Your Logos with Echo!"),
     BotCommand("docspotter", "Enhanced Auto Filter Module ⛈️"),
+    BotCommand("erasefiles", "Delete indexed files ♻️"),
     BotCommand("ringtones", "Explore sample ringtones♫"),
     BotCommand("info", "See User/Chat info 📜"),
     BotCommand("moreinfo", "Get more information about the bot🤓"),

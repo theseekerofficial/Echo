@@ -4,7 +4,7 @@ from pymongo import MongoClient
 from modules.configurator import get_env_var_from_db
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update
 from telegram.ext import CallbackContext, CallbackQueryHandler, CommandHandler, Filters, MessageHandler, Updater
-from plugins.doc_spotter.doc_spotter_file_manager import delete_indexed_files_callback, process_file_deletion, done_forwarding_files
+from plugins.doc_spotter.doc_spotter_file_manager import delete_indexed_files_callback, process_file_deletion, done_forwarding_files, start_file_deletion
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
@@ -405,7 +405,8 @@ def store_file_info(user_id, file_id, file_name, file_size, file_type, mime_type
 # Setup bot handlers
 def setup_ds_dispatcher(dispatcher):
     dispatcher.add_handler(CommandHandler("docspotter", docspotter_command))
-    dispatcher.add_handler(CommandHandler("sdsfd", done_forwarding_files))
+    dispatcher.add_handler(CommandHandler("erasefiles", start_file_deletion))
+    dispatcher.add_handler(CommandHandler("stop", done_forwarding_files))
     dispatcher.add_handler(CallbackQueryHandler(index_files_callback, pattern='^index_files$'))
     dispatcher.add_handler(CallbackQueryHandler(setup_channel_callback, pattern='^setup_channel$'))
     dispatcher.add_handler(CallbackQueryHandler(setup_group_callback, pattern='^setup_group$'))
