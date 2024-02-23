@@ -49,7 +49,14 @@
 
 # Features
 
-![Feature_Pack](https://telegra.ph/file/23314d0629b4b25987223.jpg)
+<p align="center">
+    <a href="https://github.com/theseekerofficial/Echo">
+        <kbd>
+            <img width="450" src="https://telegra.ph/file/23314d0629b4b25987223.jpg" alt="Feature_Pack">
+        </kbd>
+    </a>
+
+<div align=center>
 
 1. **Universal Usage and Portability:** 
     - Works seamlessly in both private messages and any Telegram group where the bot is an admin.♾️
