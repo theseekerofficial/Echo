@@ -1,5 +1,5 @@
 # Main bot.py
-# Don't edit this file unless you know what you are doing
+## Don't edit this file unless you know what you are doing
 from modules.configurator import load_and_store_env_vars, bsettings_command, bsettings_button_callback, show_env_value_callback, handle_new_env_value, edit_env_callback, get_env_var_from_db, close_config_callback
 load_and_store_env_vars()
 
@@ -126,7 +126,7 @@ def send_post_restart_message(bot: Bot):
 
         status_message = status_record['status']
         for owner in owners:
-            bot.send_message(chat_id=owner, text=status_message)
+            bot.send_message(chat_id=owner, text=status_message, parse_mode=ParseMode.MARKDOWN)
 
 def start(update: Update, context: CallbackContext) -> None:
     chat_id = update.message.chat_id
@@ -233,39 +233,27 @@ def stop_http_server():
 
 def restart_command(update: Update, context: CallbackContext) -> None:
     user_id = update.message.from_user.id
-
-    # Fetch OWNER and UPSTREAM_REPO_URL from the MongoDB database
     owners_str = get_env_var_from_db("OWNER")
     owners = owners_str.split(",") if owners_str else []
     repo_url = get_env_var_from_db("UPSTREAM_REPO_URL")
 
     if str(user_id) in owners:
         try:
-            updates_applied = check_for_updates(repo_url)
-
-            if updates_applied == "private_repo":
-                status_message = "Repo is private. Just Restarted! 🔒"
-                logging.info("🔒 Repo is private. Just Restarted!")
-            elif updates_applied:
-                status_message = "Successfully Updated. Restart Completed! ✅"
-                logging.info("✅ Successfully Updated. Restart Completed!")
+            updates_applied, commit_message, commit_author = check_for_updates(repo_url)
+            if updates_applied:
+                status_message = f"✅ Successfully Updated and Restarted!\n\nLatest Commit Message: `{commit_message}`\nAuthor: `{commit_author}`"
             else:
-                status_message = "No New Updates. Just Restarted! 🔄"
-                logging.info("🔄 No New Updates. Just Restarted!")
+                status_message = "🔄 No New Updates. Just Restarted!"
 
             write_update_status_to_mongo(status_message)
-
-            # First, stop the HTTP server
-            stop_http_server()
-
-            # Then, restart the bot
-            restart_bot()
+            stop_http_server() 
+            restart_bot() 
 
         except Exception as e:
             update.message.reply_text(f"Failed to restart: {str(e)}")
             logging.error(f"⚠️ Failed to restart: {str(e)}")
     else:
-        update.message.reply_text("Do not touch this, this is for this Echo variant's owner only ⚠️")
+        update.message.reply_text("You do not have permission to perform this action.")
 
 # Function to set a reminder
 def set_reminder(update: Update, context: CallbackContext) -> None:

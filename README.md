@@ -1,4 +1,4 @@
-# ECHO v1.0.5 #IM (Improvements)
+# ECHO v1.0.4 #IM (Improvements)
 
 <p align="center">
     <a href="https://github.com/theseekerofficial/Echo">
@@ -57,7 +57,6 @@
     </a>
 
 <div align=center>
-</div>
 
 1. **Universal Usage and Portability:** 
     - Works seamlessly in both private messages and any Telegram group where the bot is an admin.♾️

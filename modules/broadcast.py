@@ -58,7 +58,7 @@ def start_broadcast(update: Update, context: CallbackContext) -> None:
     with open(photo_path, 'rb') as photo:
         message = update.message.reply_photo(
             photo=photo,
-            caption="Do you want to setup URL Buttons for this Broadcast message?",
+            caption="Do you want to set URL Buttons for this Broadcast message?",
             reply_markup=reply_markup
         )
 
@@ -69,7 +69,7 @@ def handle_url_buttons_setup_response(update: Update, context: CallbackContext) 
     user_id = query.from_user.id
 
     if not is_authorized_user(user_id):
-        query.answer("You are not authorized to use this command.")
+        query.answer("You are not authorized to use this command.✖️")
         return
 
     photo_path = 'assets/broadcast.jpg'
@@ -178,7 +178,6 @@ def handle_broadcast_message(update: Update, context: CallbackContext) -> None:
         ]
         reply_markup = InlineKeyboardMarkup(keyboard)
 
-        # Send the image with the caption
         photo_path = 'assets/broadcast.jpg'
         with open(photo_path, 'rb') as photo:
             update.message.reply_photo(
@@ -192,7 +191,6 @@ def handle_broadcast_message(update: Update, context: CallbackContext) -> None:
     if 'broadcast_target' not in context.user_data:
         return
     
-    # Access necessary variables through the bot module
     from bot import user_and_chat_data_collection, REMINDER_CHECK_TIMEZONE
     user_and_chat_data_collection = user_and_chat_data_collection
     REMINDER_CHECK_TIMEZONE = REMINDER_CHECK_TIMEZONE

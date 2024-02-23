@@ -2,6 +2,7 @@ import os
 import sys
 import shutil
 import logging
+import requests
 import subprocess
 from pymongo import MongoClient
 
@@ -20,7 +21,39 @@ def get_repo_root_path(start_path):
         raise Exception("Failed to find .git directory. Are you sure this script is inside a git repository?")
     return get_repo_root_path(parent_dir)
 
+def fetch_latest_commit(repo_url):
+    # Example: Fetch the latest commit hash from the remote repository
+    try:
+        latest_remote_commit = subprocess.check_output(["git", "ls-remote", repo_url, "HEAD"], text=True).split()[0]
+        return latest_remote_commit
+    except Exception as e:
+        print(f"Error fetching latest commit: {str(e)}")
+        return None
+
+def get_current_commit():
+    # Example: Get the current commit hash of the local repository
+    try:
+        current_commit = subprocess.check_output(["git", "rev-parse", "HEAD"], text=True).strip()
+        return current_commit
+    except Exception as e:
+        print(f"Error getting current commit: {str(e)}")
+        return None
+
 def check_for_updates(repo_url):
+    latest_remote_commit = fetch_latest_commit(repo_url)
+    current_commit = get_current_commit()
+
+    if latest_remote_commit and current_commit and latest_remote_commit != current_commit:
+        subprocess.run(["git", "fetch", repo_url])
+        subprocess.run(["git", "reset", "--hard", "FETCH_HEAD"])
+
+        # Fetch details of the latest commit
+        commit_message = subprocess.check_output(["git", "log", "-1", "--pretty=%B"], text=True).strip()
+        commit_author = subprocess.check_output(["git", "log", "-1", "--pretty=%an"], text=True).strip()
+        return True, commit_message, commit_author
+    else:
+        return False, None, None
+        
     try:
         script_dir = os.path.dirname(os.path.realpath(__file__))
         repo_root_dir = get_repo_root_path(script_dir)
@@ -30,6 +63,18 @@ def check_for_updates(repo_url):
         config_env_path = os.path.join(repo_root_dir, 'config.env')
         config_env_backup_path = os.path.join(repo_root_dir, 'config.env.backup')
 
+        commit_details = fetch_commit_details(repo_url)
+        if commit_details:
+            # Assuming `commit_details[0]` contains the latest commit
+            latest_commit_message = commit_details[0]['message']
+            latest_commit_author = commit_details[0]['author']
+
+            # Use these details in the status message for updates
+            status_message = f"Successfully Updated and Restarted!\n\nLatest Commit: {latest_commit_message}\nAuthor: {latest_commit_author}"
+        else:
+            # If no new commits or failed to fetch commits
+            status_message = "🔁No New Updates, Just Restarted!"
+            
         # Backup config.env if it exists
         if os.path.exists(config_env_path):
             shutil.copy(config_env_path, config_env_backup_path)
@@ -54,7 +99,8 @@ def check_for_updates(repo_url):
             shutil.move(config_env_backup_path, config_env_path)
             logger.info("config.env restored from backup.")
 
-        logger.info("✅ Successfully synchronized local repository with remote.")
+        write_update_status_to_mongo(status_message)
+        
         return True
 
     except Exception as e:
