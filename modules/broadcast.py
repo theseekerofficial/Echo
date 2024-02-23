@@ -390,6 +390,6 @@ def register_handlers(dp):
     dp.add_handler(MessageHandler(Filters.text & ~Filters.command & Filters.chat_type.private, handle_broadcast_message), group=1)
     dp.add_handler(MessageHandler(Filters.photo & ~Filters.command & Filters.chat_type.private, handle_broadcast_message))
     dp.add_handler(MessageHandler(Filters.document & ~Filters.command & Filters.chat_type.private, handle_broadcast_message))
-    dp.add_handler(MessageHandler(Filters.audio & ~Filters.command & Filters.chat_type.private, handle_broadcast_message))
+    dp.add_handler(MessageHandler(Filters.audio & ~Filters.command & Filters.chat_type.private, handle_broadcast_message), group=1)
     dp.add_handler(MessageHandler(Filters.video & ~Filters.command & Filters.chat_type.private, handle_broadcast_message))
     pass
