@@ -57,6 +57,7 @@
     </a>
 
 <div align=center>
+</div>
 
 1. **Universal Usage and Portability:** 
     - Works seamlessly in both private messages and any Telegram group where the bot is an admin.♾️
