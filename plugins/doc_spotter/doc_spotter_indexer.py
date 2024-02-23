@@ -4,6 +4,7 @@ from pymongo import MongoClient
 from modules.configurator import get_env_var_from_db
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update
 from telegram.ext import CallbackContext, CallbackQueryHandler, CommandHandler, Filters, MessageHandler, Updater
+from plugins.doc_spotter.doc_spotter_file_manager import delete_indexed_files_callback, process_file_deletion, done_forwarding_files
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
@@ -22,7 +23,8 @@ def docspotter_command(update: Update, context: CallbackContext) -> None:
             [InlineKeyboardButton("Index Files", callback_data='index_files')],
             [InlineKeyboardButton("Set Up Group(s) to Begin Spotting", callback_data='setup_group')],
             [InlineKeyboardButton("Setup F-Sub for Listening Group(s)", callback_data='setup_fsub')],
-            [InlineKeyboardButton("Manage Index/Listen/F-Sub Chats", callback_data='manage_indexers')]
+            [InlineKeyboardButton("Manage Index/Listen/F-Sub Chats", callback_data='manage_indexers')],
+            [InlineKeyboardButton("Delete Indexed Files", callback_data='delete_indexed_files')] 
         ]
         reply_markup = InlineKeyboardMarkup(keyboard)
         update.message.reply_text('Select Process Mode for Doc Spotter Module:', reply_markup=reply_markup)
@@ -130,7 +132,8 @@ def back_to_main_callback(update: Update, context: CallbackContext) -> None:
         [InlineKeyboardButton("Index Files", callback_data='index_files')],
         [InlineKeyboardButton("Set Up Group(s) to Begin Spotting", callback_data='setup_group')],
         [InlineKeyboardButton("Setup F-Sub for Listening Group(s)", callback_data='setup_fsub')],
-        [InlineKeyboardButton("Manage Index/Listen/F-Sub Chats", callback_data='manage_indexers')]
+        [InlineKeyboardButton("Manage Index/Listen/F-Sub Chats", callback_data='manage_indexers')],
+        [InlineKeyboardButton("Delete Indexed Files", callback_data='delete_indexed_files')] 
     ]
     reply_markup = InlineKeyboardMarkup(keyboard)
 
@@ -402,6 +405,7 @@ def store_file_info(user_id, file_id, file_name, file_size, file_type, mime_type
 # Setup bot handlers
 def setup_ds_dispatcher(dispatcher):
     dispatcher.add_handler(CommandHandler("docspotter", docspotter_command))
+    dispatcher.add_handler(CommandHandler("sdsfd", done_forwarding_files))
     dispatcher.add_handler(CallbackQueryHandler(index_files_callback, pattern='^index_files$'))
     dispatcher.add_handler(CallbackQueryHandler(setup_channel_callback, pattern='^setup_channel$'))
     dispatcher.add_handler(CallbackQueryHandler(setup_group_callback, pattern='^setup_group$'))
@@ -419,8 +423,10 @@ def setup_ds_dispatcher(dispatcher):
     dispatcher.add_handler(CallbackQueryHandler(manage_indexers_callback, pattern='^dsi_back_to_indexers$'))
     dispatcher.add_handler(CallbackQueryHandler(back_to_main_callback, pattern='^back_to_main$'))
     dispatcher.add_handler(MessageHandler(Filters.text & ~Filters.command & Filters.chat_type.private, handle_text), group=2)
+    dispatcher.add_handler(CallbackQueryHandler(delete_indexed_files_callback, pattern='^delete_indexed_files$'))
     dispatcher.add_handler(MessageHandler(Filters.document, process_new_file), group=2)
     dispatcher.add_handler(MessageHandler(Filters.photo, process_new_file), group=2)
     dispatcher.add_handler(MessageHandler(Filters.video, process_new_file), group=2)
     dispatcher.add_handler(MessageHandler(Filters.audio, process_new_file), group=2)
     dispatcher.add_handler(MessageHandler(Filters.animation, process_new_file), group=2)
+    dispatcher.add_handler(MessageHandler(Filters.forwarded & Filters.chat_type.private & (Filters.document | Filters.photo | Filters.video | Filters.audio | Filters.animation), process_file_deletion), group=6)

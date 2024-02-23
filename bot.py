@@ -1,4 +1,4 @@
-# Main bot.py
+# bot.py
 ## Don't edit this file unless you know what you are doing
 from modules.configurator import load_and_store_env_vars, bsettings_command, bsettings_button_callback, show_env_value_callback, handle_new_env_value, edit_env_callback, get_env_var_from_db, close_config_callback
 load_and_store_env_vars()
@@ -82,11 +82,9 @@ REMINDER_CHECK_TIMEZONE = get_env_var_from_db("REMINDER_CHECK_TIMEZONE")
 logger.info("TOKEN: %s", TOKEN)
 logger.info("MONGODB_URI: %s", MONGODB_URI)
 
-# Perform integrity check
 try:
     decrypted_creator_info = decrypt(encrypted_creator_info)
 
-    # Check if the verification string matches the decrypted data
     if creator_credits != decrypted_creator_info:
         print("""⚠️ Attention!
 
@@ -105,11 +103,10 @@ except Exception as e:
 
 USER_AND_CHAT_DATA_COLLECTION = 'user_and_chat_data'
 
-# Inside the main function, before setting up the updater
 client = MongoClient(MONGODB_URI)
 db = client.get_database("Echo")
 user_and_chat_data_collection = db[USER_AND_CHAT_DATA_COLLECTION]
-USER_TIMEZONES_COLLECTION = 'user_timezones' # Don't edit this unless you know what you are doing
+USER_TIMEZONES_COLLECTION = 'user_timezones' 
 
 # Call the function to set necessary variables from broadcast module
 broadcast_set_bot_variables(user_and_chat_data_collection, REMINDER_CHECK_TIMEZONE)
@@ -241,7 +238,7 @@ def restart_command(update: Update, context: CallbackContext) -> None:
         try:
             updates_applied, commit_message, commit_author = check_for_updates(repo_url)
             if updates_applied:
-                status_message = f"✅ Successfully Updated and Restarted!\n\nLatest Commit Message: `{commit_message}`\nAuthor: `{commit_author}`"
+                status_message = f"✅ Successfully Updated and Restarted!\n\n*Latest Commit Details;*\n\n_Message_: `{commit_message}`\n_Author_: `{commit_author}`"
             else:
                 status_message = "🔄 No New Updates. Just Restarted!"
 

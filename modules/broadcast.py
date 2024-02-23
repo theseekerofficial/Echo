@@ -128,7 +128,6 @@ def handle_broadcast_button_click(update: Update, context: CallbackContext) -> N
 def handle_broadcast_message(update: Update, context: CallbackContext) -> None:
 
     if not context.user_data.get('awaiting_broadcast_message', False):
-        logger.info("Not ready for broadcast message, ignoring.")
         return 
 
     logger.info("Processing broadcast message.")
