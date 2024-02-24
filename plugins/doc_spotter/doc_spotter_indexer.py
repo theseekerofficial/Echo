@@ -244,9 +244,12 @@ def setup_group_callback(update: Update, context: CallbackContext) -> None:
 def index_files_callback(update: Update, context: CallbackContext) -> None:
     query = update.callback_query
     query.answer()
-    keyboard = [[InlineKeyboardButton("Setup a channel for indexing", callback_data='setup_channel')]]
+    keyboard = [
+        [InlineKeyboardButton("Setup a channel for indexing", callback_data='setup_channel')],
+        [InlineKeyboardButton("Back", callback_data='back_to_main')]
+    ]
     reply_markup = InlineKeyboardMarkup(keyboard)
-    query.edit_message_text(text="Echo's Doc Spotter", reply_markup=reply_markup)
+    query.edit_message_text(text="Let's Index some files huh?", reply_markup=reply_markup)
 
 # Callback handler for "Setup a channel for indexing" button
 def setup_channel_callback(update: Update, context: CallbackContext) -> None:

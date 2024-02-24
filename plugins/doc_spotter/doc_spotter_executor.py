@@ -18,6 +18,10 @@ db = client["Echo_Doc_Spotter"]
 echo_db = client["Echo"]
 imdb = IMDb()  # IMDb instance
 
+# Environment variable for IMDb feature activation
+DS_IMDB_ACTIVATE_str = get_env_var_from_db('DS_IMDB_ACTIVATE')
+DS_IMDB_ACTIVATE = DS_IMDB_ACTIVATE_str.lower() == 'true' if DS_IMDB_ACTIVATE_str else False
+
 PAGE_SIZE = 10
 doc_spotter_plugin_enabled = None
 
@@ -89,41 +93,46 @@ def listen_to_groups(update: Update, context: CallbackContext):
         context.user_data['search_results'] = results
 
         if results:
-            try:
-                movies = imdb.search_movie(message_text)
-                if movies:
-                    movie = movies[0]
-                    movie_id = movie.movieID
-                    movie_details = imdb.get_movie(movie_id)
+            if DS_IMDB_ACTIVATE:
+                try:
+                    movies = imdb.search_movie(message_text)
+                    if movies:
+                        movie = movies[0]
+                        movie_id = movie.movieID
+                        movie_details = imdb.get_movie(movie_id)
 
-                    # Attempt to use the full-size cover URL for a higher resolution image
-                    photo_url = movie_details.get('full-size cover url', movie_details.get('cover url', None))
+                        # Attempt to use the full-size cover URL for a higher resolution image
+                        photo_url = movie_details.get('full-size cover url', movie_details.get('cover url', None))
 
-                    if photo_url:
-                        title = movie_details.get('title', 'N/A')
-                        aka = ", ".join(movie_details.get('akas', ['N/A']))
-                        rating = movie_details.get('rating', 'N/A')
-                        release_info = f"https://www.imdb.com/title/tt{movie_id}/releaseinfo"
-                        genres = ', '.join([f"#{genre.replace(' ', '_')}" for genre in movie_details.get('genres', ['N/A'])])
-                        plot = movie_details.get('plot outline', 'Plot not available.')
-                        languages = ", ".join(movie_details.get('languages', ['N/A']))
-                        country = ", ".join(movie_details.get('countries', ['N/A']))
-                        caption = (f"Title✍️: {title}\nAlso Known As🗃️: {aka}\nRating⭐️: {rating}\n"
-                                   f"Release Info🚀: {release_info}\nGenre🎭: {genres}\nLanguage🗣️: {languages}\n"
-                                   f"Country of Origin🌏: {country}\n\nStory Line📖: {plot}")
-                        
-                        context.bot.delete_message(chat_id=update.message.chat.id, message_id=loading_message.message_id)
-                        
-                        display_page_buttons(update, context, results, 0, user_id, imdb_info=caption, photo_url=photo_url)
+                        if photo_url:
+                            title = movie_details.get('title', 'N/A')
+                            aka = ", ".join(movie_details.get('akas', ['N/A']))
+                            rating = movie_details.get('rating', 'N/A')
+                            release_info = f"https://www.imdb.com/title/tt{movie_id}/releaseinfo"
+                            genres = ', '.join([f"#{genre.replace(' ', '_')}" for genre in movie_details.get('genres', ['N/A'])])
+                            plot = movie_details.get('plot outline', 'Plot not available.')
+                            languages = ", ".join(movie_details.get('languages', ['N/A']))
+                            country = ", ".join(movie_details.get('countries', ['N/A']))
+                            caption = (f"Title✍️: {title}\nAlso Known As🗃️: {aka}\nRating⭐️: {rating}\n"
+                                       f"Release Info🚀: {release_info}\nGenre🎭: {genres}\nLanguage🗣️: {languages}\n"
+                                       f"Country of Origin🌏: {country}\n\nStory Line📖: {plot}")
+                            
+                            context.bot.delete_message(chat_id=update.message.chat.id, message_id=loading_message.message_id)
+                            
+                            display_page_buttons(update, context, results, 0, user_id, imdb_info=caption, photo_url=photo_url)
+                        else:
+                            # If no photo URL is available, use the default image
+                            raise Exception("No photo URL found.")
                     else:
-                        # If no photo URL is available, use the default image
-                        raise Exception("No photo URL found.")
-                else:
-                    # If no movies are found, use the default image
-                    raise Exception("No movies found.")
-            except Exception as e:
-                # In case of any error, default to the file list with the default image and caption
-                logging.error(f"🚫 Error fetching IMDb data: {e}")  # Log the error
+                        # If no movies are found, use the default image
+                        raise Exception("No movies found.")
+                except Exception as e:
+                    # In case of any error, default to the file list with the default image and caption
+                    logging.error(f"🚫 Error fetching IMDb data: {e}")  # Log the error
+                    display_page_buttons(update, context, results, 0, user_id)
+            else:
+                # IMDb feature is deactivated, send default image and message
+                context.bot.delete_message(chat_id=update.message.chat.id, message_id=loading_message.message_id)
                 display_page_buttons(update, context, results, 0, user_id)
         else:
             context.bot.delete_message(chat_id=update.message.chat.id, message_id=loading_message.message_id)
@@ -161,22 +170,29 @@ def display_page_buttons(update, context, results, page, user_id, imdb_info=None
     if nav_buttons:
         buttons.append(nav_buttons)  # Add as a separate row
     reply_markup = InlineKeyboardMarkup(buttons)
-    
-    # Determine which image to send
-    if not photo_url:  # If no IMDb photo, use default image
+
+    if DS_IMDB_ACTIVATE and imdb_info and photo_url:
+      # Determine which image to send
+      if not photo_url:  # If no IMDb photo, use default image
+          photo_path = os.path.join('assets', 'doc_spotter.jpg')  # Update this path as necessary
+          caption = imdb_info if imdb_info else "Here is what I found in the database:"
+          with open(photo_path, 'rb') as photo:
+              context.bot.send_photo(chat_id=chat_id, photo=photo, caption=caption, reply_markup=reply_markup)
+      else:
+          # If IMDb info is too long, send it as a separate text message
+          if imdb_info and len(imdb_info) > 1024:
+              message = context.bot.send_message(chat_id=chat_id, text=imdb_info[:1024] + "... (continued)")
+              imdb_message_id = message.message_id
+              context.bot.send_photo(chat_id=chat_id, photo=photo_url, caption="Here is what I found in the database:", reply_markup=reply_markup, reply_to_message_id=imdb_message_id)
+          else:
+              # Send IMDb info with the photo and buttons
+              context.bot.send_photo(chat_id=chat_id, photo=photo_url, caption=imdb_info, reply_markup=reply_markup)
+    else:
+        # Send default image with a standard message
         photo_path = os.path.join('assets', 'doc_spotter.jpg')  # Update this path as necessary
-        caption = imdb_info if imdb_info else "Here is what I found in the database:"
+        caption = "Here is what I found in the database:"
         with open(photo_path, 'rb') as photo:
             context.bot.send_photo(chat_id=chat_id, photo=photo, caption=caption, reply_markup=reply_markup)
-    else:
-        # If IMDb info is too long, send it as a separate text message
-        if imdb_info and len(imdb_info) > 1024:
-            message = context.bot.send_message(chat_id=chat_id, text=imdb_info[:1024] + "... (continued)")
-            imdb_message_id = message.message_id
-            context.bot.send_photo(chat_id=chat_id, photo=photo_url, caption="Here is what I found in the database:", reply_markup=reply_markup, reply_to_message_id=imdb_message_id)
-        else:
-            # Send IMDb info with the photo and buttons
-            context.bot.send_photo(chat_id=chat_id, photo=photo_url, caption=imdb_info, reply_markup=reply_markup)
     logging.info(f"✅ User {update.effective_user.id} received IMDB info and poster for '{update.message.text}' in chat {update.message.chat.id}")
 
 def format_file_size(size_in_bytes):

@@ -187,13 +187,13 @@ The *Commit Detector* is an exclusive feature tailored for the Echo's deployment
 
 🛠️ *Setup & Configuration:*
 - `GH_CD_URLS`: A comma-separated list of GitHub repository URLs. Format - `theseekerofficial/Echo`
-- `GH_CD_CHANNEL_IDS`: Telegram channel IDs where updates are sent, also comma-separated.
+- `GH_CD_CHANNEL_IDS`: Telegram Channel/Group ID(s) where updates are sent, also comma-separated.
 - `GH_CD_PAT`: Optional Personal Access Token for GitHub to boost your API rate limit and use authenticated requests.
 
 🔄 *Operational Workflow:*
 1. *Fetching Commits*: The bot periodically checks for the latest commits in the specified repositories.
 2. *Commit Detection*: It detects new commits by comparing SHAs with the stored ones in the MongoDB `GH_Commit_Detector` collection.
-3. *Notification*: For any new commit found, it sends a detailed update to the specified Telegram channels.
+3. *Notification*: For any new commit found, it sends a detailed update to the specified Telegram channels/groups.
 
 This feature is a powerful tool for staying updated with GitHub repository changes directly within Telegram
 

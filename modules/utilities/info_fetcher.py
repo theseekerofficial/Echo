@@ -18,7 +18,7 @@ def send_user_id_info(update: Update, context: CallbackContext) -> None:
         ]
         reply_markup = InlineKeyboardMarkup(keyboard)
         update.message.reply_text(f"{update.message.from_user.mention_markdown()}, what info do you need to see?",
-                                  reply_markup=reply_markup, parse_mode=ParseMode.MARKDOWN)
+                                  reply_markup=reply_markup, parse_mode=ParseMode.MARKDOWN, reply_to_message_id=update.message.message_id)
         return
     
     # If arguments are provided, handle them with a different function
@@ -41,7 +41,7 @@ def send_user_id_info(update: Update, context: CallbackContext) -> None:
             target = message.from_user
             caption = user_or_bot_caption(target, own=True)
 
-        send_profile_or_default_photo(context, target, chat_id, caption)
+        send_profile_or_default_photo(context, target, chat_id, caption, update)
     except BadRequest as e:
         context.bot.send_message(chat_id=chat_id, text="⚠️ Error retrieving information. Please try again.", parse_mode=ParseMode.MARKDOWN)
         
@@ -73,27 +73,27 @@ def chat_caption(chat):
               f"🔗 Chat Link: [Click Here]({chat_link})"
     return caption
 
-def send_profile_or_default_photo(context, target, chat_id, caption):
+def send_profile_or_default_photo(context, target, chat_id, caption, update):
     try:
         # For users, attempt to fetch and send a profile photo
         if hasattr(target, 'is_bot') or (hasattr(target, 'type') and target.type == 'private'):
             photos = context.bot.get_user_profile_photos(target.id, limit=1)
             if photos.photos:
                 photo_file_id = photos.photos[0][-1].file_id
-                context.bot.send_photo(chat_id=chat_id, photo=photo_file_id, caption=caption, parse_mode=ParseMode.MARKDOWN)
+                context.bot.send_photo(chat_id=chat_id, photo=photo_file_id, caption=caption, parse_mode=ParseMode.MARKDOWN, reply_to_message_id=update.message.message_id)
                 return
         # For chats or if no photo is available, send a default photo
-        send_default_photo(context, chat_id, caption)
+        send_default_photo(context, chat_id, caption, update)
     except BadRequest:
-        send_default_photo(context, chat_id, caption)
+        send_default_photo(context, chat_id, caption, update)
 
-def send_default_photo(context, chat_id, caption):
+def send_default_photo(context, chat_id, caption, update):
     default_images_directory = os.path.join(os.getcwd(), 'assets', 'info_assets')
     default_image_filenames = [f for f in os.listdir(default_images_directory) if os.path.isfile(os.path.join(default_images_directory, f))]
     selected_filename = random.choice(default_image_filenames)
     default_photo_path = os.path.join(default_images_directory, selected_filename)
     with open(default_photo_path, 'rb') as default_photo:
-        context.bot.send_photo(chat_id=chat_id, photo=default_photo, caption=caption, parse_mode=ParseMode.MARKDOWN)
+        context.bot.send_photo(chat_id=chat_id, photo=default_photo, caption=caption, parse_mode=ParseMode.MARKDOWN, reply_to_message_id=update.message.message_id)
 
 def send_info_by_username_or_id(update: Update, context: CallbackContext) -> None:
     args = context.args
@@ -103,7 +103,7 @@ def send_info_by_username_or_id(update: Update, context: CallbackContext) -> Non
         # Handle the case where no arguments are provided by showing the user's own info
         target = update.message.from_user
         caption = user_or_bot_caption(target, own=True)
-        send_profile_or_default_photo(context, target, chat_id, caption)
+        send_profile_or_default_photo(context, target, chat_id, caption, update)
         return
 
     entity_id_or_username = args[0]
@@ -123,14 +123,14 @@ def send_info_by_username_or_id(update: Update, context: CallbackContext) -> Non
         else:
             # Fallback or error handling for unsupported entity types
             caption = "Unsupported entity type."
-            context.bot.send_message(chat_id=chat_id, text=caption, parse_mode=ParseMode.MARKDOWN)
+            context.bot.send_message(chat_id=chat_id, text=caption, parse_mode=ParseMode.MARKDOWN, reply_to_message_id=update.message.message_id)
             return
 
-        send_profile_or_default_photo(context, entity, chat_id, caption)
+        send_profile_or_default_photo(context, entity, chat_id, caption, update)
 
     except BadRequest as e:
         error_message = "Could not fetch information for the provided username or ID."
-        context.bot.send_message(chat_id=chat_id, text=error_message, parse_mode=ParseMode.MARKDOWN)
+        context.bot.send_message(chat_id=chat_id, text=error_message, parse_mode=ParseMode.MARKDOWN, reply_to_message_id=update.message.message_id)
 
 def button_callback_handler(update: Update, context: CallbackContext) -> None:
     query = update.callback_query
@@ -148,14 +148,14 @@ def button_callback_handler(update: Update, context: CallbackContext) -> None:
         # Fetch and send group info
         entity = context.bot.get_chat(target_id)
         caption = chat_caption(entity)
-        send_profile_or_default_photo(context, entity, target_id, caption)
+        send_profile_or_default_photo(context, entity, target_id, caption, query)
     elif info_type == "myinfo":
         # Fetch and send user info
         entity = context.bot.get_chat(user_id)
         caption = user_or_bot_caption(entity, own=True)
-        send_profile_or_default_photo(context, entity, query.message.chat_id, caption)
+        send_profile_or_default_photo(context, entity, query.message.chat_id, caption, query)
 
-    query.message.delete()  
+    query.message.delete()   
 
 # Modify the register_id_command function to handle commands with arguments
 def register_id_command(dispatcher):

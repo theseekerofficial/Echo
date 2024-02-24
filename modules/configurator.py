@@ -63,6 +63,7 @@ def load_and_store_env_vars():
         "TELEGRAPH_UP_PLUGIN": os.getenv("TELEGRAPH_UP_PLUGIN"),
         "LOGOGEN_PLUGIN": os.getenv("LOGOGEN_PLUGIN"),
         "DOC_SPOTTER_PLUGIN": os.getenv("DOC_SPOTTER_PLUGIN"),
+        "DS_IMDB_ACTIVATE": os.getenv("DS_IMDB_ACTIVATE"),
         "GH_CD_URLS": os.getenv("GH_CD_URLS"),
         "GH_CD_CHANNEL_IDS": os.getenv("GH_CD_CHANNEL_IDS"),
         "GH_CD_PAT": os.getenv("GH_CD_PAT"),
@@ -132,13 +133,42 @@ def bsettings_button_callback(update: Update, context: CallbackContext):
 
     if query.data == 'config_envs':
         show_config_envs(query) 
-        
+
+def get_unique_message_for_env(key):
+    unique_messages = {
+        "TOKEN": "🔑 This is your bot's Telegram API token. Obtain it from @BotFather and Keep it secret!\n\n<b>Required [🔴]</b>\n<b>For new changes, Restart:</b> <u><i>Required</i></u>",
+        "MONGODB_URI": "🗄️ This is your MongoDB connection URI. It's crucial for your bot's database operations.\n\n<b>Required [🔴]</b>",
+        "OWNER": "👤 This is the Telegram ID of the bot owner. Only this user can access bot settings.\n\n<b>Required [🔴]</b>\n<b>For new changes, Restart:</b> <u><i>Not Required</i></u>",
+        "UPSTREAM_REPO_URL": "🔗 URL to the GitHub source code repository, Recommended to use the official Echo Repo.\n\n<b>Required [🔴]</b>\n<b>For new changes, Restart:</b> <u><i>Required</i></u>",
+        "REMINDER_CHECK_TIMEZONE": "🕒 Global timezone used for scheduling reminders and time-based commands. Find your timezone from internet or <a href=\"https://telegra.ph/Choose-your-timezone-02-16\">this link</a>\n\n<b>Required [🔴]</b>\n<b>For new changes, Restart:</b> <u><i>Required</i></u>",
+        "AUTHORIZED_USERS": "🛡️ List of user IDs to give access to Echo's some features.\n\n<b>Required [🔴]</b>\n<b>For new changes, Restart:</b> <u><i>Required</i></u>",
+        "SCEDUCAST_TIMEZONE": "🌐 Timezone setting for Sceducast, Your Scheducast will set based on this\n\n<b>Required [🔴]</b>\n<b>For new changes, Restart:</b> <u><i>Required</i></u>",
+        "SCEDUCAST_TIME_OFFSET": "⏳ Offset in hours for Sceducast scheduling. Refer Readme for more info adjusting for time zones.\n\n<b>Required [🔴]</b>\n<b>For new changes, Restart:</b> <u><i>Required</i></u>",
+        "GEMINI_PLUGIN": "🔌 Enable or Disable Gemini Plugin\n\n<b>Optional [🟩]</b>\n<b>For new changes, Restart:</b> <u><i>Required</i></u>",
+        "CHAT_BOT_PLUGIN": "🔌 Enable or Disable Chatbot Plugin\n\n<b>Optional [🟩]</b>\n<b>For new changes, Restart:</b> <u><i>Required</i></u>",
+        "GEMINI_IMAGE_PLUGIN": "🔌 Enable or Disable Gemini Image Analyze Plugin\n\n<b>Optional [🟩]</b>\n<b>For new changes, Restart:</b> <u><i>Not Required</i></u>",
+        "CALCULATOR_PLUGIN": "🔌 Enable or Disable Basic Calculator Plugin\n\n<b>Optional [🟩]</b>\n<b>For new changes, Restart:</b> <u><i>Not Required</i></u>",
+        "SCI_CALCULATOR_PLUGIN": "🔌 Enable or Disable Scientific Calculator Plugin\n\n<b>Optional [🟩]</b>\n<b>For new changes, Restart:</b> <u><i>Not Required</i></u>",
+        "UNIT_CONVERTER_PLUGIN": "🔌 Enable or Disable Unit Converter Plugin\n\n<b>Optional [🟩]</b>\n<b>For new changes, Restart:</b> <u><i>Not Required</i></u>",
+        "TELEGRAPH_UP_PLUGIN": "🔌 Enable or Disable Telegraph Image Uploading Plugin\n\n<b>Optional [🟩]</b>\n<b>For new changes, Restart:</b> <u><i>Not Required</i></u>",
+        "LOGOGEN_PLUGIN": "🔌 Enable or Disable Logo Generator Plugin\n\n<b>Optional [🟩]</b>\n<b>For new changes, Restart:</b> <u><i>Not Required</i></u>",
+        "DOC_SPOTTER_PLUGIN": "🔌 Enable or Disable Doc Spotter (Advanced Auto Filter) Plugin\n\n<b>Optional [🟩]</b>\n<b>For new changes, Restart:</b> <u><i>Not Required</i></u>",
+        "DS_IMDB_ACTIVATE": "🎥 Enable or Disable Doc Spotter's IIPS (IMDb Info and Poster Sending) in Button List\n\n<b>Optional [🟩]</b>\n<b>For new changes, Restart:</b> <u><i>Required</i></u>",
+        "GH_CD_URLS": "🔗 GitHub Repo URLs for Commit Detector Plugin\n\n<b>Optional [🟩], But necessary if GH_CD_CHANNEL_IDS was filled</b>\n<b>For new changes, Restart:</b> <u><i>Required</i></u>",
+        "GH_CD_CHANNEL_IDS": "📢 Lists Telegram chat IDs Where Commit Detector Notifications are Sent.\n\n<b>Optional [🟩], But necessary if GH_CD_URLS was filled</b>\n<b>For new changes, Restart:</b> <u><i>Required</i></u>",
+        "GH_CD_PAT": "🔐 Personal Access Token for GitHub to authenticate deployment requests.\n\n<b>Optional [🟩]</b>\n<b>For new changes, Restart:</b> <u><i>Required</i></u>",
+        "ENABLE_GLOBAL_G_API": "🌍 Enables or disables global Google Gemini API for AI related features across the Echo.\n\n<b>Optional [🟩]</b>\n<b>For new changes, Restart:</b> <u><i>Required</i></u>",
+        "GLOBAL_G_API": "🔑 Your Global Google Gemini API key.\n\n<b>Optional [🟩]</b>\n<b>For new changes, Restart:</b> <u><i>Required</i></u>"
+    }
+
+    return unique_messages.get(key, "<b>Please fill in the environment variables accordingly. Refer to the README for more information about these variables.</b>")
+
 def show_env_value_callback(update: Update, context: CallbackContext):
     query = update.callback_query
     query.answer()
 
     parts = query.data.split("_")
-    key = "_".join(parts[1:])  # Join all parts after the first underscore
+    key = "_".join(parts[1:]) 
 
     client = MongoClient(os.getenv("MONGODB_URI"))
     db = client.get_database("Echo")
@@ -146,10 +176,12 @@ def show_env_value_callback(update: Update, context: CallbackContext):
     env_record = configs_collection.find_one({"key": key})
 
     if env_record:
-        text_message = f"{key}: {env_record['value']}"
+        unique_message = get_unique_message_for_env(key)
+        base_message = f"{key}: <code>{env_record['value']}</code>"
+        text_message = f"{unique_message}\n\n{base_message}"
+        
         keyboard = []
-
-        if key != "MONGODB_URI":
+        if key not in ["MONGODB_URI"]: 
             keyboard.append([InlineKeyboardButton("Edit ENV", callback_data=f"edit_{key}")])
         else:
             # Special message for MONGODB_URI
@@ -157,12 +189,12 @@ def show_env_value_callback(update: Update, context: CallbackContext):
                             "<u>MONGODB_URI</u> is an env that Echo can't edit from the telegram interface. " \
                             "If you want to change your current <u>MONGODB_URI</u>, you have to edit your " \
                             "<b>config.env</b> in your repo and redeploy.\n\n"
-
-        # Add a 'Back' button to go back to the main config envs menu
+        
         keyboard.append([InlineKeyboardButton("Back", callback_data='config_envs')])
 
         reply_markup = InlineKeyboardMarkup(keyboard)
-        query.edit_message_text(text=text_message, reply_markup=reply_markup, parse_mode=ParseMode.HTML)
+        query.edit_message_text(text=text_message, reply_markup=reply_markup, parse_mode=ParseMode.HTML, disable_web_page_preview=True)
+        
     else:
         query.edit_message_text(text=f"Value for {key} not found.")
 
@@ -181,31 +213,26 @@ def handle_new_env_value(update: Update, context: CallbackContext):
     owner = get_owner_from_db()
 
     if str(user_id) != owner or 'edit_env_key' not in context.user_data:
-        # If the user is not the owner or not in editing mode, do nothing
         return
 
-    # Retrieve the environment variable key to be edited
     full_key = context.user_data['edit_env_key']
-    new_value = update.message.text.strip()  # Get the new value sent by the owner
+    new_value = update.message.text.strip()  
 
-    # Update the value in the MongoDB database
     client = MongoClient(os.getenv("MONGODB_URI"))
     db = client.get_database("Echo")
     configs_collection = db["configs"]
     configs_collection.update_one({"key": full_key}, {"$set": {"value": new_value}})
 
-    # Prepare the message text and keyboard for the updated value
-    text_message = f"{full_key}: {new_value}"
-    keyboard = [
-        [InlineKeyboardButton("Edit ENV", callback_data=f"edit_{full_key}")],
-        [InlineKeyboardButton("Back", callback_data='config_envs')]
-    ]
+    unique_message = get_unique_message_for_env(full_key)
+    base_message = f"{full_key}: <code>{new_value}</code>"
+    text_message = f"{unique_message}\n\n{base_message}"
+
+    keyboard = [[InlineKeyboardButton("Edit ENV", callback_data=f"edit_{full_key}")],
+                [InlineKeyboardButton("Back", callback_data='config_envs')]]
     reply_markup = InlineKeyboardMarkup(keyboard)
 
-    # Send the updated value message with the keyboard
-    update.message.reply_text(text=text_message, reply_markup=reply_markup, parse_mode=ParseMode.HTML)
+    update.message.reply_text(text=text_message, reply_markup=reply_markup, parse_mode=ParseMode.HTML, disable_web_page_preview=True)
 
-    # Clear the editing mode flag and key from the user's context data
     del context.user_data['edit_env_key']
 
 def show_config_envs(query):
@@ -223,16 +250,16 @@ def show_config_envs(query):
     for env in envs:
         button = InlineKeyboardButton(env["key"], callback_data=f"env_{env['key']}")
         row.append(button)
-        if len(row) == 2:  # Two buttons per row
+        if len(row) == 2: 
             keyboard.append(row)
             row = []
-    if row:  # Add the last row if it has less than 2 buttons
+    if row: 
         keyboard.append(row)
 
     keyboard.append([InlineKeyboardButton("Close", callback_data='close_config')])
 
     reply_markup = InlineKeyboardMarkup(keyboard)
-    query.edit_message_text(text="Select an ENV to view its value:", reply_markup=reply_markup)
+    query.edit_message_text(text="Select an ENV to edit or view its value:", reply_markup=reply_markup)
 
 def close_config_callback(update: Update, context: CallbackContext):
     query = update.callback_query

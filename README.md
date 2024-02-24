@@ -1,4 +1,4 @@
-# ECHO v1.0.7 2X #BF (Bug Fix)
+# ECHO v1.0.8 3IX #IM (Improvements)
 
 <p align="center">
     <a href="https://github.com/theseekerofficial/Echo">
@@ -61,7 +61,7 @@
 
 1. **Universal Usage and Portability:** 
     - Works seamlessly in both private messages and any Telegram group where the bot is an admin.♾️
-    - Ensure all necessary fonts, graphics, and other elements are included to make Echo functional as expected, making it more portable. 🧩
+    - We have included all the necessary fonts, graphics, and other elements in the repository to ensure Echo functions as expected and to enhance its portability. 🧩
 
 2. **Persistent Storage:** 
     - MongoDB integration for storing reminders and user data.💽
@@ -130,7 +130,7 @@
         - Cooking 🍽️
 
 15. **Telegraph Image Uploading**
-    - Upload Any Telegram Image to Telegraph and get an instant Direct Link you your image🔺
+    - Upload any Telegram image to Telegraph and get an instant direct link to your image 🔺
     - Reply to any image as /uptotgph to see the magic! 🪄
 
 16. **Logo Generator**
@@ -148,7 +148,7 @@
         - Delete Indexed Files Easily
 
 17. **Info & Utility Modules**
-    - Minor Modules that cloud be help to you in day-to-day telegram usage 📅
+    - Simple Modules that cloud be help to you in day-to-day telegram usage 📅
     - Status of Echo 📈
         - See Database Usage for Each Database in Echo
         - Find Your Telegram ID
@@ -254,23 +254,27 @@ This section provides detailed information on the required environment variables
 
 ### Feature Configurations and Others
 
-1. **GH_CD_URLS** [🟩 (Required if GH_CD_CHANNEL_IDS ENV was Filled)]
+1. **DS_IMDB_ACTIVATE** [🟩]
+   - Description: Set True or Flase to Enable or Disable IMDb Poster and Info in Doc Spotter Button List message
+   - Example: `DS_IMDB_ACTIVATE=True`
+     
+2. **GH_CD_URLS** [🟩 (Required if GH_CD_CHANNEL_IDS ENV was Filled)]
    - Description: Fill in the repo URL in the format theseekerofficial/Echo.
    - Example: `GH_CD_URLS=theseekerofficial/Echo`
   
-2. **GH_CD_CHANNEL_IDS** [🟩 (Required if GH_CD_URLS ENV was Filled)]
-   - Description: Add the Channel ID that you need to post-commit update.
+3. **GH_CD_CHANNEL_IDS** [🟩 (Required if GH_CD_URLS ENV was Filled)]
+   - Description: Add the Channel ID(s)/Group ID(s) that you need to post-commit update.
    - Example: `GH_CD_CHANNEL_IDS=-100123456789`
 
-3. **GH_CD_PAT** [🟩]
+4. **GH_CD_PAT** [🟩]
    - Description: Your GitHub Personal Authorization Token for 5000 requests per hour API calls.
    - Example: `GH_CD_CHANNEL_IDS=ujb32uvb579g29824t89v245h8`
 
-4. **ENABLE_GLOBAL_G_API** [🟩]
+5. **ENABLE_GLOBAL_G_API** [🟩]
    - Description: Enable Global API for AI-related features (True or False)
    - Example: `ENABLE_GLOBAL_G_API=True`
   
-5. **GLOBAL_G_API** [🟩]
+6. **GLOBAL_G_API** [🟩]
    - Description: Add your API key from [Google AI Studios](https://aistudio.google.com/app/apikey)
    - Example: `GLOBAL_G_API=urwgui598t42598bgt589t5`
 
