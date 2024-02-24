@@ -1,4 +1,4 @@
-# ECHO v1.0.7 X #IM (Improvements)
+# ECHO v1.0.7 2X #BF (Bug Fix)
 
 <p align="center">
     <a href="https://github.com/theseekerofficial/Echo">
