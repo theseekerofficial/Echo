@@ -26,6 +26,7 @@ from telegram import Update, ParseMode, Message, User, Chat, BotCommand, BotComm
 from modules.utilities.database_info import database_command
 from modules.utilities.info_fetcher import register_id_command
 from modules.encrypted_data import encrypted_creator_info, decrypt
+from modules.utilities.overview import overview_command, register_overview_handlers
 from modules.edit_reminder import edit_reminders, edit_specific_reminder, edit_reminder
 from modules.reminder_creator import reminder_creator_handlers, start_reminder_creation
 from modules.help import help_command, handle_help_button_click, handle_back_button_click
@@ -448,6 +449,7 @@ bot_commands = [
     BotCommand("ringtones", "Explore sample ringtones♫"),
     BotCommand("info", "See User/Chat info 📜"),
     BotCommand("moreinfo", "Get more information about the bot🤓"),
+    BotCommand("overview", "See a stats report about Echo and Host Server 📝"),
     BotCommand("database", "Get database stats📊"),
     BotCommand("bsettings", "Config Echo! ⚙️"),
     BotCommand("restart", "Restart Echo (And get letest update from REPO)!🔁"),
@@ -486,6 +488,7 @@ if __name__ == '__main__':
     dp.add_handler(CommandHandler("er", edit_reminder))
     dp.add_handler(CommandHandler("database", database_command))
     dp.add_handler(CommandHandler("bsettings", bsettings_command))
+    dp.add_handler(CommandHandler("overview", overview_command))
     dp.add_handler(CommandHandler("restart", restart_command))
     dp.add_handler(CallbackQueryHandler(reminder_reaction_button_callback, pattern='^re_b_re_'))
 
@@ -518,6 +521,8 @@ if __name__ == '__main__':
     dp.add_handler(CallbackQueryHandler(handle_back_button_click, pattern='^back$'))
 
     setup_commit_detector(updater)
+
+    register_overview_handlers(dp)
     
     register_id_command(dp)
      
@@ -536,7 +541,9 @@ if __name__ == '__main__':
     dp.add_handler(CommandHandler("broadcast", handle_broadcast_message))
 
     scheducast.setup_dispatcher(dp, db)     
-     
+
+    dp.bot_data['start_time'] = datetime.now()
+    
     # Start the Bot
     updater.start_polling()
 

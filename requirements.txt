@@ -13,3 +13,5 @@ asteval
 gunicorn
 pillow
 IMDbPY
+psutil
+distro

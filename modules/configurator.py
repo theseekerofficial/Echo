@@ -204,7 +204,7 @@ def edit_env_callback(update: Update, context: CallbackContext):
 
     full_key = query.data.split("_", 1)[1]
     context.user_data['edit_env_key'] = full_key
-    context.user_data['awaiting_env_value'] = True  # Set a flag
+    context.user_data['awaiting_env_value'] = True
 
     query.edit_message_text(text=f"Now send your new value for {full_key}!")
 

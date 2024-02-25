@@ -1,4 +1,4 @@
-# ECHO v1.0.8 3IX #IM (Improvements)
+# ECHO v1.0.9 2FZ #IM #NF (Improvements/New Feature)
 
 <p align="center">
     <a href="https://github.com/theseekerofficial/Echo">
@@ -139,28 +139,29 @@
 
 17. **Doc Spotter (Advanced Auto Filtering)**
     - Are you an admin that has a movie group? This plugin is for you.🫵
-    - Feel the power of DocSpotter Plugin's power💪
+    - Feel the power of DocSpotter Plugin 💪
         - Multiple F-Sub chats (Channels or Groups)
         - IMDB info and poster fetching
+        - Enable or disable IMDb in your preferences.
         - Button dashboard only has access to the user who searches keyword
         - Requested file received in Bot PM
         - Indexing any file type in telegram
         - Delete Indexed Files Easily
 
-17. **Info & Utility Modules**
+18. **Info & Utility Modules**
     - Simple Modules that cloud be help to you in day-to-day telegram usage 📅
     - Status of Echo 📈
-        - See Database Usage for Each Database in Echo
-        - Find Your Telegram ID
-        - Find any other user Telegram ID
-        - Find any other chat(Channel/Group) Telegram ID
+        - See Database Usage for Each Database in Echo (/database)
+        - Find Your Telegram ID (/info)
+        - Find any other user Telegram ID (/info)
+        - Find any other chat(Channel/Group) Telegram ID (/info)
+        - See a stats report about Echo and Host Server 📝 (/overview)
 
-18. **Commit Detector Function**
-    - Keep updated about your fav GitHub repo within the telegram environment. This feature can detect new commits from any public repo and send them to your telegram channel🪄
+19. **Commit Detector Function**
+    - Keep updated about your fav GitHub repo within the telegram environment. This feature can detect new commits from any public repo and send them to your telegram channel(s)/group(s)🪄
     - Exclusively for Echo deploying owners only 
 
 # Commands
-
 
 - `/start`: Initiate the bot and receive a warm welcome.👋
 - `/help`: To get help message and more info.🤝

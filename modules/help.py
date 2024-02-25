@@ -80,9 +80,6 @@ def handle_help_button_click(update, context: CallbackContext) -> None:
                  "/scd - The cmd used for capture schducast date and time. Use /scheducast to get this step🪜\n"
                  "/scm - The cmd used for capture schducast message. Use /scheducast to get this step🪜\n\n[Echo-Verse♾️](https://t.me/Echo_AIO)",
           'gemini': """*Welcome to Echo's Gemini AI Plugin*\n\n"""
-                 """⚠️This feature might be currently unavailable.
-Because the person (Not the Creator) who deployed the bot can disable certain plugins as needed.
-🔒 Your privacy and user experience are our top priorities! 🔒\n\n"""
                  "/gemini - Start chat with gemini AI💬\n"
                  "/mygapi - Get your Google Gemini API from [this link](https://aistudio.google.com/app/apikey) and send it to bot using (/mygapi yourapikey) format✅\n"
                  "/analyze4to - Start analyze your image using Gemini-Pro-Vision📸\n"

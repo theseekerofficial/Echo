@@ -132,21 +132,18 @@ def capture_reminder_message(update: Update, context: CallbackContext) -> None:
                 'user_id': user_id,
                 'datetime': utc_reminder_datetime,
                 'message': message,
-                # 'recurring' will be added based on user's next choices
             }
 
-            # Temporarily store reminder information for later completion
             context.user_data['pending_reminder'] = reminder_info
 
-            # Continue with asking if the reminder is recurring
             ask_if_recurring(update, context)
+            context.user_data['awaiting_reminder_message'] = False
 
         except Exception as e:
             error_message = 'An error occurred while setting your reminder. Please try again. ❗'
             update.message.reply_text(error_message)
             logger.error(f"Error setting reminder: {e} ❗")
     else:
-        # Handle other text messages as usual
         pass
 
 def ask_if_recurring(update: Update, context: CallbackContext) -> None:
@@ -169,6 +166,7 @@ def handle_recurring_selection(update: Update, context: CallbackContext) -> None
         save_reminder(context.user_data['pending_reminder'])
         query.edit_message_text(text=f"Your reminder has been set successfully boss. 🫡")
         del context.user_data['pending_reminder']
+        context.user_data.pop('awaiting_recurring_selection', None)
 
 def ask_for_recurring_period(query):
     periods = ["Minutely", "Hourly", "Daily", "Weekly", "Monthly", "Yearly"]
@@ -187,14 +185,14 @@ def handle_recurring_period_selection(update: Update, context: CallbackContext) 
     # Save the reminder with recurring information
     save_reminder(context.user_data['pending_reminder'])
     query.edit_message_text(text=f"Your recurring reminder has been set to repeat {period} boss. 🫡")
-    del context.user_data['pending_reminder']  # Clear the temporary reminder data
+    del context.user_data['pending_reminder'] 
+    context.user_data.pop('awaiting_recurring_selection', None)
 
 def save_reminder(reminder_info):
     client = MongoClient(MONGODB_URI)
     db = client.Echo  
     
     try:
-        # Insert the reminder into the database
         db.reminders.insert_one(reminder_info)
         logger.info(f"👤 User ID {reminder_info['user_id']} - New reminder stored 📝: {reminder_info}")
         return True

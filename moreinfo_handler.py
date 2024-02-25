@@ -32,6 +32,8 @@ def more_info(update, context):
  14. gunicorn
  15. pillow
  16. IMDbPY
+ 17. psutil
+ 18. distro
 
 🔗 Repo Link: https://github.com/theseekerofficial/Echo""")
     decrypted_creator_info = decrypt(encrypted_creator_info)
