@@ -21,9 +21,9 @@ def get_bot_uptime(start_time):
 
 def overview_command(update: Update, context: CallbackContext) -> None:
     keyboard = [
-        [InlineKeyboardButton("Bot Status", callback_data='overview_bot_status')],
-        [InlineKeyboardButton("System Status", callback_data='overview_system_status')],
-        [InlineKeyboardButton("Plugin Status", callback_data='overview_plugin_status')]
+        [InlineKeyboardButton("Bot Status", callback_data='overview_bot_status'), InlineKeyboardButton("System Status", callback_data='overview_system_status')],
+        [InlineKeyboardButton("Plugin Status", callback_data='overview_plugin_status')],
+        [InlineKeyboardButton("Check For Updates!", callback_data='overview_check_updates')]
     ]
     reply_markup = InlineKeyboardMarkup(keyboard)
     update.message.reply_text('Echo\'s Overview', reply_markup=reply_markup)
@@ -186,6 +186,44 @@ def plugin_status_callback(update: Update, context: CallbackContext) -> None:
 
     query.edit_message_text(text=status_message, reply_markup=reply_markup, parse_mode='HTML')
 
+def check_for_updates_callback(update: Update, context: CallbackContext) -> None:
+    query = update.callback_query
+    user_id = query.from_user.id
+    owner_id = int(os.getenv('OWNER', 'default_owner_id'))
+
+    if user_id != owner_id:
+        query.answer("Sorry, mate, this button can only be used by the owner.", show_alert=True)
+        return
+
+    try:
+        with open('README.md', 'r') as file:
+            local_version = file.readline().strip()
+    except Exception as e:
+        local_version = "Local version could not be determined."
+
+    repo_url = 'https://raw.githubusercontent.com/theseekerofficial/Echo/master/README.md'
+    try:
+        response = requests.get(repo_url)
+        remote_version = response.text.split('\n', 1)[0].strip()
+    except Exception as e:
+        query.edit_message_text("Failed to fetch remote version.")
+        return
+
+    if local_version == remote_version:
+        message = f"🆗 <b><i><u>Bot is Up to Date!</u></i></b>\n\nVersion: <code>{local_version}</code>"
+    else:
+        message = f"🆕 <b><i><u>New Update Available!</u></i></b>\n\nCurrent Version: <code>{local_version}</code>\nNew Version: <code>{remote_version}</code>\n\n" \
+                  f"To update, simply send /restart, and you are fully up to date. 🔄"
+
+    # Add Back and Close buttons
+    keyboard = [
+        [InlineKeyboardButton("Close", callback_data='overview_close'),
+         InlineKeyboardButton("Back", callback_data='overview_back')]
+    ]
+    reply_markup = InlineKeyboardMarkup(keyboard)
+
+    query.edit_message_text(text=message, reply_markup=reply_markup, parse_mode='HTML')
+
 def overview_close_callback(update: Update, context: CallbackContext) -> None:
     query = update.callback_query
     query.answer()
@@ -196,9 +234,9 @@ def overview_back_callback(update: Update, context: CallbackContext) -> None:
     query.answer()
 
     keyboard = [
-        [InlineKeyboardButton("Bot Status", callback_data='overview_bot_status')],
-        [InlineKeyboardButton("System Status", callback_data='overview_system_status')],
-        [InlineKeyboardButton("Plugin Status", callback_data='overview_plugin_status')]
+        [InlineKeyboardButton("Bot Status", callback_data='overview_bot_status'), InlineKeyboardButton("System Status", callback_data='overview_system_status')],
+        [InlineKeyboardButton("Plugin Status", callback_data='overview_plugin_status')],
+        [InlineKeyboardButton("Check For Updates!", callback_data='overview_check_updates')]
     ]
     reply_markup = InlineKeyboardMarkup(keyboard)
 
@@ -208,5 +246,6 @@ def register_overview_handlers(dispatcher):
     dispatcher.add_handler(CallbackQueryHandler(bot_status_callback, pattern='^overview_bot_status$'))
     dispatcher.add_handler(CallbackQueryHandler(system_status_callback, pattern='^overview_system_status$'))
     dispatcher.add_handler(CallbackQueryHandler(plugin_status_callback, pattern='^overview_plugin_status$'))
+    dispatcher.add_handler(CallbackQueryHandler(check_for_updates_callback, pattern='^overview_check_updates$'))
     dispatcher.add_handler(CallbackQueryHandler(overview_close_callback, pattern='^overview_close$'))
     dispatcher.add_handler(CallbackQueryHandler(overview_back_callback, pattern='^overview_back$'))

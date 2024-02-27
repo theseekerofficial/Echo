@@ -1,5 +1,5 @@
 # bot.py
-## Don't edit this file unless you know what you are doing
+## Don't edit this file unless you know what you are doing!
 from modules.configurator import load_and_store_env_vars, bsettings_command, bsettings_button_callback, show_env_value_callback, handle_new_env_value, edit_env_callback, get_env_var_from_db, close_config_callback
 load_and_store_env_vars()
 
@@ -237,17 +237,24 @@ def restart_command(update: Update, context: CallbackContext) -> None:
 
     if str(user_id) in owners:
         try:
+            snowflake_message = context.bot.send_message(chat_id=update.message.chat_id, text="❄️", parse_mode=ParseMode.MARKDOWN)
+
             updates_applied, commit_message, commit_author = check_for_updates(repo_url)
             if updates_applied:
                 status_message = f"✅ Successfully Updated and Restarted!\n\n*Latest Commit Details;*\n\n_Message_: `{commit_message}`\n_Author_: `{commit_author}`"
             else:
                 status_message = "🔄 No New Updates. Just Restarted!"
+            
+            context.bot.delete_message(chat_id=update.message.chat_id, message_id=snowflake_message.message_id)
 
             write_update_status_to_mongo(status_message)
-            stop_http_server() 
-            restart_bot() 
+            stop_http_server()
+            restart_bot()
+
+            context.bot.delete_message(chat_id=update.message.chat_id, message_id=snowflake_message.message_id)
 
         except Exception as e:
+            context.bot.delete_message(chat_id=update.message.chat_id, message_id=snowflake_message.message_id)
             update.message.reply_text(f"Failed to restart: {str(e)}")
             logging.error(f"⚠️ Failed to restart: {str(e)}")
     else:
@@ -452,7 +459,7 @@ bot_commands = [
     BotCommand("overview", "See a stats report about Echo and Host Server 📝"),
     BotCommand("database", "Get database stats📊"),
     BotCommand("bsettings", "Config Echo! ⚙️"),
-    BotCommand("restart", "Restart Echo (And get letest update from REPO)!🔁"),
+    BotCommand("restart", "Restart Echo (And get latest update from REPO)!🔁"),
 ]
 
 # Main function

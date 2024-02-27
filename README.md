@@ -1,4 +1,4 @@
-# ECHO v1.0.9 2FZ #IM #NF (Improvements/New Feature)
+# ECHO v1.0.9 4UY #IM (Improvements)
 
 <p align="center">
     <a href="https://github.com/theseekerofficial/Echo">
