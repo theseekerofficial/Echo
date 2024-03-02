@@ -5,8 +5,10 @@ load_and_store_env_vars()
 
 import os
 import io
+import sys
 import pytz
 import logging
+import subprocess
 import http.server
 import socketserver
 
@@ -36,6 +38,7 @@ from modules.broadcast import register_handlers as broadcast_register_handlers, 
 
 
 from plugins.scheducast import scheducast
+from plugins.shiftx.shiftx import register_shiftx_handlers
 from plugins.calculators.calculator import setup_calculator
 from plugins.logo_gen.logo_generator import handle_logogen, button
 from plugins.calculators.sci_calculator import setup_sci_calculator
@@ -430,6 +433,21 @@ def set_timezone(update: Update, context: CallbackContext) -> None:
 
     update.message.reply_text(f'Time zone set to {user_timezone}.')
 
+def install_ffmpeg():
+    logger.info("Checking for ffmpeg installation...")
+    try:
+        subprocess.run(["ffmpeg", "-version"], check=True, stdout=subprocess.PIPE)
+        logger.info("ffmpeg is already installed.")
+    except (subprocess.CalledProcessError, FileNotFoundError):
+        logger.info("ffmpeg not found. Attempting installation...")
+        try:
+            subprocess.run(["sudo", "apt-get", "update"], check=True)
+            subprocess.run(["sudo", "apt-get", "install", "-y", "ffmpeg"], check=True)
+            logger.info("ffmpeg installation successful.")
+        except subprocess.CalledProcessError as e:
+            logger.info(f"Failed to install ffmpeg: {e}")
+            sys.exit(1)
+
 # List of bot commands
 bot_commands = [
     BotCommand("start", "Start the Echo🤖"),
@@ -452,6 +470,7 @@ bot_commands = [
     BotCommand("uptotgph", "Upload any telegram image to telegraph ⤴️"),
     BotCommand("logogen", "[Beta] Craft Your Logos with Echo!"),
     BotCommand("docspotter", "Enhanced Auto Filter Module ⛈️"),
+    BotCommand("shiftx", "Convert Various range of files to another type 🔄️"),
     BotCommand("erasefiles", "Delete indexed files ♻️"),
     BotCommand("ringtones", "Explore sample ringtones♫"),
     BotCommand("info", "See User/Chat info 📜"),
@@ -532,7 +551,7 @@ if __name__ == '__main__':
     register_overview_handlers(dp)
     
     register_id_command(dp)
-     
+    
     setup_telegraph_up(dp)
      
     setup_calculator(dp)
@@ -549,6 +568,10 @@ if __name__ == '__main__':
 
     scheducast.setup_dispatcher(dp, db)     
 
+    register_shiftx_handlers(dp)
+
+    install_ffmpeg()
+    
     dp.bot_data['start_time'] = datetime.now()
     
     # Start the Bot

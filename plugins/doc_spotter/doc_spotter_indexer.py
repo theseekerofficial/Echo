@@ -434,4 +434,4 @@ def setup_ds_dispatcher(dispatcher):
     dispatcher.add_handler(MessageHandler(Filters.audio, process_new_file), group=2)
     dispatcher.add_handler(MessageHandler(Filters.animation, process_new_file), group=2)
     dispatcher.add_handler(MessageHandler(Filters.chat_type.private & Filters.audio, process_file_deletion), group=6)
-    dispatcher.add_handler(MessageHandler(Filters.forwarded & Filters.chat_type.private & (Filters.document | Filters.photo | Filters.video | Filters.animation), process_file_deletion), group=6)
+    dispatcher.add_handler(MessageHandler(Filters.forwarded & Filters.chat_type.private | Filters.chat_type.groups & (Filters.document | Filters.photo | Filters.video | Filters.animation), process_file_deletion), group=6)

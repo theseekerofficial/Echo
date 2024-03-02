@@ -15,3 +15,8 @@ pillow
 IMDbPY
 psutil
 distro
+pdf2docx
+cairosvg
+pdfminer.six
+fpdf
+pypandoc

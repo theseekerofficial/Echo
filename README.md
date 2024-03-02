@@ -1,4 +1,4 @@
-# ECHO v1.0.9 4UY #IM (Improvements)
+# ECHO v1.1.0 RG4 #IM #NF (Improvements/New Feature)
 
 <p align="center">
     <a href="https://github.com/theseekerofficial/Echo">
@@ -137,7 +137,17 @@
     - Enhance your creativity using Echo's Logo Generator Plugin🧬
     - /logogen is your magic word! 🪄
 
-17. **Doc Spotter (Advanced Auto Filtering)**
+17. **ShiftX (Advanced Multifile Converter Plugin) 🔄️
+    - What you want to convert?
+        - Images?
+        - Videos?
+        - Documents?
+        - Audios?
+    - No need to go around websites to convert you files. Echo got your back 🤝
+    - More conversation pairs yet to come ♾️
+    - Convert a wide range of files simply within the Telegram Interface 🔥
+      
+19. **Doc Spotter (Advanced Auto Filtering)**
     - Are you an admin that has a movie group? This plugin is for you.🫵
     - Feel the power of DocSpotter Plugin 💪
         - Multiple F-Sub chats (Channels or Groups)
@@ -148,7 +158,7 @@
         - Indexing any file type in telegram
         - Delete Indexed Files Easily
 
-18. **Info & Utility Modules**
+20. **Info & Utility Modules**
     - Simple Modules that cloud be help to you in day-to-day telegram usage 📅
     - Status of Echo 📈
         - See Database Usage for Each Database in Echo (/database)
@@ -157,7 +167,7 @@
         - Find any other chat(Channel/Group) Telegram ID (/info)
         - See a stats report about Echo and Host Server 📝 (/overview)
 
-19. **Commit Detector Function**
+21. **Commit Detector Function**
     - Keep updated about your fav GitHub repo within the telegram environment. This feature can detect new commits from any public repo and send them to your telegram channel(s)/group(s)🪄
     - Exclusively for Echo deploying owners only 
 
@@ -177,6 +187,7 @@
 - `/logogen`: Craft your own logo with endless possibilities. (with Support for adding your own graphics, frames and more) 🎨🖌️
 - `/docspotter`: Advanced auto filter feature packed with all feature you need for file managing 🗃️
 - `/erasefiles`: Delete indexed files easily ♻️
+- `/shiftx`: Convert wide range of files using Echo's ShiftX Plugin ♻️
 - `/setreminder`: Set a reminder for a specific date and time.🗓️
 - `/myreminders`: To see all your active reminders.📃
 - `/editreminders`: Edit Your reminders✍️
@@ -278,6 +289,22 @@ This section provides detailed information on the required environment variables
 6. **GLOBAL_G_API** [🟩]
    - Description: Add your API key from [Google AI Studios](https://aistudio.google.com/app/apikey)
    - Example: `GLOBAL_G_API=urwgui598t42598bgt589t5`
+     
+7. **SHIFTX_MP3_TO_AAC_BITRATE** [🟩]
+   - Description: Set a quality for MP3 to AAC Outputs. Set a value among 128k, 192k, 256k, 320k | 128k = Lowest quality, smallest file size / 320k = highest quality, largest file size.
+   - Example: `SHIFTX_MP3_TO_AAC_BITRATE=192k`
+
+8. **SHIFTX_AAC_TO_MP3_BITRATE** [🟩]
+   - Description: Set a quality for ACC to MP3 Outputs. Set a value among 128k, 192k, 256k, 320k | 128k = Lowest quality, smallest file size / 320k = highest quality, largest file size.
+   - Example: `SHIFTX_AAC_TO_MP3_BITRATE=256k`
+  
+9. **SHIFTX_OGG_TO_MP3_QUALITY** [🟩]
+   - Description: Set a quality for OGG to MP3 Outputs. Set a value from 0 to 9 | 9 = Lowest quality, smallest file size / 0 = highest quality, largest file size.
+   - Example: `SHIFTX_OGG_TO_MP3_QUALITY=5`
+  
+10. **SHIFTX_MP3_TO_OGG_QUALITY** [🟩]
+   - Description: Set a quality for MP3 to OGG Outputs. Set a value from -1 to 10 | -1 = Lowest quality, smallest file size / 10 = highest quality, largest file size.
+   - Example: `SHIFTX_MP3_TO_OGG_QUALITY=4`
 
 ### Plugin On/Off
 
@@ -317,6 +344,10 @@ This section provides detailed information on the required environment variables
    - Description: Set to `True` or `False` to Enable or Disable the Doc Spotter Plugin.
    - Example: `DOC_SPOTTER_PLUGIN=True`
 
+10. **SHIFTX_PLUGIN** [🟩]
+   - Description: Set to `True` or `False` to Enable or Disable the ShiftX Plugin.
+   - Example: `SHIFTX_PLUGIN=True`
+
 Make sure to replace the placeholder values with your actual configuration settings. These environment variables are crucial for customizing and configuring the behavior of your Echo bot. Ensure that they are correctly set before running the bot to ensure its proper functionality.
 
 If you have any questions or need further assistance, please refer to the documentation or reach out to the [Echo support team.](https://t.me/ECHO_Support_Unit)
@@ -341,7 +372,9 @@ If you have any questions or need further assistance, please refer to the docume
 7. To Creating Virtual Environment, Run `python3.10 -m venv venv` in your server terminal
 8. Activate the virtual environment using `source venv/bin/activate` 
 9. Install required Python packages: `pip install -r requirements.txt`
-10. Run the bot: `python bot.py` or `python3 bot.py`
+10. Update System `sudo apt update`
+11. Install ffmpeg for ShiftX Plugin (Optional | If you skip installation, Echo will dynamically install ffmpeg itself) `sudo apt install ffmpeg`
+12. Run the bot: `python bot.py` or `python3 bot.py`
 
 ___All-in-One Deploy CMDs for VPS (Make Sure to install python3.10 in your server)___
 ```
@@ -352,11 +385,13 @@ git clone https://github.com/theseekerofficial/Echo
 cd Echo
 python3.10 -m venv venv
 source venv/bin/activate
+sudo apt update
+sudo apt install ffmpeg
 pip install -r requirements.txt
 python3 bot.py
 ```
 
-***Use a method like `Linux Screen` to keep your bot online 24/7 when using VPS deployment***
+***Use a method like `Linux Screen` to keep your Echo online 24/7 when using VPS deployment***
 
 ### Run Using Docker
 -------------------------------------------------------------------------------------
