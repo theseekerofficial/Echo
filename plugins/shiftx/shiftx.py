@@ -1,4 +1,4 @@
-# plugins/shiftx/shiftx.py
+# shiftx.py
 import os
 import logging
 from modules.configurator import get_env_var_from_db

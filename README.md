@@ -300,7 +300,7 @@ This section provides detailed information on the required environment variables
   
 9. **SHIFTX_OGG_TO_MP3_QUALITY** [🟩]
    - Description: Set a quality for OGG to MP3 Outputs. Set a value from 0 to 9 | 9 = Lowest quality, smallest file size / 0 = highest quality, largest file size.
-   - Example: `SHIFTX_OGG_TO_MP3_QUALITY=5`
+   - Example: `SHIFTX_OGG_TO_MP3_QUALITY=4`
   
 10. **SHIFTX_MP3_TO_OGG_QUALITY** [🟩]
    - Description: Set a quality for MP3 to OGG Outputs. Set a value from -1 to 10 | -1 = Lowest quality, smallest file size / 10 = highest quality, largest file size.

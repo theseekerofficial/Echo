@@ -1,4 +1,4 @@
-# plugins/shiftx/shiftx_logics.py
+# shiftx_logics.py
 import os
 import subprocess
 from pathlib import Path

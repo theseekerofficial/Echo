@@ -1,3 +1,4 @@
+# doc_spotter_indexer.py
 import os
 import logging
 from pymongo import MongoClient

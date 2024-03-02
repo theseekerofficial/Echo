@@ -1,4 +1,4 @@
-# bot.py
+# bot.py (Main Bot file)
 ## Don't edit this file unless you know what you are doing!
 from modules.configurator import load_and_store_env_vars, bsettings_command, bsettings_button_callback, show_env_value_callback, handle_new_env_value, edit_env_callback, get_env_var_from_db, close_config_callback
 load_and_store_env_vars()

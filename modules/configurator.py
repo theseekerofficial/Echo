@@ -167,8 +167,8 @@ def get_unique_message_for_env(key):
         "GLOBAL_G_API": "🔑 Your Global Google Gemini API key.\n\n<b>Optional [🟩]</b>\n<b>For new changes, Restart:</b> <u><i>Required</i></u>",
         "SHIFTX_MP3_TO_AAC_BITRATE": "🔊 Set a quality for MP3 to AAC Outputs.\n\n<code>Set a value among 128k, 192k, 256k, 320k</code>\n\n<b>Optional [🟩]</b>\n<b>For new changes, Restart:</b> <u><i>Required</i></u>",
         "SHIFTX_AAC_TO_MP3_BITRATE": "🔊 Set a quality for AAC to MP3 Outputs.\n\n<code>Set a value among 128k, 192k, 256k, 320k</code>\n\n<b>Optional [🟩]</b>\n<b>For new changes, Restart:</b> <u><i>Required</i></u>",
-        "SHIFTX_OGG_TO_MP3_QUALITY": "🔊 Set quality for OGG to MP3 Outputs.\n\n<code>Set a value from 0 to 9</code>\n\n<b>Optional [🟩]</b>\n<b>For new changes, Restart:</b> <u><i>Required</i></u>",
-        "SHIFTX_MP3_TO_OGG_QUALITY": "🔊 Set quality for MP3 to OGG Outputs.\n\n<code>Set a value from -1 to 10</code>\n\n<b>Optional [🟩]</b>\n<b>For new changes, Restart:</b> <u><i>Required</i></u>"
+        "SHIFTX_OGG_TO_MP3_QUALITY": "🔊 Set a quality for OGG to MP3 Outputs.\n\n<code>Set a value from 0 to 9</code>\n\n<b>Optional [🟩]</b>\n<b>For new changes, Restart:</b> <u><i>Required</i></u>",
+        "SHIFTX_MP3_TO_OGG_QUALITY": "🔊 Set a quality for MP3 to OGG Outputs.\n\n<code>Set a value from -1 to 10</code>\n\n<b>Optional [🟩]</b>\n<b>For new changes, Restart:</b> <u><i>Required</i></u>"
     }
 
     return unique_messages.get(key, "<b>Please fill in the environment variables accordingly. Refer to the README for more information about these variables.</b>")

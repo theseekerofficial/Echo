@@ -7,7 +7,6 @@ pycryptodome
 python-dateutil
 pyrogram
 TgCrypto
-telethon
 google-generativeai
 asteval
 gunicorn
