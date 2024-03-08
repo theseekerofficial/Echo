@@ -142,10 +142,12 @@ def fetch_plugin_statuses():
     configs = db.configs.find({})
 
     for config in configs:
-        if config['key'] != "GH_CD_URLS":
+        if config['key'] != "GH_CD_URLS" and config['key'] != "REMOVEBG_API":
             plugin_statuses[config['key']] = config['value'] == "True"
-        else:
+        elif config['key'] == "GH_CD_URLS" or config['key'] == "REMOVEBG_API":
             plugin_statuses[config['key']] = bool(config['value'])
+        else:
+            plugin_statuses[config['key']] = config['value']
 
     return plugin_statuses
 
@@ -167,6 +169,9 @@ def plugin_status_callback(update: Update, context: CallbackContext) -> None:
         "TELEGRAPH_UP_PLUGIN": "Telegraph Uploader",
         "LOGOGEN_PLUGIN": "Logo Generator",
         "DOC_SPOTTER_PLUGIN": "Doc Spotter [DS]",
+        "SHIFTX_PLUGIN": "ShiftX Converter",
+        "REMOVEBG_PLUGIN": "Background Remover",
+        "REMOVEBG_API": "Global API for Background Remover",
         "DS_IMDB_ACTIVATE": "IMDb in DS",
         "GH_CD_URLS": "Commit Detector"
     }

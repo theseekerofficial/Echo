@@ -64,6 +64,7 @@ def load_and_store_env_vars():
         "LOGOGEN_PLUGIN": os.getenv("LOGOGEN_PLUGIN"),
         "DOC_SPOTTER_PLUGIN": os.getenv("DOC_SPOTTER_PLUGIN"),
         "SHIFTX_PLUGIN": os.getenv("SHIFTX_PLUGIN"),
+        "REMOVEBG_PLUGIN": os.getenv("REMOVEBG_PLUGIN"),
         "DS_IMDB_ACTIVATE": os.getenv("DS_IMDB_ACTIVATE"),
         "GH_CD_URLS": os.getenv("GH_CD_URLS"),
         "GH_CD_CHANNEL_IDS": os.getenv("GH_CD_CHANNEL_IDS"),
@@ -73,7 +74,8 @@ def load_and_store_env_vars():
         "SHIFTX_MP3_TO_AAC_BITRATE": os.getenv("SHIFTX_MP3_TO_AAC_BITRATE"),
         "SHIFTX_AAC_TO_MP3_BITRATE": os.getenv("SHIFTX_AAC_TO_MP3_BITRATE"),
         "SHIFTX_OGG_TO_MP3_QUALITY": os.getenv("SHIFTX_OGG_TO_MP3_QUALITY"),
-        "SHIFTX_MP3_TO_OGG_QUALITY": os.getenv("SHIFTX_MP3_TO_OGG_QUALITY")
+        "SHIFTX_MP3_TO_OGG_QUALITY": os.getenv("SHIFTX_MP3_TO_OGG_QUALITY"),
+        "REMOVEBG_API": os.getenv("REMOVEBG_API")
     }
 
     create_configs_collection()  # Create the "configs" collection if it doesn't exist
@@ -159,6 +161,7 @@ def get_unique_message_for_env(key):
         "LOGOGEN_PLUGIN": "🔌 Enable or Disable Logo Generator Plugin\n\n<b>Optional [🟩]</b>\n<b>For new changes, Restart:</b> <u><i>Not Required</i></u>",
         "DOC_SPOTTER_PLUGIN": "🔌 Enable or Disable Doc Spotter (Advanced Auto Filter) Plugin\n\n<b>Optional [🟩]</b>\n<b>For new changes, Restart:</b> <u><i>Not Required</i></u>",
         "SHIFTX_PLUGIN": "🔌 Enable or Disable ShiftX Plugin\n\n<b>Optional [🟩]</b>\n<b>For new changes, Restart:</b> <u><i>Not Required</i></u>",
+        "REMOVEBG_PLUGIN": "🔌 Enable or Disable RemoveBG Plugin\n\n<b>Optional [🟩]</b>\n<b>For new changes, Restart:</b> <u><i>Not Required</i></u>",
         "DS_IMDB_ACTIVATE": "🎥 Enable or Disable Doc Spotter's IIPS (IMDb Info and Poster Sending) in Button List\n\n<b>Optional [🟩]</b>\n<b>For new changes, Restart:</b> <u><i>Required</i></u>",
         "GH_CD_URLS": "🔗 GitHub Repo URLs for Commit Detector Plugin\n\n<b>Optional [🟩], But necessary if GH_CD_CHANNEL_IDS was filled</b>\n<b>For new changes, Restart:</b> <u><i>Required</i></u>",
         "GH_CD_CHANNEL_IDS": "📢 Lists Telegram chat IDs Where Commit Detector Notifications are Sent.\n\n<b>Optional [🟩], But necessary if GH_CD_URLS was filled</b>\n<b>For new changes, Restart:</b> <u><i>Required</i></u>",
@@ -167,8 +170,9 @@ def get_unique_message_for_env(key):
         "GLOBAL_G_API": "🔑 Your Global Google Gemini API key.\n\n<b>Optional [🟩]</b>\n<b>For new changes, Restart:</b> <u><i>Required</i></u>",
         "SHIFTX_MP3_TO_AAC_BITRATE": "🔊 Set a quality for MP3 to AAC Outputs.\n\n<code>Set a value among 128k, 192k, 256k, 320k</code>\n\n<b>Optional [🟩]</b>\n<b>For new changes, Restart:</b> <u><i>Required</i></u>",
         "SHIFTX_AAC_TO_MP3_BITRATE": "🔊 Set a quality for AAC to MP3 Outputs.\n\n<code>Set a value among 128k, 192k, 256k, 320k</code>\n\n<b>Optional [🟩]</b>\n<b>For new changes, Restart:</b> <u><i>Required</i></u>",
-        "SHIFTX_OGG_TO_MP3_QUALITY": "🔊 Set a quality for OGG to MP3 Outputs.\n\n<code>Set a value from 0 to 9</code>\n\n<b>Optional [🟩]</b>\n<b>For new changes, Restart:</b> <u><i>Required</i></u>",
-        "SHIFTX_MP3_TO_OGG_QUALITY": "🔊 Set a quality for MP3 to OGG Outputs.\n\n<code>Set a value from -1 to 10</code>\n\n<b>Optional [🟩]</b>\n<b>For new changes, Restart:</b> <u><i>Required</i></u>"
+        "SHIFTX_OGG_TO_MP3_QUALITY": "🔊 Set quality for OGG to MP3 Outputs.\n\n<code>Set a value from 0 to 9</code>\n\n<b>Optional [🟩]</b>\n<b>For new changes, Restart:</b> <u><i>Required</i></u>",
+        "SHIFTX_MP3_TO_OGG_QUALITY": "🔊 Set quality for MP3 to OGG Outputs.\n\n<code>Set a value from -1 to 10</code>\n\n<b>Optional [🟩]</b>\n<b>For new changes, Restart:</b> <u><i>Required</i></u>",
+        "REMOVEBG_API": "🔊 Set Global API Key for RemoveBG Plugin.\n\n<i>Gen an API Key from https://www.remove.bg/dashboard#api-key</i>\n\n<b>Optional [🟩]</b>\n<b>For new changes, Restart:</b> <u><i>Required</i></u>"
     }
 
     return unique_messages.get(key, "<b>Please fill in the environment variables accordingly. Refer to the README for more information about these variables.</b>")

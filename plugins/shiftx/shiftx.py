@@ -134,7 +134,7 @@ def shiftx_file_handler(update: Update, context: CallbackContext) -> None:
         new_file.download(temp_file_path)
         word_file_path = temp_file_path.replace('.pdf', '_converted.docx')
         pdf_to_word(temp_file_path, word_file_path)
-        update.message.reply_document(document=open(word_file_path, 'rb'))
+        update.message.reply_document(document=open(word_file_path, 'rb'), caption="Here's your converted WORD file.\n\nPowerd by @Echo_AIO")
         cleanup_file(temp_file_path)
         cleanup_file(word_file_path)
   
@@ -145,7 +145,7 @@ def shiftx_file_handler(update: Update, context: CallbackContext) -> None:
         new_file.download(temp_file_path)
         txt_file_path = temp_file_path.replace('.pdf', '_converted.txt')
         pdf_to_txt(temp_file_path, txt_file_path)
-        update.message.reply_document(document=open(txt_file_path, 'rb'), caption="Here's your converted TXT file.")
+        update.message.reply_document(document=open(txt_file_path, 'rb'), caption="Here's your converted TXT file.\n\nPowerd by @Echo_AIO")
         cleanup_file(temp_file_path)
         cleanup_file(txt_file_path)
 
@@ -156,7 +156,7 @@ def shiftx_file_handler(update: Update, context: CallbackContext) -> None:
         new_file.download(temp_file_path)
         pdf_file_path = temp_file_path.replace('.txt', '_converted.pdf')
         txt_to_pdf(temp_file_path, pdf_file_path)
-        update.message.reply_document(document=open(pdf_file_path, 'rb'), caption="Here's your converted PDF file.")
+        update.message.reply_document(document=open(pdf_file_path, 'rb'), caption="Here's your converted PDF file.\n\nPowerd by @Echo_AIO")
         cleanup_file(temp_file_path)
         cleanup_file(pdf_file_path)
     
@@ -167,7 +167,7 @@ def shiftx_file_handler(update: Update, context: CallbackContext) -> None:
         new_file.download(temp_file_path)
         png_file_path = temp_file_path.replace('.jpeg', '.png').replace('.jpg', '.png')
         jpeg_to_png(temp_file_path, png_file_path)
-        update.message.reply_document(document=open(png_file_path, 'rb'), caption="Here's your converted PNG File.")
+        update.message.reply_document(document=open(png_file_path, 'rb'), caption="Here's your converted PNG File.\n\nPowerd by @Echo_AIO")
         cleanup_file(temp_file_path)
         cleanup_file(png_file_path)
 
@@ -178,7 +178,7 @@ def shiftx_file_handler(update: Update, context: CallbackContext) -> None:
         new_file.download(temp_file_path)
         jpeg_file_path = temp_file_path.replace('.png', '_converted.jpeg')
         png_to_jpeg(temp_file_path, jpeg_file_path)
-        update.message.reply_document(document=open(jpeg_file_path, 'rb'), caption="Here's your converted JPEG File.")
+        update.message.reply_document(document=open(jpeg_file_path, 'rb'), caption="Here's your converted JPEG File.\n\nPowerd by @Echo_AIO")
         cleanup_file(temp_file_path)
         cleanup_file(jpeg_file_path)
 
@@ -189,7 +189,7 @@ def shiftx_file_handler(update: Update, context: CallbackContext) -> None:
         new_file.download(temp_file_path)
         png_file_path = temp_file_path.replace('.svg', '_converted.png')
         svg_to_png(temp_file_path, png_file_path)
-        update.message.reply_document(document=open(png_file_path, 'rb'), caption="Here's your converted PNG file.")
+        update.message.reply_document(document=open(png_file_path, 'rb'), caption="Here's your converted PNG file.\n\nPowerd by @Echo_AIO")
         cleanup_file(temp_file_path)
         cleanup_file(png_file_path)
 
@@ -200,7 +200,7 @@ def shiftx_file_handler(update: Update, context: CallbackContext) -> None:
         new_file.download(temp_file_path)
         jpeg_file_path = temp_file_path.replace('.svg', '_converted.jpeg')
         svg_to_jpeg(temp_file_path, jpeg_file_path)
-        update.message.reply_document(document=open(jpeg_file_path, 'rb'), caption="Here's your converted JPEG file.")
+        update.message.reply_document(document=open(jpeg_file_path, 'rb'), caption="Here's your converted JPEG file.\n\nPowerd by @Echo_AIO")
         cleanup_file(temp_file_path)
         cleanup_file(jpeg_file_path)
 
@@ -211,7 +211,7 @@ def shiftx_file_handler(update: Update, context: CallbackContext) -> None:
         new_file.download(temp_file_path)
         png_file_path = temp_file_path.replace('.tiff', '_converted.png').replace('.tif', '_converted.png')
         tiff_to_png(temp_file_path, png_file_path)
-        update.message.reply_document(document=open(png_file_path, 'rb'), caption="Here's your converted PNG file.")
+        update.message.reply_document(document=open(png_file_path, 'rb'), caption="Here's your converted PNG file.\n\nPowerd by @Echo_AIO")
         cleanup_file(temp_file_path)
         cleanup_file(png_file_path)
 
@@ -222,7 +222,7 @@ def shiftx_file_handler(update: Update, context: CallbackContext) -> None:
         new_file.download(temp_file_path)
         jpeg_file_path = temp_file_path.replace('.tiff', '_converted.jpeg').replace('.tif', '_converted.jpeg')
         tiff_to_jpeg(temp_file_path, jpeg_file_path)
-        update.message.reply_document(document=open(jpeg_file_path, 'rb'), caption="Here's your converted JPEG file.")
+        update.message.reply_document(document=open(jpeg_file_path, 'rb'), caption="Here's your converted JPEG file.\n\nPowerd by @Echo_AIO")
         cleanup_file(temp_file_path)
         cleanup_file(jpeg_file_path)
 
@@ -233,7 +233,7 @@ def shiftx_file_handler(update: Update, context: CallbackContext) -> None:
         new_file.download(temp_file_path)
         png_file_path = temp_file_path.replace('.webp', '_converted.png')
         webp_to_png(temp_file_path, png_file_path)
-        update.message.reply_document(document=open(png_file_path, 'rb'), caption="Here's your converted PNG file.")
+        update.message.reply_document(document=open(png_file_path, 'rb'), caption="Here's your converted PNG file.\n\nPowerd by @Echo_AIO")
         cleanup_file(temp_file_path)
         cleanup_file(png_file_path)
 
@@ -244,7 +244,7 @@ def shiftx_file_handler(update: Update, context: CallbackContext) -> None:
         new_file.download(temp_file_path)
         jpeg_file_path = temp_file_path.replace('.webp', '_converted.jpeg')
         webp_to_jpeg(temp_file_path, jpeg_file_path)
-        update.message.reply_document(document=open(jpeg_file_path, 'rb'), caption="Here's your converted JPEG file.")
+        update.message.reply_document(document=open(jpeg_file_path, 'rb'), caption="Here's your converted JPEG file.\n\nPowerd by @Echo_AIO")
         cleanup_file(temp_file_path)
         cleanup_file(jpeg_file_path)
 
@@ -255,7 +255,7 @@ def shiftx_file_handler(update: Update, context: CallbackContext) -> None:
         new_file.download(temp_file_path)
         tiff_file_path = temp_file_path.replace('.png', '_converted.tiff')
         png_to_tiff(temp_file_path, tiff_file_path)
-        update.message.reply_document(document=open(tiff_file_path, 'rb'), caption="Here's your converted TIFF file.")
+        update.message.reply_document(document=open(tiff_file_path, 'rb'), caption="Here's your converted TIFF file.\n\nPowerd by @Echo_AIO")
         cleanup_file(temp_file_path)
         cleanup_file(tiff_file_path)
 
@@ -266,7 +266,7 @@ def shiftx_file_handler(update: Update, context: CallbackContext) -> None:
         new_file.download(temp_file_path)
         tiff_file_path = temp_file_path.replace('.jpeg', '_converted.tiff').replace('.jpg', '_converted.tiff')
         jpeg_to_tiff(temp_file_path, tiff_file_path)
-        update.message.reply_document(document=open(tiff_file_path, 'rb'), caption="Here's your converted TIFF file.")
+        update.message.reply_document(document=open(tiff_file_path, 'rb'), caption="Here's your converted TIFF file.\n\nPowerd by @Echo_AIO")
         cleanup_file(temp_file_path)
         cleanup_file(tiff_file_path)
 
@@ -277,7 +277,7 @@ def shiftx_file_handler(update: Update, context: CallbackContext) -> None:
         new_file.download(temp_file_path)
         webp_file_path = temp_file_path.replace('.png', '_converted.webp')
         png_to_webp(temp_file_path, webp_file_path)
-        update.message.reply_document(document=open(webp_file_path, 'rb'), caption="Here's your converted WebP file.")
+        update.message.reply_document(document=open(webp_file_path, 'rb'), caption="Here's your converted WebP file.\n\nPowerd by @Echo_AIO")
         cleanup_file(temp_file_path)
         cleanup_file(webp_file_path)
 
@@ -288,7 +288,7 @@ def shiftx_file_handler(update: Update, context: CallbackContext) -> None:
         new_file.download(temp_file_path)
         webp_file_path = temp_file_path.replace('.jpeg', '_converted.webp').replace('.jpg', '_converted.webp')
         jpeg_to_webp(temp_file_path, webp_file_path)
-        update.message.reply_document(document=open(webp_file_path, 'rb'), caption="Here's your converted WebP file.")
+        update.message.reply_document(document=open(webp_file_path, 'rb'), caption="Here's your converted WebP file.\n\nPowerd by @Echo_AIO")
         cleanup_file(temp_file_path)
         cleanup_file(webp_file_path)
 
@@ -299,7 +299,7 @@ def shiftx_file_handler(update: Update, context: CallbackContext) -> None:
         new_file.download(temp_file_path)
         aac_file_path = temp_file_path.rsplit('.', 1)[0] + '.aac'
         mp3_to_aac(temp_file_path, aac_file_path)
-        update.message.reply_document(document=open(aac_file_path, 'rb'), caption="Here's your converted AAC file.")
+        update.message.reply_document(document=open(aac_file_path, 'rb'), caption="Here's your converted AAC file.\n\nPowerd by @Echo_AIO")
         cleanup_file(temp_file_path)
         cleanup_file(aac_file_path)
 
@@ -310,7 +310,7 @@ def shiftx_file_handler(update: Update, context: CallbackContext) -> None:
         new_file.download(temp_file_path)
         mp3_file_path = temp_file_path.rsplit('.', 1)[0] + '.mp3'
         aac_to_mp3(temp_file_path, mp3_file_path)
-        update.message.reply_document(document=open(mp3_file_path, 'rb'), caption="Here's your converted MP3 file.")
+        update.message.reply_document(document=open(mp3_file_path, 'rb'), caption="Here's your converted MP3 file.\n\nPowerd by @Echo_AIO")
         cleanup_file(temp_file_path)
         cleanup_file(mp3_file_path)
 
@@ -321,7 +321,7 @@ def shiftx_file_handler(update: Update, context: CallbackContext) -> None:
         new_file.download(temp_file_path)
         ogg_file_path = temp_file_path.rsplit('.', 1)[0] + '.ogg'
         mp3_to_ogg(temp_file_path, ogg_file_path)
-        update.message.reply_document(document=open(ogg_file_path, 'rb'), caption="Here's your converted OGG file.")
+        update.message.reply_document(document=open(ogg_file_path, 'rb'), caption="Here's your converted OGG file.\n\nPowerd by @Echo_AIO")
         cleanup_file(temp_file_path)
         cleanup_file(ogg_file_path)
 
@@ -332,7 +332,7 @@ def shiftx_file_handler(update: Update, context: CallbackContext) -> None:
         new_file.download(temp_file_path)
         mp3_file_path = temp_file_path.rsplit('.', 1)[0] + '.mp3'
         ogg_to_mp3(temp_file_path, mp3_file_path)
-        update.message.reply_document(document=open(mp3_file_path, 'rb'), caption="Here's your converted MP3 file.")
+        update.message.reply_document(document=open(mp3_file_path, 'rb'), caption="Here's your converted MP3 file.\n\nPowerd by @Echo_AIO")
         cleanup_file(temp_file_path)
         cleanup_file(mp3_file_path)
     

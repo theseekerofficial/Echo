@@ -1,4 +1,4 @@
-# bot.py (Main Bot file)
+# bot.py (Main bot file)
 ## Don't edit this file unless you know what you are doing!
 from modules.configurator import load_and_store_env_vars, bsettings_command, bsettings_button_callback, show_env_value_callback, handle_new_env_value, edit_env_callback, get_env_var_from_db, close_config_callback
 load_and_store_env_vars()
@@ -38,6 +38,7 @@ from modules.broadcast import register_handlers as broadcast_register_handlers, 
 
 
 from plugins.scheducast import scheducast
+from plugins.removebg.removebg import setup_removebg
 from plugins.shiftx.shiftx import register_shiftx_handlers
 from plugins.calculators.calculator import setup_calculator
 from plugins.logo_gen.logo_generator import handle_logogen, button
@@ -349,10 +350,9 @@ def reminder_reaction_button_callback(update: Update, context: CallbackContext) 
 
     # Adjusted to handle additional segments in callback_data
     parts = callback_data.split('_')
-    action = parts[3]  # Assuming 'action' is always at the third position
-    reminder_id = '_'.join(parts[4:])  # Joining the rest as reminder_id may contain '_'
+    action = parts[3] 
+    reminder_id = '_'.join(parts[4:])  
 
-    # Define noop button for completed actions
     noop_button = None
 
     if action == 'complete':
@@ -474,6 +474,8 @@ bot_commands = [
     BotCommand("erasefiles", "Delete indexed files ♻️"),
     BotCommand("ringtones", "Explore sample ringtones♫"),
     BotCommand("info", "See User/Chat info 📜"),
+    BotCommand("removebg", "Remove background from any image 🪄"),
+    BotCommand("rbgusage", "See your RemoveBG API Usage 📈"),
     BotCommand("moreinfo", "Get more information about the bot🤓"),
     BotCommand("overview", "See a stats report about Echo and Host Server 📝"),
     BotCommand("database", "Get database stats📊"),
@@ -541,7 +543,7 @@ if __name__ == '__main__':
     dp.job_queue.run_repeating(check_reminders, interval=60, first=0)
     dp.job_queue.run_repeating(lambda context: check_scheduled_broadcasts(context.bot), interval=60, first=0)
     dp.bot.set_my_commands(bot_commands, scope=BotCommandScopeDefault())
-    dp.add_handler(CallbackQueryHandler(handle_help_button_click, pattern='^(basic|reminder|misc|brsc|gemini|calculator_help|tgphup|logogen_help|doc_spotter_help|info_help|chatbot_help|commit_detector_help)$'))
+    dp.add_handler(CallbackQueryHandler(handle_help_button_click, pattern='^(basic|reminder|misc|brsc|gemini|calculator_help|tgphup|logogen_help|doc_spotter_help|info_help|chatbot_help|commit_detector_help|shiftx_help|removebg_help)$'))
     dp.add_handler(callback_query_handler)
     dp.add_handler(CallbackQueryHandler(handle_confirmation, pattern='^(yes|no):'))
     dp.add_handler(CallbackQueryHandler(handle_back_button_click, pattern='^back$'))
@@ -570,6 +572,8 @@ if __name__ == '__main__':
 
     register_shiftx_handlers(dp)
 
+    setup_removebg(dp)
+    
     install_ffmpeg()
     
     dp.bot_data['start_time'] = datetime.now()
@@ -581,5 +585,6 @@ if __name__ == '__main__':
     bot_name = bot_info.first_name
     bot_username = bot_info.username
     logger.info(f"{bot_name} [@{bot_username}] Started Successfully ✅. Have Some fun with Echo ✨")
-
+    logger.info(f"PRODUCT OF TSSC | Creator: ꓄ꃅꍟ ꌗꍟꍟꀘꍟꋪ [@MrUnknown114]")
+        
     updater.idle()

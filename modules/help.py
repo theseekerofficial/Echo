@@ -27,6 +27,10 @@ _Echo the Multifunctional User assistant has arrived to save your schedule and m
         ],
         [
             InlineKeyboardButton("DocSpotter Commands", callback_data='doc_spotter_help'),
+            InlineKeyboardButton("ShiftX Commands", callback_data='shiftx_help'),
+        ],
+        [
+            InlineKeyboardButton("RemoveBG Commands", callback_data='removebg_help'),
             InlineKeyboardButton("Info Commands", callback_data='info_help'),
         ],
         [
@@ -195,6 +199,50 @@ The *Commit Detector* is an exclusive feature tailored for the Echo's deployment
 This feature is a powerful tool for staying updated with GitHub repository changes directly within Telegram
 
 [Echo-Verse♾️](https://t.me/Echo_AIO)
+""",
+   'shiftx_help' : """*ShiftX is Echo's feature that allows users to perform various file conversions in no time!.🔄*
+   
+*🚀 Start the ShiftX Plugin:*
+- Type `/shiftx` in any private chat with the bot to start the ShiftX plugin.
+- This command will display a menu with categories for documents, images, and audio. After that selected the category you want.
+
+*🔳 Choose Conversion Type:*
+- Depending on the category you selected, you'll be presented with different conversion options.
+- For example, if you choose "Documents," you might see options like "PDF to Word," "PDF to TXT," etc.
+- Click on the desired conversion type.
+
+*⬆️ Upload File:*
+- After selecting the conversion type, you'll be prompted to upload the file you want to convert.
+- Upload the file by sending it to the bot.
+
+*⬇️ Receive Converted File:*
+- After the conversion is complete, the bot will send you the converted file.
+
+[Echo-Verse♾️](https://t.me/Echo_AIO)
+""",
+   'removebg_help' : """*RemoveBG allows you to remove background from basically any image within few seconds!.🪄*
+   
+*Setting up Remove.bg API Key ⚙️*
+- To set up your Remove.bg API key, use the command `/setrbgapi <your_api_key>`.
+- Example: `/setrbgapi your_api_key_here`
+
+*Removing Backgrounds🎨🖌️*
+- To remove the background from an image, reply to the image with the command `/removebg`.
+- Example: Reply to an image with `/removebg`.
+
+*Viewing Remove.bg API Key 🔍*
+To view your current Remove.bg API key, use the command `/showrbgapi`.
+Example: `/showrbgapi`
+
+*Deleting Remove.bg API Key 🚮*
+If you wish to delete your Remove.bg API key, use the command `/delrbgapi`.
+Example: `/delrbgapi`
+
+*Checking API Usage 📊*
+To check your Remove.bg API usage, use the command `/rbgusage`.
+Example: `/rbgusage`
+
+[Echo-Verse♾️](https://t.me/Echo_AIO)
 """
     }
 
@@ -266,6 +314,10 @@ def get_inline_keyboard_for_category(category):
         ],
         [
             InlineKeyboardButton("DocSpotter Commands", callback_data='doc_spotter_help'),
+            InlineKeyboardButton("ShiftX Commands", callback_data='shiftx_help'),
+        ],
+        [
+            InlineKeyboardButton("RemoveBG Commands", callback_data='Removebg_help'),
             InlineKeyboardButton("Info Commands", callback_data='info_help'),
         ],
         [

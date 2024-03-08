@@ -1,4 +1,4 @@
-# ECHO v1.1.0 RG4 #IM #NF (Improvements/New Feature)
+# ECHO v1.1.1 T8N #IM #NF (Improvements/New Feature)
 
 <p align="center">
     <a href="https://github.com/theseekerofficial/Echo">
@@ -137,7 +137,7 @@
     - Enhance your creativity using Echo's Logo Generator Plugin🧬
     - /logogen is your magic word! 🪄
 
-17. **ShiftX (Advanced Multifile Converter Plugin) 🔄️
+17. **ShiftX (Advanced Multifile Converter Plugin)** 🔄️
     - What you want to convert?
         - Images?
         - Videos?
@@ -157,17 +157,20 @@
         - Requested file received in Bot PM
         - Indexing any file type in telegram
         - Delete Indexed Files Easily
+20. **Image Background Remover**
+    - Easily Remove your Images Background Using Echo's Background Remover 🖼️✂️
+    - User own Personal and Global API mechanism for more flexibility 🦾
 
-20. **Info & Utility Modules**
+22. **Info & Utility Modules**
     - Simple Modules that cloud be help to you in day-to-day telegram usage 📅
     - Status of Echo 📈
         - See Database Usage for Each Database in Echo (/database)
         - Find Your Telegram ID (/info)
         - Find any other user Telegram ID (/info)
         - Find any other chat(Channel/Group) Telegram ID (/info)
-        - See a stats report about Echo and Host Server 📝 (/overview)
+        - See a stats report about Echo and Host Server (/overview)
 
-21. **Commit Detector Function**
+23. **Commit Detector Function**
     - Keep updated about your fav GitHub repo within the telegram environment. This feature can detect new commits from any public repo and send them to your telegram channel(s)/group(s)🪄
     - Exclusively for Echo deploying owners only 
 
@@ -195,6 +198,8 @@
 - `/settimezone TIMEZONE`: Customize your preferred timezone for reminder notifications.⏳
 - `/ringtones`: Get uncommon ringtone files for set to Echo Reminder Bot.🎵
 - `/info`: See User/Bot/Chat info 📜
+- `/removebg`: Remove background from any image 🪄
+- `/rbgusage`: See your RemoveBG API Usage 📈 
 - `/moreinfo`: Unbox the secrets! Type /moreinfo for the full bot lowdown & bonus notes.📚
 - `/database`: Get database stats 📊
 - `/bsettings`: Config Echo easily ⚙️
@@ -300,11 +305,15 @@ This section provides detailed information on the required environment variables
   
 9. **SHIFTX_OGG_TO_MP3_QUALITY** [🟩]
    - Description: Set a quality for OGG to MP3 Outputs. Set a value from 0 to 9 | 9 = Lowest quality, smallest file size / 0 = highest quality, largest file size.
-   - Example: `SHIFTX_OGG_TO_MP3_QUALITY=4`
+   - Example: `SHIFTX_OGG_TO_MP3_QUALITY=5`
   
 10. **SHIFTX_MP3_TO_OGG_QUALITY** [🟩]
    - Description: Set a quality for MP3 to OGG Outputs. Set a value from -1 to 10 | -1 = Lowest quality, smallest file size / 10 = highest quality, largest file size.
    - Example: `SHIFTX_MP3_TO_OGG_QUALITY=4`
+     
+11. **REMOVEBG_API** [🟩]
+   - Description: Set a Global API Key for RemoveBG Plugin. Get one from [RemoveBG](https://www.remove.bg/dashboard#api-key)
+   - Example: `REMOVEBG_API=abcdefgh12345678`
 
 ### Plugin On/Off
 
@@ -347,6 +356,10 @@ This section provides detailed information on the required environment variables
 10. **SHIFTX_PLUGIN** [🟩]
    - Description: Set to `True` or `False` to Enable or Disable the ShiftX Plugin.
    - Example: `SHIFTX_PLUGIN=True`
+     
+11. **REMOVEBG_PLUGIN** [🟩]
+   - Description: Set to `True` or `False` to Enable or Disable the RemoveBG Plugin.
+   - Example: `REMOVEBG_PLUGIN=True`
 
 Make sure to replace the placeholder values with your actual configuration settings. These environment variables are crucial for customizing and configuring the behavior of your Echo bot. Ensure that they are correctly set before running the bot to ensure its proper functionality.
 

@@ -12,5 +12,5 @@ COPY . /app/
 
 EXPOSE 8000
 
-#Run the bot
+#RUN THE BOT
 CMD ["python3", "bot.py"]
