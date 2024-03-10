@@ -1,6 +1,7 @@
 # configurator.py
 import os
 import logging
+import telegram
 from dotenv import load_dotenv
 from pymongo import MongoClient
 from telegram.ext import CallbackContext, CallbackQueryHandler, CommandHandler
@@ -9,6 +10,9 @@ from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update, ParseMo
 # Set up logging
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=logging.INFO)
 logger = logging.getLogger(__name__)
+
+ENV_VARS_PER_PAGE = 10
+MAX_PAGE_BTNS_PER_ROW = 6
 
 class DatabaseConfig:
     _client = None
@@ -50,6 +54,10 @@ def load_and_store_env_vars():
         "MONGODB_URI": os.getenv("MONGODB_URI"),
         "OWNER": os.getenv("OWNER"),
         "UPSTREAM_REPO_URL": os.getenv("UPSTREAM_REPO_URL"),
+        "SETUP_BOT_PROFILE": os.getenv("SETUP_BOT_PROFILE"),
+        "BOT_NAME": os.getenv("BOT_NAME"),
+        "BOT_ABOUT": os.getenv("BOT_ABOUT"),
+        "BOT_DESCRIPTION": os.getenv("BOT_DESCRIPTION"),
         "REMINDER_CHECK_TIMEZONE": os.getenv("REMINDER_CHECK_TIMEZONE"),
         "AUTHORIZED_USERS": os.getenv("AUTHORIZED_USERS"),
         "SCEDUCAST_TIMEZONE": os.getenv("SCEDUCAST_TIMEZONE"),
@@ -147,6 +155,10 @@ def get_unique_message_for_env(key):
         "MONGODB_URI": "🗄️ This is your MongoDB connection URI. It's crucial for your bot's database operations.\n\n<b>Required [🔴]</b>",
         "OWNER": "👤 This is the Telegram ID of the bot owner. Only this user can access bot settings.\n\n<b>Required [🔴]</b>\n<b>For new changes, Restart:</b> <u><i>Not Required</i></u>",
         "UPSTREAM_REPO_URL": "🔗 URL to the GitHub source code repository, Recommended to use the official Echo Repo.\n\n<b>Required [🔴]</b>\n<b>For new changes, Restart:</b> <u><i>Required</i></u>",
+        "SETUP_BOT_PROFILE": "Automatically setup Bot Name, About and Description at the deploy of Echo instead of manually setup in @BotFather\n\n⚠️ You have been advised to set SETUP_BOT_PROFILE environment variable to <code>False</code> after you set up your Echo profile correctly during the first deployment using /bsettings to prevent unnecessary rate limit errors.\n\n<b>Optional But Recommended to Fill [🔶]</b>\n<b>For new changes, Restart:</b> <u><i>Required</i></u>",
+        "BOT_NAME": "Set New name for Echo!\n\n<b>Optional But Recommended to Fill [🔶]</b>\n<b>For new changes, Restart:</b> <u><i>Required</i></u>",
+        "BOT_ABOUT": "Set New about text for Echo!\n\n<b>Optional But Recommended to Fill [🔶]</b>\n<b>For new changes, Restart:</b> <u><i>Required</i></u>",
+        "BOT_DESCRIPTION": "Set New description for Echo!\n\n<b>Optional But Recommended to Fill [🔶]</b>\n<b>For new changes, Restart:</b> <u><i>Required</i></u>",
         "REMINDER_CHECK_TIMEZONE": "🕒 Global timezone used for scheduling reminders and time-based commands. Find your timezone from internet or <a href=\"https://telegra.ph/Choose-your-timezone-02-16\">this link</a>\n\n<b>Required [🔴]</b>\n<b>For new changes, Restart:</b> <u><i>Required</i></u>",
         "AUTHORIZED_USERS": "🛡️ List of user IDs to give access to Echo's some features.\n\n<b>Required [🔴]</b>\n<b>For new changes, Restart:</b> <u><i>Required</i></u>",
         "SCEDUCAST_TIMEZONE": "🌐 Timezone setting for Sceducast, Your Scheducast will set based on this\n\n<b>Required [🔴]</b>\n<b>For new changes, Restart:</b> <u><i>Required</i></u>",
@@ -249,31 +261,73 @@ def handle_new_env_value(update: Update, context: CallbackContext):
 
     del context.user_data['edit_env_key']
 
-def show_config_envs(query):
-    # Connect to MongoDB
+def show_config_envs(query, page=0):
     client = MongoClient(os.getenv("MONGODB_URI"))
     db = client.get_database("Echo")
     configs_collection = db["configs"]
 
-    # Fetch all environment variables
-    envs = list(configs_collection.find({}))
+    # Fetch all environment variables and calculate the number of pages
+    all_envs = list(configs_collection.find({}))
+    total_envs = len(all_envs)
+    total_pages = (total_envs + ENV_VARS_PER_PAGE - 1) // ENV_VARS_PER_PAGE
 
-    # Create a two-column grid of buttons
+    # Calculate the range of envs to display on the current page
+    start = page * ENV_VARS_PER_PAGE
+    end = start + ENV_VARS_PER_PAGE
+    page_envs = all_envs[start:end]
+
+    # Create a two-column grid of buttons for the current page of envs
     keyboard = []
-    row = []
-    for env in envs:
-        button = InlineKeyboardButton(env["key"], callback_data=f"env_{env['key']}")
-        row.append(button)
-        if len(row) == 2: 
-            keyboard.append(row)
-            row = []
-    if row: 
+    for i in range(0, len(page_envs), 2):
+        row = [
+            InlineKeyboardButton(page_envs[i]["key"], callback_data=f"env_{page_envs[i]['key']}"),
+            InlineKeyboardButton(page_envs[i+1]["key"], callback_data=f"env_{page_envs[i+1]['key']}")
+        ] if (i + 1) < len(page_envs) else [
+            InlineKeyboardButton(page_envs[i]["key"], callback_data=f"env_{page_envs[i]['key']}")
+        ]
         keyboard.append(row)
 
-    keyboard.append([InlineKeyboardButton("Close", callback_data='close_config')])
+    # Pagination buttons logic
+    page_buttons = [InlineKeyboardButton(str(p + 1), callback_data=f"page_{p}") for p in range(total_pages)]
+    
+    # Split page buttons into groups for each row
+    page_btn_groups = [page_buttons[i:i + MAX_PAGE_BTNS_PER_ROW] for i in range(0, len(page_buttons), MAX_PAGE_BTNS_PER_ROW)]
+
+    # Add each group of page buttons as a new row in the keyboard
+    for btn_group in page_btn_groups:
+        keyboard.append(btn_group)
+
+    keyboard.append([InlineKeyboardButton("Back to Bot Settings", callback_data='back_to_bot_settings'),
+                     InlineKeyboardButton("Close", callback_data='close_config')])
 
     reply_markup = InlineKeyboardMarkup(keyboard)
     query.edit_message_text(text="Select an ENV to edit or view its value:", reply_markup=reply_markup)
+
+def page_navigation_callback(update: Update, context: CallbackContext):
+    query = update.callback_query
+    query.answer()
+
+    page = int(query.data.split('_')[1])
+
+    try:
+        show_config_envs(query, page=page)
+    except telegram.error.BadRequest as e:
+
+        if "Message is not modified" in str(e):
+            pass 
+        else:
+            raise 
+
+def back_to_bot_settings_callback(update: Update, context: CallbackContext):
+    query = update.callback_query
+    query.answer()
+
+    # Display the bot settings message with "Config ENVs" button
+    keyboard = [
+        [InlineKeyboardButton("Config ENVs", callback_data='config_envs')]
+    ]
+    reply_markup = InlineKeyboardMarkup(keyboard)
+    query.edit_message_text(text="Bot Settings:", reply_markup=reply_markup)
 
 def close_config_callback(update: Update, context: CallbackContext):
     query = update.callback_query

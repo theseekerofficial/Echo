@@ -73,9 +73,10 @@ def handle_help_button_click(update, context: CallbackContext) -> None:
                     "/delreminder - Delete a specific reminder.🗑️\n"
                     "/settimezone - Set your time zone.🌎\n"
                     "/editreminders - Edit your existing reminders.✂️\n\n🌟Easily find your timezone using [this link](https://telegra.ph/Choose-your-timezone-02-16)\n\n[Echo-Verse♾️](https://t.me/Echo_AIO)",
-            'misc': "*Welcome to Echo's other misc comands⚙️*\n\n"
+            'misc': "*Welcome to Echo's other misc commands⚙️*\n\n"
                 "/ringtones - Explore sample ringtones.🎵\n"
-                "/id - See User/Chat info 📜\n"
+                "/info - Get Info about specific User,Bot or Chat 📜\n"
+                "/users - See Echo using Users Chats list 📜\n"
                 "/database - See my mongoDB database stats📊\n"
                 "/moreinfo - Get more information about the bot.📚\n\n[Echo-Verse♾️](https://t.me/Echo_AIO)",
             'brsc': """*Welcome to Echo's Announcement modules⚙️*\n\n"""

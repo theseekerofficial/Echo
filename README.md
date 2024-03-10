@@ -1,4 +1,4 @@
-# ECHO v1.1.1 T8N #IM #NF (Improvements/New Feature)
+# ECHO v1.1.2 P6V #IM #NF (Improvements/New Features)
 
 <p align="center">
     <a href="https://github.com/theseekerofficial/Echo">
@@ -166,9 +166,10 @@
     - Status of Echo 📈
         - See Database Usage for Each Database in Echo (/database)
         - Find Your Telegram ID (/info)
-        - Find any other user Telegram ID (/info)
-        - Find any other chat(Channel/Group) Telegram ID (/info)
+        - Find Any Other user Telegram ID (/info)
+        - Find Any Other chat(Channel/Group) Telegram ID (/info)
         - See a stats report about Echo and Host Server (/overview)
+        - /users Command for Owner to See Echo Using User's and Group Chats list
 
 23. **Commit Detector Function**
     - Keep updated about your fav GitHub repo within the telegram environment. This feature can detect new commits from any public repo and send them to your telegram channel(s)/group(s)🪄
@@ -265,7 +266,30 @@ This section provides detailed information on the required environment variables
 4. **SCEDUCAST_TIME_OFFSET** [🔴]
    - Description: Set the correct time offset for the timezone you mentioned in SCEDUCAST_TIMEZONE. The offset should be in hours and minutes.
    - Example: `SCEDUCAST_TIME_OFFSET=9.5`
-     - Explanation: If your local timezone is Asia/Colombo, and it is 5 hours and 30 minutes ahead of UTC, you should set this value to `5.5`.
+   - Explanation: If your local timezone is Asia/Colombo, and it is 5 hours and 30 minutes ahead of UTC, you should set this value to `5.5`.
+
+## Optional But Recommended to Fill Environment Variables (🔶)
+
+### Echo Profile Setup
+
+1. **SETUP_BOT_PROFILE** [🔶]
+   - Description;
+       - You have been advised to set SETUP_BOT_PROFILE environment variable to False after you set up your Echo profile correctly during the first deployment using /bsettings to prevent unnecessary rate limit errors.
+       - Set True to set up the Echo profile automatically. If you keep this env as empty or False you will have to set the bot profile manually in BotFather 
+   - Example: `SETUP_BOT_PROFILE=True`
+
+2. **BOT_NAME** [🔶]
+   - Description: Enter a new name for Echo
+   - Example: `BOT_NAME=Ｅｃｈｏ`
+     
+3. **BOT_ABOUT** [🔶]
+   - Description: Enter a new about text for Echo. ⚠️ Remember about Telegram about text limits. keep the about text shorter
+   - Example: `BOT_ABOUT=Echo is your All-in-One AI Personal Assistant 🤖`
+     
+4. **BOT_DESCRIPTION** [🔶]
+   - Description: Enter a new description for Echo
+   - Example: `BOT_DESCRIPTION=Echo is a personal AI assistant on Telegram that enhances productivity through the seamless integration of reminders, schedules, broadcasts, and many more features.🍃`
+
 
 ## Optional Environment Variables (🟩)
 

@@ -1,11 +1,11 @@
 # shiftx_logics.py
 import os
+import logging
+import cairosvg
 import subprocess
+from PIL import Image
 from pathlib import Path
 from pdf2docx import Converter
-from PIL import Image
-import cairosvg
-import logging
 from modules.configurator import get_env_var_from_db
 
 # Set up logging

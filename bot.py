@@ -1,6 +1,6 @@
 # bot.py (Main bot file)
 ## Don't edit this file unless you know what you are doing!
-from modules.configurator import load_and_store_env_vars, bsettings_command, bsettings_button_callback, show_env_value_callback, handle_new_env_value, edit_env_callback, get_env_var_from_db, close_config_callback
+from modules.configurator import load_and_store_env_vars, bsettings_command, bsettings_button_callback, show_env_value_callback, handle_new_env_value, edit_env_callback, get_env_var_from_db, close_config_callback, page_navigation_callback, back_to_bot_settings_callback
 load_and_store_env_vars()
 
 import os
@@ -25,6 +25,8 @@ from reminders_manager import show_user_reminders
 from telegram.ext import Updater, CommandHandler, MessageHandler, CallbackContext, Filters, CallbackQueryHandler
 from telegram import Update, ParseMode, Message, User, Chat, BotCommand, BotCommandScopeDefault, Bot, InlineKeyboardButton, InlineKeyboardMarkup
 
+from modules.set_my_info import setup_bot_info
+from modules.utilities.users import show_users
 from modules.utilities.database_info import database_command
 from modules.utilities.info_fetcher import register_id_command
 from modules.encrypted_data import encrypted_creator_info, decrypt
@@ -135,78 +137,61 @@ def start(update: Update, context: CallbackContext) -> None:
     user = update.message.from_user
     chat = update.message.chat
 
+    # User info common to both private and group chats
+    username = f"@{user.username}" if user.username else None
+    user_info = {
+        'user_id': user.id,
+        'chat_id': user.id,
+        'telegram_name': user.full_name,
+        'telegram_username': username,
+        'is_user': True,  # Flag to distinguish user records
+        'bot_start_time': datetime.now(),
+    }
+
+    # Check if user document exists; if not, insert it
+    user_and_chat_data_collection.update_one(
+        {'user_id': user.id, 'is_user': True},
+        {'$set': user_info},
+        upsert=True
+    )
+
+    # If the command is issued in a group, record the group's info separately
+    if chat.type in ['group', 'supergroup']:
+        group_info = {
+            'chat_id': chat_id,
+            'group_name': chat.title,
+            'group_username': chat.username if chat.username else None,
+            'is_group': True,  # Flag to distinguish group records
+            'bot_added_time': datetime.now(),
+        }
+        user_and_chat_data_collection.update_one(
+            {'chat_id': chat_id, 'is_group': True},
+            {'$set': group_info},
+            upsert=True
+        )
+
+    # Welcome message setup
+    start_photo_path = "assets/start.jpeg"  # Adjust path as necessary
     if chat.type == 'private':
-        username = f"@{user.username}" if user.username else None
-
-        # Save user details to MongoDB
-        user_and_chat_data_collection.update_one(
-            {'user_id': user.id, 'chat_id': chat_id},
-            {'$set': {
-                'user_id': user.id,
-                'chat_id': chat_id,
-                'telegram_name': user.full_name,  # Use full_name to store the complete name
-                'telegram_username': username,
-                'bot_start_time': datetime.now(),
-            }},
-            upsert=True
-        )
-
-        start_photo_path = "assets/start.jpeg"  
         start_caption = '🕊*Step into the world of Echo, where modern Telegram experiences are crafted. Let Echo be your guide to a new dimension of communication and convenience. Welcome to the Echo experience!*\n\n*Echo is your trusty sidekick. Need a nudge? /setreminder is your jam.*'
-
-        # Add the "Update Channel 📢" and "Support Group 🫂" buttons
-        keyboard = [
-            [InlineKeyboardButton("Update Channel 📢", url="https://t.me/Echo_AIO")],
-            [InlineKeyboardButton("Support Group 🫂", url="https://t.me/ECHO_Support_Unit")]
-        ]
-
-        reply_markup = InlineKeyboardMarkup(keyboard)
-
-        context.bot.send_photo(
-            chat_id=chat_id,
-            photo=open(start_photo_path, "rb"),
-            caption=start_caption,
-            parse_mode=ParseMode.MARKDOWN,
-            reply_markup=reply_markup  # Add the inline keyboard
-        )
-
-    elif chat.type == 'group' or chat.type == 'supergroup':
-        group_username = chat.username if chat.username else None
-
-        # Save group details to MongoDB
-        user_and_chat_data_collection.update_one(
-            {'chat_id': chat_id},
-            {'$set': {
-                'chat_id': chat_id,
-                'group_name': chat.title,
-                'group_username': group_username,
-                'bot_added_time': datetime.now(),
-            }},
-            upsert=True
-        )
-
-        start_photo_path = "assets/start.jpeg"  
+    else:
         start_caption = '🕊*Step into the world of Echo, where modern Telegram experiences are crafted. Let Echo assist you in your group chats with a new dimension of communication and convenience. Welcome to the Echo experience!*\n\n*Echo is your trusty sidekick. Need a nudge? /setreminder is your jam.*'
 
-        # Add the "Update Channel 📢" and "Support Group 🫂" buttons
-        keyboard = [
-            [InlineKeyboardButton("Update Channel 📢", url="https://t.me/Echo_AIO")],
-            [InlineKeyboardButton("Support Group 🫂", url="https://t.me/ECHO_Support_Unit")]
-        ]
+    # Common keyboard setup for both chat types
+    keyboard = [
+        [InlineKeyboardButton("Update Channel 📢", url="https://t.me/Echo_AIO")],
+        [InlineKeyboardButton("Support Group 🫂", url="https://t.me/ECHO_Support_Unit")]
+    ]
+    reply_markup = InlineKeyboardMarkup(keyboard)
 
-        reply_markup = InlineKeyboardMarkup(keyboard)
-
-        context.bot.send_photo(
-            chat_id=chat_id,
-            photo=open(start_photo_path, "rb"),
-            caption=start_caption,
-            parse_mode=ParseMode.MARKDOWN,
-            reply_markup=reply_markup  # Add the inline keyboard
-        )
-     
-    else:
-        # Unknown chat type, handle accordingly
-        return
+    # Send the welcome message with a photo
+    context.bot.send_photo(
+        chat_id=chat_id,
+        photo=open(start_photo_path, "rb"),
+        caption=start_caption,
+        parse_mode=ParseMode.MARKDOWN,
+        reply_markup=reply_markup
+    )
 
 # HTTP server code
 class SimpleHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
@@ -464,7 +449,7 @@ bot_commands = [
     BotCommand("chatbot", "Chat with Echo's Chatbot🗨️"),
     BotCommand("mygapi", "Setup your Gemini API🧩"),
     BotCommand("analyze4to", "Begin Image Analysis Process🖼️"),
-    BotCommand("showmygapi", "Look at you Google Gemini API👀"),
+    BotCommand("showmygapi", "Look at your Google Gemini API👀"),
     BotCommand("delmygapi", "Delete Your Google API from Echo's Database🗑️"),
     BotCommand("calculator", "or /cal To get Echo's Calculator menu 🧮"),
     BotCommand("uptotgph", "Upload any telegram image to telegraph ⤴️"),
@@ -476,7 +461,8 @@ bot_commands = [
     BotCommand("info", "See User/Chat info 📜"),
     BotCommand("removebg", "Remove background from any image 🪄"),
     BotCommand("rbgusage", "See your RemoveBG API Usage 📈"),
-    BotCommand("moreinfo", "Get more information about the bot🤓"),
+    BotCommand("moreinfo", "Get more information about the Echo🤓"),
+    BotCommand("users", "[Only for Owner] Get user and group list that use Echo 👥"),
     BotCommand("overview", "See a stats report about Echo and Host Server 📝"),
     BotCommand("database", "Get database stats📊"),
     BotCommand("bsettings", "Config Echo! ⚙️"),
@@ -515,6 +501,7 @@ if __name__ == '__main__':
     dp.add_handler(MessageHandler(Filters.regex(r'^/editreminder_\w+$'), edit_specific_reminder))
     dp.add_handler(CommandHandler("er", edit_reminder))
     dp.add_handler(CommandHandler("database", database_command))
+    dp.add_handler(CommandHandler("users", show_users))
     dp.add_handler(CommandHandler("bsettings", bsettings_command))
     dp.add_handler(CommandHandler("overview", overview_command))
     dp.add_handler(CommandHandler("restart", restart_command))
@@ -536,6 +523,8 @@ if __name__ == '__main__':
     dp.add_handler(CallbackQueryHandler(show_env_value_callback, pattern='^env_'))
     dp.add_handler(CallbackQueryHandler(edit_env_callback, pattern='^edit_'))
     dp.add_handler(CallbackQueryHandler(close_config_callback, pattern='^close_config$'))
+    dp.add_handler(CallbackQueryHandler(page_navigation_callback, pattern='^page_\\d+$'))
+    dp.add_handler(CallbackQueryHandler(back_to_bot_settings_callback, pattern='^back_to_bot_settings$'))
     dp.add_handler(MessageHandler(Filters.text & ~Filters.command & Filters.chat_type.private, handle_new_env_value), group=0)
      
     send_post_restart_message(updater.bot)
@@ -575,6 +564,8 @@ if __name__ == '__main__':
     setup_removebg(dp)
     
     install_ffmpeg()
+    
+    setup_bot_info()
     
     dp.bot_data['start_time'] = datetime.now()
     

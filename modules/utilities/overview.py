@@ -35,15 +35,14 @@ def bot_status_callback(update: Update, context: CallbackContext) -> None:
     bot_start_time = context.bot_data.get('start_time', datetime.now())
     uptime = get_bot_uptime(bot_start_time)
 
-    repo_url = 'https://raw.githubusercontent.com/theseekerofficial/Echo/master/README.md'
     try:
-        response = requests.get(repo_url)
-        content = response.text
-        match = re.search(r"ECHO v(.*?\))", content)
-        if match:
-            bot_version = match.group(0)
-        else:
-            bot_version = 'Unknown'
+        with open('README.md', 'r') as file:
+            first_line = file.readline().strip()
+            match = re.search(r"ECHO v(.*?\))", first_line)
+            if match:
+                bot_version = match.group(0)
+            else:
+                bot_version = 'Unknown'
     except Exception as e:
         bot_version = 'Unknown'
 
