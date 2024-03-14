@@ -1,4 +1,4 @@
-# ECHO v1.1.2 P6V #IM #NF (Improvements/New Features)
+# ECHO v1.1.3 UX1 #IM #NF (Improvements/New Features)
 
 <p align="center">
     <a href="https://github.com/theseekerofficial/Echo">
@@ -157,11 +157,26 @@
         - Requested file received in Bot PM
         - Indexing any file type in telegram
         - Delete Indexed Files Easily
+          
 20. **Image Background Remover**
     - Easily Remove your Images Background Using Echo's Background Remover 🖼️✂️
     - User own Personal and Global API mechanism for more flexibility 🦾
 
-22. **Info & Utility Modules**
+21. **Chat Cloner [Clonergram]**
+    - Want to clone a group or channel? Leave it to Echo, /clonegram is the magic word 💠
+    - Working on both groups and channels ✔️
+    - Clone only you selected message/file types only
+        - Text Cloning ✅
+        - Image Cloning ✅
+        - File Cloning ✅
+        - Stiker Cloning ✅
+        - Audio Cloning ✅
+        - Video Cloneing ✅
+      
+23. **IMDb Search**
+    - Find your fav movies and TV shows using /imdb 🍿🎞️
+
+24. **Info & Utility Modules**
     - Simple Modules that cloud be help to you in day-to-day telegram usage 📅
     - Status of Echo 📈
         - See Database Usage for Each Database in Echo (/database)
@@ -171,7 +186,7 @@
         - See a stats report about Echo and Host Server (/overview)
         - /users Command for Owner to See Echo Using User's and Group Chats list
 
-23. **Commit Detector Function**
+25. **Commit Detector Function**
     - Keep updated about your fav GitHub repo within the telegram environment. This feature can detect new commits from any public repo and send them to your telegram channel(s)/group(s)🪄
     - Exclusively for Echo deploying owners only 
 
@@ -189,6 +204,7 @@
 - `/delmygapi`: Delete Your G-API from Echo's Database 🗑️
 - `/uptotgph`: Upload any telegram image to Telegraph and get instant direct link 🚀
 - `/logogen`: Craft your own logo with endless possibilities. (with Support for adding your own graphics, frames and more) 🎨🖌️
+- `/imdb` : Find your fav movies and TV shows using /imdb 🍿🎞️
 - `/docspotter`: Advanced auto filter feature packed with all feature you need for file managing 🗃️
 - `/erasefiles`: Delete indexed files easily ♻️
 - `/shiftx`: Convert wide range of files using Echo's ShiftX Plugin ♻️
@@ -384,6 +400,14 @@ This section provides detailed information on the required environment variables
 11. **REMOVEBG_PLUGIN** [🟩]
    - Description: Set to `True` or `False` to Enable or Disable the RemoveBG Plugin.
    - Example: `REMOVEBG_PLUGIN=True`
+     
+12. **IMDb_PLUGIN** [🟩]
+   - Description: Set to `True` or `False` to Enable or Disable the IMDb Plugin.
+   - Example: `IMDb_PLUGIN=True`
+
+13. **CLONEGRAM_PLUGIN** [🟩]
+   - Description: Set to `True` or `False` to Enable or Disable the Clonegram Plugin.
+   - Example: `CLONEGRAM_PLUGIN=True`
 
 Make sure to replace the placeholder values with your actual configuration settings. These environment variables are crucial for customizing and configuring the behavior of your Echo bot. Ensure that they are correctly set before running the bot to ensure its proper functionality.
 

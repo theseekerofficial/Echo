@@ -1,8 +1,7 @@
 # unit_converter.py in plugins/calculators/
-
 import logging
-from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update, ParseMode
 from telegram.ext import CallbackContext, CallbackQueryHandler
+from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update, ParseMode
 
 # Set up logging
 logging.basicConfig(level=logging.INFO)
@@ -675,7 +674,3 @@ def setup_unit_converter(dispatcher):
     dispatcher.add_handler(CallbackQueryHandler(handle_make_another_calc, pattern='^make_another_calc$'))
     dispatcher.add_handler(CallbackQueryHandler(handle_close_conversion, pattern='^close_conversion$'))
     dispatcher.add_handler(CallbackQueryHandler(show_unit_converter_instructions, pattern='^unit_converter_instruction$'))
-
-# This would be called from the main bot file or calculator.py to setup the unit converter handlers
-# from plugins.calculators.unit_converter import setup_unit_converter
-# setup_unit_converter(dispatcher)

@@ -38,9 +38,9 @@ from modules.restarter import check_for_updates, restart_bot, write_update_statu
 from modules.reminder_manager import handle_delreminder_command, callback_query_handler, handle_confirmation
 from modules.broadcast import register_handlers as broadcast_register_handlers, set_bot_variables as broadcast_set_bot_variables, handle_broadcast_message
 
-
 from plugins.scheducast import scheducast
 from plugins.removebg.removebg import setup_removebg
+from plugins.imdb.imdb import register_imdb_handlers
 from plugins.shiftx.shiftx import register_shiftx_handlers
 from plugins.calculators.calculator import setup_calculator
 from plugins.logo_gen.logo_generator import handle_logogen, button
@@ -48,6 +48,7 @@ from plugins.calculators.sci_calculator import setup_sci_calculator
 from plugins.doc_spotter.doc_spotter_indexer import setup_ds_dispatcher
 from plugins.commit_detector.commit_detector import setup_commit_detector
 from plugins.scheducast.scheducast_check import check_scheduled_broadcasts
+from plugins.clonegram.clonegram_indexer import register_clonegram_handlers
 from plugins.gemini.gemini_chat_bot import toggle_chatbot, handle_chat_message
 from plugins.doc_spotter.doc_spotter_executor import setup_ds_executor_dispatcher
 from plugins.telegraph.telegraph_up import setup_dispatcher as setup_telegraph_up
@@ -453,9 +454,11 @@ bot_commands = [
     BotCommand("delmygapi", "Delete Your Google API from Echo's Database🗑️"),
     BotCommand("calculator", "or /cal To get Echo's Calculator menu 🧮"),
     BotCommand("uptotgph", "Upload any telegram image to telegraph ⤴️"),
-    BotCommand("logogen", "[Beta] Craft Your Logos with Echo!"),
+    BotCommand("logogen", "Craft Your Logos with Echo!🖌️🎨"),
+    BotCommand("imdb", "Seach Movies and TV-Shows in IMDb 🔎🎥"),
     BotCommand("docspotter", "Enhanced Auto Filter Module ⛈️"),
     BotCommand("shiftx", "Convert Various range of files to another type 🔄️"),
+    BotCommand("clonegram", "Clone any type of message between chats 🔀"),
     BotCommand("erasefiles", "Delete indexed files ♻️"),
     BotCommand("ringtones", "Explore sample ringtones♫"),
     BotCommand("info", "See User/Chat info 📜"),
@@ -532,7 +535,7 @@ if __name__ == '__main__':
     dp.job_queue.run_repeating(check_reminders, interval=60, first=0)
     dp.job_queue.run_repeating(lambda context: check_scheduled_broadcasts(context.bot), interval=60, first=0)
     dp.bot.set_my_commands(bot_commands, scope=BotCommandScopeDefault())
-    dp.add_handler(CallbackQueryHandler(handle_help_button_click, pattern='^(basic|reminder|misc|brsc|gemini|calculator_help|tgphup|logogen_help|doc_spotter_help|info_help|chatbot_help|commit_detector_help|shiftx_help|removebg_help)$'))
+    dp.add_handler(CallbackQueryHandler(handle_help_button_click, pattern='^(basic|reminder|misc|brsc|gemini|calculator_help|tgphup|logogen_help|doc_spotter_help|info_help|chatbot_help|commit_detector_help|shiftx_help|removebg_help|imdb_help|clonegram_help)$'))
     dp.add_handler(callback_query_handler)
     dp.add_handler(CallbackQueryHandler(handle_confirmation, pattern='^(yes|no):'))
     dp.add_handler(CallbackQueryHandler(handle_back_button_click, pattern='^back$'))
@@ -566,6 +569,10 @@ if __name__ == '__main__':
     install_ffmpeg()
     
     setup_bot_info()
+
+    register_imdb_handlers(dp)
+
+    register_clonegram_handlers(dp)
     
     dp.bot_data['start_time'] = datetime.now()
     

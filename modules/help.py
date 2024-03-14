@@ -1,5 +1,5 @@
-from telegram import InlineKeyboardMarkup, InlineKeyboardButton, ParseMode
 from telegram.ext import CallbackContext
+from telegram import InlineKeyboardMarkup, InlineKeyboardButton, ParseMode
 
 def help_command(update, context: CallbackContext) -> None:
     # Send the photo with the inline keyboard
@@ -10,31 +10,35 @@ _Echo the Multifunctional User assistant has arrived to save your schedule and m
 
     keyboard = [
         [
-            InlineKeyboardButton("Basic Commands", callback_data='basic'),
-            InlineKeyboardButton("Reminder Commands", callback_data='reminder'),
+            InlineKeyboardButton("Basics", callback_data='basic'),
+            InlineKeyboardButton("Reminder Feature", callback_data='reminder'),
         ],
         [
-            InlineKeyboardButton("Gemini AI Commands", callback_data='gemini'),
-            InlineKeyboardButton("Broad/Schedu cast Commands", callback_data='brsc'),
+            InlineKeyboardButton("Gemini AI Feature", callback_data='gemini'),
+            InlineKeyboardButton("Broad/Schedu cast Features", callback_data='brsc'),
         ],
         [
-            InlineKeyboardButton("ChatBot Commands", callback_data='chatbot_help'),
-            InlineKeyboardButton("Calculator Commands", callback_data='calculator_help'),
+            InlineKeyboardButton("ChatBot Feature", callback_data='chatbot_help'),
+            InlineKeyboardButton("Calculator Feature", callback_data='calculator_help'),
         ],
         [
-            InlineKeyboardButton("Telegraph Commands", callback_data='tgphup'),
-            InlineKeyboardButton("Logo Gen Commands", callback_data='logogen_help'),
+            InlineKeyboardButton("Telegraph Feature", callback_data='tgphup'),
+            InlineKeyboardButton("Logo Gen Feature", callback_data='logogen_help'),
         ],
         [
-            InlineKeyboardButton("DocSpotter Commands", callback_data='doc_spotter_help'),
-            InlineKeyboardButton("ShiftX Commands", callback_data='shiftx_help'),
+            InlineKeyboardButton("DocSpotter Feature", callback_data='doc_spotter_help'),
+            InlineKeyboardButton("ShiftX Feature", callback_data='shiftx_help'),
         ],
         [
-            InlineKeyboardButton("RemoveBG Commands", callback_data='removebg_help'),
-            InlineKeyboardButton("Info Commands", callback_data='info_help'),
+            InlineKeyboardButton("RemoveBG Feature", callback_data='removebg_help'),
+            InlineKeyboardButton("Info Feature", callback_data='info_help'),
         ],
         [
-            InlineKeyboardButton("Commit Detector Commands", callback_data='commit_detector_help'),
+            InlineKeyboardButton("Commit Detector Feature", callback_data='commit_detector_help'),
+            InlineKeyboardButton("IMDb Feature", callback_data='imdb_help'),
+        ],
+        [
+            InlineKeyboardButton("Clonegram Feature", callback_data='clonegram_help'),
             InlineKeyboardButton("Misc Commands", callback_data='misc'),
         ],
     ]
@@ -244,7 +248,41 @@ To check your Remove.bg API usage, use the command `/rbgusage`.
 Example: `/rbgusage`
 
 [Echo-Verse♾️](https://t.me/Echo_AIO)
+""",
+   'imdb_help' : """🔶*Welcome to the IMDb Plugin! Here's how you can start using it:*
+
+*Performing a Search* 🔎
+
+1. *Initiate Search*: To search for a movie or TV series, use the `/imdb` command followed by the name of the movie or series. For example: `/imdb Inception`
+2. *View Results*: After a short moment, the bot will display the top 10 matching results for your query.
+3. *Select a Result*: Click on the inline button corresponding to the movie or series you're interested in. 
+
+_Tips_ ✔️
+
+- *Search Again*: You can perform another search at any time by using the `/imdb` command followed by your new query.
+- *Help and Support*: If you encounter any issues or have questions, Visit @ECHO_Support_Unit
+
+Enjoy the IMDb Plugin!
+
+[Echo-Verse♾️](https://t.me/Echo_AIO)
+""",
+   'clonegram_help' : """🔷*Welcome to the Clonegram Plugin! Here's how you can start using it:*
+
+*Setup a Task* ⚙️
+
+🔶 *Initiate Set up*: Simply send /clonegram and fallow the guide provide by the bot. 
+🔶 In this step you need to provide source chat id , destination chat id (Use /info command to find your chats ids), clone type and media types
+🔶 After successful setup bot will start to clone you source chat to destination chat
+
+_Tips_ ✔️
+
+Admin Role is required for channels. But for groups, it's not necessary if the bot's 'Group Privacy' is disabled in @BotFather. Contect the deployed person to know about that
+
+Enjoy the Clonegram Plugin!
+
+[Echo-Verse♾️](https://t.me/Echo_AIO)
 """
+        
     }
 
     # Get the message for the clicked button
@@ -298,31 +336,35 @@ Echo the Multifunctional User assistant has arrived to save your schedule and ma
 def get_inline_keyboard_for_category(category):
     keyboard = [
         [
-            InlineKeyboardButton("Basic Commands", callback_data='basic'),
-            InlineKeyboardButton("Reminder Commands", callback_data='reminder'),
+            InlineKeyboardButton("Basics", callback_data='basic'),
+            InlineKeyboardButton("Reminder Feature", callback_data='reminder'),
         ],
         [
-            InlineKeyboardButton("Gemini AI Commands", callback_data='gemini'),
-            InlineKeyboardButton("Broad/Schedu cast Commands", callback_data='brsc'),
+            InlineKeyboardButton("Gemini AI Feature", callback_data='gemini'),
+            InlineKeyboardButton("Broad/Schedu cast Features", callback_data='brsc'),
         ],
         [
-            InlineKeyboardButton("ChatBot Commands", callback_data='chatbot_help'),
-            InlineKeyboardButton("Calculator Commands", callback_data='calculator_help'),
+            InlineKeyboardButton("ChatBot Feature", callback_data='chatbot_help'),
+            InlineKeyboardButton("Calculator Feature", callback_data='calculator_help'),
         ],
         [
-            InlineKeyboardButton("Telegraph Commands", callback_data='tgphup'),
-            InlineKeyboardButton("Logo Gen Commands", callback_data='logogen_help'),
+            InlineKeyboardButton("Telegraph Feature", callback_data='tgphup'),
+            InlineKeyboardButton("Logo Gen Feature", callback_data='logogen_help'),
         ],
         [
-            InlineKeyboardButton("DocSpotter Commands", callback_data='doc_spotter_help'),
-            InlineKeyboardButton("ShiftX Commands", callback_data='shiftx_help'),
+            InlineKeyboardButton("DocSpotter Feature", callback_data='doc_spotter_help'),
+            InlineKeyboardButton("ShiftX Feature", callback_data='shiftx_help'),
         ],
         [
-            InlineKeyboardButton("RemoveBG Commands", callback_data='Removebg_help'),
-            InlineKeyboardButton("Info Commands", callback_data='info_help'),
+            InlineKeyboardButton("RemoveBG Feature", callback_data='removebg_help'),
+            InlineKeyboardButton("Info Feature", callback_data='info_help'),
         ],
         [
-            InlineKeyboardButton("Commit Detector Commands", callback_data='commit_detector_help'),
+            InlineKeyboardButton("Commit Detector Feature", callback_data='commit_detector_help'),
+            InlineKeyboardButton("IMDb Feature", callback_data='imdb_help'),
+        ],
+        [
+            InlineKeyboardButton("Clonegram Feature", callback_data='clonegram_help'),
             InlineKeyboardButton("Misc Commands", callback_data='misc'),
         ],
     ]

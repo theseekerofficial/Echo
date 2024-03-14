@@ -171,6 +171,8 @@ def plugin_status_callback(update: Update, context: CallbackContext) -> None:
         "SHIFTX_PLUGIN": "ShiftX Converter",
         "REMOVEBG_PLUGIN": "Background Remover",
         "REMOVEBG_API": "Global API for Background Remover",
+        "IMDb_PLUGIN": "IMDb Movie/TV Show Finder",
+        "CLONEGRAM_PLUGIN": "Chat Cloner [Clonegram]",
         "DS_IMDB_ACTIVATE": "IMDb in DS",
         "GH_CD_URLS": "Commit Detector"
     }
