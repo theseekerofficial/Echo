@@ -1,5 +1,6 @@
 import os
 import logging
+import requests
 from imdb import IMDb
 from bson import ObjectId
 from pymongo import MongoClient
@@ -18,9 +19,14 @@ db = client["Echo_Doc_Spotter"]
 echo_db = client["Echo"]
 imdb = IMDb()  # IMDb instance
 
-# Environment variable for IMDb feature activation
 DS_IMDB_ACTIVATE_str = get_env_var_from_db('DS_IMDB_ACTIVATE')
 DS_IMDB_ACTIVATE = DS_IMDB_ACTIVATE_str.lower() == 'true' if DS_IMDB_ACTIVATE_str else False
+
+DS_URL_BUTTONS_str = get_env_var_from_db('DS_URL_BUTTONS')
+DS_URL_BUTTONS = DS_URL_BUTTONS_str.lower() == 'true' if DS_URL_BUTTONS_str else False
+
+AD_SHORTNER_API = get_env_var_from_db('URL_SHORTNER_API')
+AD_SHORTNER = get_env_var_from_db('URL_SHORTNER')
 
 PAGE_SIZE = 10
 doc_spotter_plugin_enabled = None
@@ -138,22 +144,53 @@ def listen_to_groups(update: Update, context: CallbackContext):
             context.bot.delete_message(chat_id=update.message.chat.id, message_id=loading_message.message_id)
             update.message.reply_text("No matching files found.")
 
+def get_short_url(long_url):
+    if not AD_SHORTNER_API or not AD_SHORTNER:
+        return long_url  
+
+    # Ensure the long URL is properly URL encoded
+    encoded_long_url = requests.utils.quote(long_url)
+
+    # Construct the API URL for shortening
+    api_url = f"{AD_SHORTNER}/api?api={AD_SHORTNER_API}&url={encoded_long_url}&format=text"
+
+    try:
+        response = requests.get(api_url)
+        response.raise_for_status()  # Raises an HTTPError if the response status code is 4XX/5XX
+        shortened_url = response.text
+        return shortened_url.strip()  # Remove any leading/trailing whitespace
+    except requests.RequestException as e:
+        print(f"Failed to shorten URL: {e}")
+        return long_url  # Return the original URL in case of any error
+
 def display_page_buttons(update, context, results, page, user_id, imdb_info=None, photo_url=None, is_pagination=False):
     chat_id = update.effective_chat.id
     message_sender_user_id = update.message.from_user.id
     total_pages = (len(results) + PAGE_SIZE - 1) // PAGE_SIZE
     start_index = page * PAGE_SIZE
     end_index = min(start_index + PAGE_SIZE, len(results))
+    original_group_id = update.effective_chat.id
 
+    bot_username = context.bot.get_me().username
     buttons = []
-    for result in results[start_index:end_index]:
-        file_name = result["file_name"]
-        file_size = format_file_size(result.get("file_size", 0))
-        quality = extract_quality(file_name)
-        quality_and_size = f"[{file_size}/{quality}]" if quality else f"[{file_size}]"
-        file_name_display = f"{quality_and_size} {file_name}"
-        doc_id = f"dse_{result['_id']}_{message_sender_user_id}"  # Modify this line
-        buttons.append([InlineKeyboardButton(text=file_name_display, callback_data=doc_id)])
+
+    if DS_URL_BUTTONS:
+        for result in results[start_index:end_index]:
+            file_id = str(result['_id'])
+            doc_id = f"{file_id}_{message_sender_user_id}"
+            long_url = f"https://t.me/{bot_username}?start=file_{doc_id}_{original_group_id}"
+            short_url = get_short_url(long_url)  
+            file_name_display = f"{result['file_name']}"
+            buttons.append([InlineKeyboardButton(text=file_name_display, url=short_url)])
+    else:
+        for result in results[start_index:end_index]:
+            file_name = result["file_name"]
+            file_size = format_file_size(result.get("file_size", 0))
+            quality = extract_quality(file_name)
+            quality_and_size = f"[{file_size}/{quality}]" if quality else f"[{file_size}]"
+            file_name_display = f"{quality_and_size} {file_name}"
+            doc_id = f"dse_{result['_id']}_{message_sender_user_id}"  # Modify this line
+            buttons.append([InlineKeyboardButton(text=file_name_display, callback_data=doc_id)])
 
     # Include the page count display
     page_count_button = InlineKeyboardButton(f"{page + 1}/{total_pages}", callback_data="noop")
@@ -195,6 +232,44 @@ def display_page_buttons(update, context, results, page, user_id, imdb_info=None
             context.bot.send_photo(chat_id=chat_id, photo=photo, caption=caption, reply_markup=reply_markup)
     logging.info(f"✅ User {update.effective_user.id} received IMDB info and poster for '{update.message.text}' in chat {update.message.chat.id}")
 
+def send_file_to_user(chat_id, doc_id, original_group_id, context):
+    user_id = find_user_by_group(original_group_id)  
+    
+    if not user_id:
+        logging.error(f"Could not find user ID for group ID: {original_group_id}")
+        context.bot.send_message(chat_id=chat_id, text="Sorry, there was an error processing your request. Could not determine user ID.")
+        return
+    
+    collection_name = f"DS_collection_{user_id}"
+    collection = db[collection_name]
+
+    try:
+        # Ensure the doc_id is a valid ObjectId
+        file_document = collection.find_one({"_id": ObjectId(doc_id)})
+
+        if file_document:
+            file_id = file_document.get('file_id')
+            file_name = file_document.get('file_name')
+            file_type = file_document.get('file_type')
+            caption = file_document.get('caption', '')
+            
+            # Send the file based on its type
+            if file_type == 'photo':
+                context.bot.send_photo(chat_id=chat_id, photo=file_id, caption=caption)
+            elif file_type == 'video':
+                context.bot.send_video(chat_id=chat_id, video=file_id, caption=caption)
+            elif file_type == 'audio':
+                context.bot.send_audio(chat_id=chat_id, audio=file_id, caption=caption)
+            else:  
+                context.bot.send_document(chat_id=chat_id, document=file_id, caption=caption)
+        else:
+            # Handle the case where the document is not found
+            context.bot.send_message(chat_id=chat_id, text="Sorry, the requested file could not be found.")
+    except Exception as e:
+        # Log or handle any errors encountered
+        logging.error(f"Error sending file to user: {e}")
+        context.bot.send_message(chat_id=chat_id, text="Sorry, there was an error processing your request.")
+        
 def format_file_size(size_in_bytes):
     # Convert file size from bytes to a readable format (KB, MB, GB)
     if size_in_bytes < 1024:
@@ -301,7 +376,7 @@ def handle_pagination(update, context, target_page, user_id, message_sender_user
 
     if results:
         # Pass the `query.from_user.id` as `message_sender_user_id`
-        reply_markup = generate_buttons_for_page(results, target_page, user_id, message_sender_user_id)
+        reply_markup = generate_buttons_for_page(update, context, results, target_page, user_id, message_sender_user_id)
 
         # Proceed to update the message or send a new message based on the results
         if 'imdb_info' in context.user_data:
@@ -317,21 +392,33 @@ def handle_pagination(update, context, target_page, user_id, message_sender_user
         query.edit_message_text(text="No documents found for this page.")
     query.answer()
 
-def generate_buttons_for_page(results, page, user_id, message_sender_user_id):
+def generate_buttons_for_page(update, context, results, page, user_id, message_sender_user_id):
     PAGE_SIZE = 10
     total_pages = (len(results) + PAGE_SIZE - 1) // PAGE_SIZE
     start_index = page * PAGE_SIZE
     end_index = min(start_index + PAGE_SIZE, len(results))
+    original_group_id = update.effective_chat.id
 
+    bot_username = context.bot.get_me().username
     buttons = []
-    for result in results[start_index:end_index]:
-        file_name = result["file_name"]
-        file_size = format_file_size(result.get("file_size", 0))
-        quality = extract_quality(file_name)
-        quality_and_size = f"[{file_size}/{quality}]" if quality else f"[{file_size}]"
-        file_name_display = f"{quality_and_size} {file_name}"
-        doc_id = f"dse_{str(result['_id'])}_{message_sender_user_id}"
-        buttons.append([InlineKeyboardButton(text=file_name_display, callback_data=doc_id)])
+
+    if DS_URL_BUTTONS:
+        for result in results[start_index:end_index]:
+            file_id = str(result['_id'])
+            doc_id = f"{file_id}_{message_sender_user_id}"
+            long_url = f"https://t.me/{bot_username}?start=file_{doc_id}_{original_group_id}"
+            short_url = get_short_url(long_url)  
+            file_name_display = f"{result['file_name']}"
+            buttons.append([InlineKeyboardButton(text=file_name_display, url=short_url)])
+    else:
+        for result in results[start_index:end_index]:
+            file_name = result["file_name"]
+            file_size = format_file_size(result.get("file_size", 0))
+            quality = extract_quality(file_name)
+            quality_and_size = f"[{file_size}/{quality}]" if quality else f"[{file_size}]"
+            file_name_display = f"{quality_and_size} {file_name}"
+            doc_id = f"dse_{str(result['_id'])}_{message_sender_user_id}"
+            buttons.append([InlineKeyboardButton(text=file_name_display, callback_data=doc_id)])
 
     # Include the page count display
     page_count_button = InlineKeyboardButton(f"{page + 1}/{total_pages}", callback_data="noop")

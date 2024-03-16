@@ -174,6 +174,7 @@ def plugin_status_callback(update: Update, context: CallbackContext) -> None:
         "IMDb_PLUGIN": "IMDb Movie/TV Show Finder",
         "CLONEGRAM_PLUGIN": "Chat Cloner [Clonegram]",
         "DS_IMDB_ACTIVATE": "IMDb in DS",
+        "DS_URL_BUTTONS": "URL Buttons for Doc Spotter",
         "GH_CD_URLS": "Commit Detector"
     }
 

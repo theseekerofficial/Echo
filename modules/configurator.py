@@ -62,6 +62,8 @@ def load_and_store_env_vars():
         "AUTHORIZED_USERS": os.getenv("AUTHORIZED_USERS"),
         "SCEDUCAST_TIMEZONE": os.getenv("SCEDUCAST_TIMEZONE"),
         "SCEDUCAST_TIME_OFFSET": os.getenv("SCEDUCAST_TIME_OFFSET"),
+        "URL_SHORTNER": os.getenv("URL_SHORTNER"),
+        "URL_SHORTNER_API": os.getenv("URL_SHORTNER_API"),
         "GEMINI_PLUGIN": os.getenv("GEMINI_PLUGIN"),
         "CHAT_BOT_PLUGIN": os.getenv("CHAT_BOT_PLUGIN"),
         "GEMINI_IMAGE_PLUGIN": os.getenv("GEMINI_IMAGE_PLUGIN"),
@@ -76,6 +78,7 @@ def load_and_store_env_vars():
         "IMDb_PLUGIN": os.getenv("IMDb_PLUGIN"),
         "CLONEGRAM_PLUGIN": os.getenv("CLONEGRAM_PLUGIN"),
         "DS_IMDB_ACTIVATE": os.getenv("DS_IMDB_ACTIVATE"),
+        "DS_URL_BUTTONS": os.getenv("DS_URL_BUTTONS"),
         "GH_CD_URLS": os.getenv("GH_CD_URLS"),
         "GH_CD_CHANNEL_IDS": os.getenv("GH_CD_CHANNEL_IDS"),
         "GH_CD_PAT": os.getenv("GH_CD_PAT"),
@@ -88,19 +91,16 @@ def load_and_store_env_vars():
         "REMOVEBG_API": os.getenv("REMOVEBG_API")
     }
 
-    create_configs_collection()  # Create the "configs" collection if it doesn't exist
+    create_configs_collection() 
 
     client = MongoClient(os.getenv("MONGODB_URI"))
     db = client.get_database("Echo")
     configs_collection = db["configs"]
 
     for key, value in env_vars.items():
-        # Check if the key already exists in the database
         if configs_collection.count_documents({"key": key}) == 0:
-            # If the key does not exist, insert it with its value
             configs_collection.insert_one({"key": key, "value": value})
         else:
-            # If the key already exists, skip to the next one
             logger.info(f"Skipping {key} as it already exists in the database.")
 
     logger.info("Environment variables have been checked and updated in MongoDB.")
@@ -165,6 +165,8 @@ def get_unique_message_for_env(key):
         "AUTHORIZED_USERS": "🛡️ List of user IDs to give access to Echo's some features.\n\n<b>Required [🔴]</b>\n<b>For new changes, Restart:</b> <u><i>Required</i></u>",
         "SCEDUCAST_TIMEZONE": "🌐 Timezone setting for Sceducast, Your Scheducast will set based on this\n\n<b>Required [🔴]</b>\n<b>For new changes, Restart:</b> <u><i>Required</i></u>",
         "SCEDUCAST_TIME_OFFSET": "⏳ Offset in hours for Sceducast scheduling. Refer Readme for more info adjusting for time zones.\n\n<b>Required [🔴]</b>\n<b>For new changes, Restart:</b> <u><i>Required</i></u>",
+        "URL_SHORTNER": "Your Ad Shortner Domain with <code>https://</code>\n\nE.g. <code>https://atglinks.com</code>\n\n<i>Suppoerted Shortners: <code>atglinks.com, exe.io, gplinks.in, shrinkme.io, urlshortx.com, shortzon.com, shorte.st, ouo.io</code></i>\n\n<b>Optional [🟩]</b>\n<b>For new changes, Restart:</b> <u><i>Required</i></u>",
+        "URL_SHORTNER_API": "Your Ad Shortner API\n\n<i>Suppoerted Shortners: <code>atglinks.com, exe.io, gplinks.in, shrinkme.io, urlshortx.com, shortzon.com, shorte.st, ouo.io</code></i>\n\n<b>Optional [🟩]</b>\n<b>For new changes, Restart:</b> <u><i>Required</i></u>",
         "GEMINI_PLUGIN": "🔌 Enable or Disable Gemini Plugin\n\n<b>Optional [🟩]</b>\n<b>For new changes, Restart:</b> <u><i>Required</i></u>",
         "CHAT_BOT_PLUGIN": "🔌 Enable or Disable Chatbot Plugin\n\n<b>Optional [🟩]</b>\n<b>For new changes, Restart:</b> <u><i>Required</i></u>",
         "GEMINI_IMAGE_PLUGIN": "🔌 Enable or Disable Gemini Image Analyze Plugin\n\n<b>Optional [🟩]</b>\n<b>For new changes, Restart:</b> <u><i>Not Required</i></u>",
@@ -188,7 +190,8 @@ def get_unique_message_for_env(key):
         "SHIFTX_AAC_TO_MP3_BITRATE": "🔊 Set a quality for AAC to MP3 Outputs.\n\n<code>Set a value among 128k, 192k, 256k, 320k</code>\n\n<b>Optional [🟩]</b>\n<b>For new changes, Restart:</b> <u><i>Required</i></u>",
         "SHIFTX_OGG_TO_MP3_QUALITY": "🔊 Set quality for OGG to MP3 Outputs.\n\n<code>Set a value from 0 to 9</code>\n\n<b>Optional [🟩]</b>\n<b>For new changes, Restart:</b> <u><i>Required</i></u>",
         "SHIFTX_MP3_TO_OGG_QUALITY": "🔊 Set quality for MP3 to OGG Outputs.\n\n<code>Set a value from -1 to 10</code>\n\n<b>Optional [🟩]</b>\n<b>For new changes, Restart:</b> <u><i>Required</i></u>",
-        "REMOVEBG_API": "🔊 Set Global API Key for RemoveBG Plugin.\n\n<i>Gen an API Key from https://www.remove.bg/dashboard#api-key</i>\n\n<b>Optional [🟩]</b>\n<b>For new changes, Restart:</b> <u><i>Required</i></u>"
+        "REMOVEBG_API": "🔊 Set Global API Key for RemoveBG Plugin.\n\n<i>Gen an API Key from https://www.remove.bg/dashboard#api-key</i>\n\n<b>Optional [🟩]</b>\n<b>For new changes, Restart:</b> <u><i>Required</i></u>",
+        "DS_URL_BUTTONS": "Enable or Desable URL buttons for Doc Spotter\n\n<b>Optional [🟩]</b>\n<b>For new changes, Restart:</b> <u><i>Required</i></u>"
     }
 
     return unique_messages.get(key, "<b>Please fill in the environment variables accordingly. Refer to the README for more information about these variables.</b>")

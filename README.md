@@ -1,4 +1,4 @@
-# ECHO v1.1.3 UX1 #IM #NF (Improvements/New Features)
+# ECHO v1.1.4 JD4 #IM (Improvements)
 
 <p align="center">
     <a href="https://github.com/theseekerofficial/Echo">
@@ -149,6 +149,8 @@
       
 19. **Doc Spotter (Advanced Auto Filtering)**
     - Are you an admin that has a movie group? This plugin is for you.🫵
+    - Enabled ability to Switch beteen Inline buttons to Inline URL Buttons 🦘
+    - Ad Shortner Support for links 🫰💸
     - Feel the power of DocSpotter Plugin 💪
         - Multiple F-Sub chats (Channels or Groups)
         - IMDB info and poster fetching
@@ -315,39 +317,53 @@ This section provides detailed information on the required environment variables
    - Description: Set True or Flase to Enable or Disable IMDb Poster and Info in Doc Spotter Button List message
    - Example: `DS_IMDB_ACTIVATE=True`
      
-2. **GH_CD_URLS** [🟩 (Required if GH_CD_CHANNEL_IDS ENV was Filled)]
+2. **DS_URL_BUTTONS** [🟩 (Required to be True for URL Shortner feature to work)]
+   - Description: Set True or Flase to Enable or Disable URL Buttons for Result list in DS Plugin | `This ENV needs to set True for URL Shortner feature to work`
+   - Example: `DS_URL_BUTTONS=True`
+     
+3. **URL_SHORTNER** 
+   - Fill your shortener's domain.
+   - Supported Shortners: `atglinks.com, exe.io, gplinks.in, shrinkme.io, urlshortx.com, shortzon.com, shorte.st, ouo.io`
+   - Example: `URL_SHORTNER=https://atglinks.com`
+     
+4. **URL_SHORTNER_API**
+   - Description: Fill your shortener's api.
+   - Supported Shortners: `atglinks.com, exe.io, gplinks.in, shrinkme.io, urlshortx.com, shortzon.com, shorte.st, ouo.io`
+   - Example: `URL_SHORTNER_API=dhoyj96oh4j50j90j5uy3g40y045h32tr473g4t804t`
+     
+5.  **GH_CD_URLS** [🟩 (Required if GH_CD_CHANNEL_IDS ENV was Filled)]
    - Description: Fill in the repo URL in the format theseekerofficial/Echo.
    - Example: `GH_CD_URLS=theseekerofficial/Echo`
   
-3. **GH_CD_CHANNEL_IDS** [🟩 (Required if GH_CD_URLS ENV was Filled)]
+6. **GH_CD_CHANNEL_IDS** [🟩 (Required if GH_CD_URLS ENV was Filled)]
    - Description: Add the Channel ID(s)/Group ID(s) that you need to post-commit update.
    - Example: `GH_CD_CHANNEL_IDS=-100123456789`
 
-4. **GH_CD_PAT** [🟩]
+7. **GH_CD_PAT** [🟩]
    - Description: Your GitHub Personal Authorization Token for 5000 requests per hour API calls.
    - Example: `GH_CD_CHANNEL_IDS=ujb32uvb579g29824t89v245h8`
 
-5. **ENABLE_GLOBAL_G_API** [🟩]
+8. **ENABLE_GLOBAL_G_API** [🟩]
    - Description: Enable Global API for AI-related features (True or False)
    - Example: `ENABLE_GLOBAL_G_API=True`
   
-6. **GLOBAL_G_API** [🟩]
+9. **GLOBAL_G_API** [🟩]
    - Description: Add your API key from [Google AI Studios](https://aistudio.google.com/app/apikey)
    - Example: `GLOBAL_G_API=urwgui598t42598bgt589t5`
      
-7. **SHIFTX_MP3_TO_AAC_BITRATE** [🟩]
+10. **SHIFTX_MP3_TO_AAC_BITRATE** [🟩]
    - Description: Set a quality for MP3 to AAC Outputs. Set a value among 128k, 192k, 256k, 320k | 128k = Lowest quality, smallest file size / 320k = highest quality, largest file size.
    - Example: `SHIFTX_MP3_TO_AAC_BITRATE=192k`
 
-8. **SHIFTX_AAC_TO_MP3_BITRATE** [🟩]
+11. **SHIFTX_AAC_TO_MP3_BITRATE** [🟩]
    - Description: Set a quality for ACC to MP3 Outputs. Set a value among 128k, 192k, 256k, 320k | 128k = Lowest quality, smallest file size / 320k = highest quality, largest file size.
    - Example: `SHIFTX_AAC_TO_MP3_BITRATE=256k`
   
-9. **SHIFTX_OGG_TO_MP3_QUALITY** [🟩]
+11. **SHIFTX_OGG_TO_MP3_QUALITY** [🟩]
    - Description: Set a quality for OGG to MP3 Outputs. Set a value from 0 to 9 | 9 = Lowest quality, smallest file size / 0 = highest quality, largest file size.
    - Example: `SHIFTX_OGG_TO_MP3_QUALITY=5`
   
-10. **SHIFTX_MP3_TO_OGG_QUALITY** [🟩]
+11. **SHIFTX_MP3_TO_OGG_QUALITY** [🟩]
    - Description: Set a quality for MP3 to OGG Outputs. Set a value from -1 to 10 | -1 = Lowest quality, smallest file size / 10 = highest quality, largest file size.
    - Example: `SHIFTX_MP3_TO_OGG_QUALITY=4`
      

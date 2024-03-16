@@ -50,8 +50,8 @@ from plugins.commit_detector.commit_detector import setup_commit_detector
 from plugins.scheducast.scheducast_check import check_scheduled_broadcasts
 from plugins.clonegram.clonegram_indexer import register_clonegram_handlers
 from plugins.gemini.gemini_chat_bot import toggle_chatbot, handle_chat_message
-from plugins.doc_spotter.doc_spotter_executor import setup_ds_executor_dispatcher
 from plugins.telegraph.telegraph_up import setup_dispatcher as setup_telegraph_up
+from plugins.doc_spotter.doc_spotter_executor import setup_ds_executor_dispatcher, send_file_to_user
 from plugins.gemini.gemini import handle_gemini_command, handle_mygapi_command, handle_delmygapi_command, handle_showmygapi_command, analyze4to_handler
 
 creator_credits = """🎨 Creator and Developer of Echo 🎨
@@ -137,26 +137,24 @@ def start(update: Update, context: CallbackContext) -> None:
     chat_id = update.message.chat_id
     user = update.message.from_user
     chat = update.message.chat
+    args = context.args  
 
-    # User info common to both private and group chats
     username = f"@{user.username}" if user.username else None
     user_info = {
         'user_id': user.id,
         'chat_id': user.id,
         'telegram_name': user.full_name,
         'telegram_username': username,
-        'is_user': True,  # Flag to distinguish user records
+        'is_user': True,  
         'bot_start_time': datetime.now(),
     }
 
-    # Check if user document exists; if not, insert it
     user_and_chat_data_collection.update_one(
         {'user_id': user.id, 'is_user': True},
         {'$set': user_info},
         upsert=True
     )
 
-    # If the command is issued in a group, record the group's info separately
     if chat.type in ['group', 'supergroup']:
         group_info = {
             'chat_id': chat_id,
@@ -172,7 +170,19 @@ def start(update: Update, context: CallbackContext) -> None:
         )
 
     # Welcome message setup
-    start_photo_path = "assets/start.jpeg"  # Adjust path as necessary
+    start_photo_path = "assets/start.jpeg"  
+    if chat.type == 'private' and args:
+        start_param = args[0]
+        if start_param.startswith('file_'):
+            parts = start_param.split('_')
+            if len(parts) == 4:
+                file, doc_id, message_sender_user_id, original_group_id = parts
+                send_file_to_user(chat_id, doc_id, original_group_id, context)
+                return
+            else:
+                context.bot.send_message(chat_id=chat_id, text="The request seems to be invalid.")
+                return
+                
     if chat.type == 'private':
         start_caption = '🕊*Step into the world of Echo, where modern Telegram experiences are crafted. Let Echo be your guide to a new dimension of communication and convenience. Welcome to the Echo experience!*\n\n*Echo is your trusty sidekick. Need a nudge? /setreminder is your jam.*'
     else:
@@ -185,7 +195,6 @@ def start(update: Update, context: CallbackContext) -> None:
     ]
     reply_markup = InlineKeyboardMarkup(keyboard)
 
-    # Send the welcome message with a photo
     context.bot.send_photo(
         chat_id=chat_id,
         photo=open(start_photo_path, "rb"),
