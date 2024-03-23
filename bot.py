@@ -22,11 +22,13 @@ from datetime import datetime, timezone, timedelta
 from ringtone_manager import send_ringtones 
 from reminders_manager import show_user_reminders
 
-from telegram.ext import Updater, CommandHandler, MessageHandler, CallbackContext, Filters, CallbackQueryHandler
+from telegram.ext import Updater, CommandHandler, MessageHandler, CallbackContext, Filters, CallbackQueryHandler, BaseFilter
 from telegram import Update, ParseMode, Message, User, Chat, BotCommand, BotCommandScopeDefault, Bot, InlineKeyboardButton, InlineKeyboardMarkup
 
+from modules.token_system import TokenSystem
 from modules.set_my_info import setup_bot_info
 from modules.utilities.users import show_users
+from modules.utilities.paid_users import paid_users_handlers
 from modules.utilities.database_info import database_command
 from modules.utilities.info_fetcher import register_id_command
 from modules.encrypted_data import encrypted_creator_info, decrypt
@@ -68,7 +70,6 @@ For inquiries and collaborations, please contact:
 For support and community engagement, join our support group:
 👥 Support Group: https://t.me/ECHO_Support_Unit"""
 
-# Load environment variables from config.env file
 dotenv_path = os.path.join(os.path.dirname(__file__), 'config.env')
 load_dotenv(dotenv_path)
 
@@ -84,6 +85,7 @@ logger = logging.getLogger(__name__)
 # Assign the environment variables to variables
 TOKEN = get_env_var_from_db("TOKEN")
 MONGODB_URI = os.getenv("MONGODB_URI")
+TOKEN_RESET_TIME = os.getenv("TOKEN_RESET_TIME")
 REMINDER_CHECK_TIMEZONE = get_env_var_from_db("REMINDER_CHECK_TIMEZONE")
 
 # log the environment variables
@@ -125,7 +127,6 @@ def send_post_restart_message(bot: Bot):
     status_record = db.update_status.find_one({'_id': 'restart_status'})
 
     if status_record and 'status' in status_record:
-        # Fetch OWNER from the MongoDB database
         owner_str = get_env_var_from_db("OWNER")
         owners = owner_str.split(",") if owner_str else []
 
@@ -160,7 +161,7 @@ def start(update: Update, context: CallbackContext) -> None:
             'chat_id': chat_id,
             'group_name': chat.title,
             'group_username': chat.username if chat.username else None,
-            'is_group': True,  # Flag to distinguish group records
+            'is_group': True, 
             'bot_added_time': datetime.now(),
         }
         user_and_chat_data_collection.update_one(
@@ -171,10 +172,25 @@ def start(update: Update, context: CallbackContext) -> None:
 
     # Welcome message setup
     start_photo_path = "assets/start.jpeg"  
+
     if chat.type == 'private' and args:
-        start_param = args[0]
-        if start_param.startswith('file_'):
-            parts = start_param.split('_')
+        token = args[0]
+        token_record = token_system.collection.find_one({'token': token, 'user_id': user.id})
+        if token_record:
+            if token_system.collection.find_one({'used': False, 'user_id': user.id}):
+                token_system.collection.update_one(
+                    {'used': False, 'user_id': user.id},
+                    {'$set': {'token': token, 'created_at': datetime.now(), 'activation_pending': False, 'used': True}},
+                    upsert=True
+                )
+                update.message.reply_html(f"Your Token Activated Successfully ✅\n\nExpire Time: <code>Exactly {int(TOKEN_RESET_TIME)/3600:.3f} hour(s) from right now.</code>\nToken: <code>{token}</code>")
+                return
+            else:
+                update.message.reply_html(f"⚠️Invalid token or Same Token Reused. Please generate new token") 
+                return
+            
+        elif args[0].startswith('file_'):
+            parts = args[0].split('_')
             if len(parts) == 4:
                 file, doc_id, message_sender_user_id, original_group_id = parts
                 send_file_to_user(chat_id, doc_id, original_group_id, context)
@@ -202,6 +218,19 @@ def start(update: Update, context: CallbackContext) -> None:
         parse_mode=ParseMode.MARKDOWN,
         reply_markup=reply_markup
     )
+
+BOT_USERNAME = None
+
+class FilterBotAdded(BaseFilter):
+    def __call__(self, update):
+        global BOT_USERNAME
+        if update.message and update.message.new_chat_members:
+            return any(member.username == BOT_USERNAME for member in update.message.new_chat_members)
+        return False
+
+def welcome_message(update, context):
+    chat_id = update.effective_chat.id
+    context.bot.send_message(chat_id=chat_id, text="🔷 Thanks for having me in your group. Send /start to register this group in my database.")
 
 # HTTP server code
 class SimpleHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
@@ -364,45 +393,48 @@ def reminder_reaction_button_callback(update: Update, context: CallbackContext) 
     query.edit_message_text(text=f"#Reminder: {query.message.text.split(':', 1)[1]}",
                             reply_markup=InlineKeyboardMarkup([[noop_button]]))
 
-# Function to handle the /myreminders command
 def show_my_reminders(update: Update, context: CallbackContext) -> None:
     user_id = update.message.from_user.id
-
-    # Check if there is an existing document for the user in the user_timezones collection
     user_timezone_record = db.user_timezones.find_one({'user_id': user_id}, {'timezone': 1})
     user_timezone = user_timezone_record['timezone'] if user_timezone_record else None
-
-    # Set the timezone to user's timezone if available; otherwise, use the global timezone
     target_timezone = pytz.timezone(user_timezone) if user_timezone else pytz.timezone(REMINDER_CHECK_TIMEZONE)
+    timezone_message = f'🌐 Your current timezone: *{user_timezone if user_timezone else REMINDER_CHECK_TIMEZONE}* 🕒'
 
-    # Display user's current timezone at the top of the message
-    timezone_message = f'🌐 Your current timezone: *{user_timezone}* 🕒' if user_timezone else f'🌐 Your current timezone: *{REMINDER_CHECK_TIMEZONE}* (Default) 🕒'
-
-    # Call the function to show user reminders
-    reminders = show_user_reminders(user_id)
-
+    reminders = list(db.reminders.find({'user_id': user_id}))
     if reminders:
-        messages = [timezone_message, '']  # Adding a line space after timezone message
+        messages = [timezone_message + '\n']
+        current_msg = ''
 
         for reminder in reminders:
             reminder_datetime = reminder["datetime"].astimezone(target_timezone)
-            time_remaining = reminder_datetime - datetime.now(pytz.timezone(REMINDER_CHECK_TIMEZONE))
+            time_remaining = reminder_datetime - datetime.now(target_timezone)
+            remaining_time_str = str(timedelta(seconds=round(time_remaining.total_seconds())))
+            recurring_info = f'Recurring: `{reminder["recurring"].capitalize()}`' if 'recurring' in reminder else '`One-time Reminder`'
 
-            # Format remaining time as days, hours, minutes, and seconds
-            remaining_time_str = str(timedelta(seconds=time_remaining.total_seconds()))
+            message = (f'📅 *{reminder["message"]}*'
+                        f'\n\tDate & Time - `{reminder_datetime.strftime("%Y-%m-%d %H:%M:%S")}`'
+                        f'\n\tRemaining Time - `{remaining_time_str}`'
+                        f'\n\t{recurring_info}'
+                        f'\n\n»»————-　★　-————««\n\n')
 
-            message = f'📅 *{reminder["message"]}*' \
-                      f'\n\tDate & Time - {reminder_datetime.strftime("%Y-%m-%d %H:%M:%S")}' \
-                      f'\n\tRemaining Time - {remaining_time_str}'
+            if len(current_msg + message) <= 4096:
+                current_msg += message
+            else:
+                messages.append(current_msg)
+                current_msg = message
 
-            messages.extend([message, ''])  # Add a line space after each reminder
+        # Append the last part of the message if it's not empty
+        if current_msg.strip():
+            messages.append(current_msg)
 
-        update.message.reply_text('\n'.join(messages), parse_mode=ParseMode.MARKDOWN)
+        for msg in messages:
+            if msg.strip():  # Check if the message is not just whitespace
+                update.message.reply_text(msg, parse_mode=ParseMode.MARKDOWN, disable_web_page_preview=True)
     else:
-        no_reminders_message = 'You have no reminders.'
-        if not user_timezone:
-            no_reminders_message += f'\n\n*Note:* You haven\'t set a custom timezone, so your reminders and other time-related activities are set to the global timezone (*{REMINDER_CHECK_TIMEZONE}*) 🌐.\n\n Use [This link](https://telegra.ph/Choose-your-timezone-02-16) to find you timezone easily🪄'
-        update.message.reply_text(no_reminders_message, parse_mode=ParseMode.MARKDOWN)
+        no_reminders_message = ('You have no reminders.'
+                                f'\n\n*Note:* You haven\'t set a custom timezone, so your reminders and other time-related activities are set to the global timezone (*{REMINDER_CHECK_TIMEZONE}*) 🌐.'
+                                '\n\n Use [This link](https://telegra.ph/Choose-your-timezone-02-16) to find your timezone easily🪄')
+        update.message.reply_text(no_reminders_message, parse_mode=ParseMode.MARKDOWN, disable_web_page_preview=True)
         
 # Function to set the user's time zone
 def set_timezone(update: Update, context: CallbackContext) -> None:
@@ -475,6 +507,8 @@ bot_commands = [
     BotCommand("rbgusage", "See your RemoveBG API Usage 📈"),
     BotCommand("moreinfo", "Get more information about the Echo🤓"),
     BotCommand("users", "[Only for Owner] Get user and group list that use Echo 👥"),
+    BotCommand("addpaid", "[Only for Owner] Add a paid user 💸"),
+    BotCommand("paid", "[Only for Owner] see paid user(s) info 📜"),
     BotCommand("overview", "See a stats report about Echo and Host Server 📝"),
     BotCommand("database", "Get database stats📊"),
     BotCommand("bsettings", "Config Echo! ⚙️"),
@@ -489,25 +523,25 @@ if __name__ == '__main__':
     http_server_thread = Thread(target=run_http_server)
     http_server_thread.start()
      
-    # Initialize the Updater with your bot token
     updater = Updater(TOKEN, use_context=True)
     dp = updater.dispatcher
-
+    
     from moreinfo_handler import more_info
     from modules.broadcast import register_handlers as broadcast_register_handlers, set_bot_variables as broadcast_set_bot_variables, handle_broadcast_message
 
-    # Retrieve user timezone from MongoDB or set it to REMINDER_CHECK_TIMEZONE
     default_timezone = db.user_timezones.find_one({'user_id': 0}, {'timezone': 1})
     dp.user_data['timezone'] = default_timezone['timezone'] if default_timezone else REMINDER_CHECK_TIMEZONE
-     
-    dp.add_handler(CommandHandler("start", start)) 
-    dp.add_handler(CommandHandler("sr", set_reminder))
-    dp.add_handler(CommandHandler("setreminder", start_reminder_creation))
-    dp.add_handler(CommandHandler("settimezone", set_timezone))
-    dp.add_handler(CommandHandler("myreminders", show_my_reminders))
-    dp.add_handler(CommandHandler("delreminder", handle_delreminder_command)) 
+
+    token_system = TokenSystem(os.getenv("MONGODB_URI"), "Echo", "user_tokens")
+    
+    dp.add_handler(CommandHandler("start", start))
     dp.add_handler(CommandHandler("help", help_command))
-    dp.add_handler(CommandHandler("ringtones", send_ringtones))
+    dp.add_handler(token_system.token_filter(CommandHandler("sr", set_reminder)))
+    dp.add_handler(token_system.token_filter(CommandHandler("setreminder", start_reminder_creation)))
+    dp.add_handler(token_system.token_filter(CommandHandler("settimezone", set_timezone)))
+    dp.add_handler(CommandHandler("myreminders", show_my_reminders))
+    dp.add_handler(CommandHandler("delreminder", handle_delreminder_command))
+    dp.add_handler(token_system.token_filter(CommandHandler("ringtones", send_ringtones)))
     dp.add_handler(CommandHandler("moreinfo", more_info))
     dp.add_handler(CommandHandler("editreminders", edit_reminders))
     dp.add_handler(MessageHandler(Filters.regex(r'^/editreminder_\w+$'), edit_specific_reminder))
@@ -519,16 +553,15 @@ if __name__ == '__main__':
     dp.add_handler(CommandHandler("restart", restart_command))
     dp.add_handler(CallbackQueryHandler(reminder_reaction_button_callback, pattern='^re_b_re_'))
 
-    gemini_handler = CommandHandler('gemini', handle_gemini_command)
-    dp.add_handler(gemini_handler)
+    dp.add_handler(token_system.token_filter(CommandHandler('gemini', handle_gemini_command)))
     dp.add_handler(CommandHandler("mygapi", handle_mygapi_command)) 
     dp.add_handler(CommandHandler("delmygapi", handle_delmygapi_command))
     dp.add_handler(CommandHandler("showmygapi", handle_showmygapi_command))
-    dp.add_handler(CommandHandler('analyze4to', analyze4to_handler))
-    dp.add_handler(CommandHandler("chatbot", toggle_chatbot))
+    dp.add_handler(token_system.token_filter(CommandHandler('analyze4to', analyze4to_handler)))
+    dp.add_handler(token_system.token_filter(CommandHandler("chatbot", toggle_chatbot)))
     dp.add_handler(MessageHandler((Filters.text & ~Filters.command) & (Filters.chat_type.private | Filters.chat_type.groups), handle_chat_message), group=5)
      
-    dp.add_handler(CommandHandler("logogen", handle_logogen, pass_args=True))
+    dp.add_handler(token_system.token_filter(CommandHandler("logogen", handle_logogen, pass_args=True)))
     dp.add_handler(CallbackQueryHandler(button, pattern=r"^(frame_|logo_|font_size_\d+)"))
 
     dp.add_handler(CallbackQueryHandler(bsettings_button_callback, pattern='^config_envs$'))
@@ -567,7 +600,7 @@ if __name__ == '__main__':
      
     from modules import broadcast 
     broadcast.register_handlers(dp)
-    dp.add_handler(CommandHandler("broadcast", handle_broadcast_message))
+    dp.add_handler(token_system.token_filter(CommandHandler("broadcast", handle_broadcast_message)))
 
     scheducast.setup_dispatcher(dp, db)     
 
@@ -582,15 +615,22 @@ if __name__ == '__main__':
     register_imdb_handlers(dp)
 
     register_clonegram_handlers(dp)
+
+    paid_users_handlers(dp)
+    
+    bot_info = updater.bot.get_me()
+    bot_name = bot_info.first_name
+    bot_username = bot_info.username
+
+    BOT_USERNAME = dp.bot.username
+    filter_bot_added = FilterBotAdded()
+    dp.add_handler(MessageHandler(filter_bot_added, welcome_message), group=10)
     
     dp.bot_data['start_time'] = datetime.now()
     
     # Start the Bot
     updater.start_polling()
 
-    bot_info = updater.bot.get_me()
-    bot_name = bot_info.first_name
-    bot_username = bot_info.username
     logger.info(f"{bot_name} [@{bot_username}] Started Successfully ✅. Have Some fun with Echo ✨")
     logger.info(f"PRODUCT OF TSSC | Creator: ꓄ꃅꍟ ꌗꍟꍟꀘꍟꋪ [@MrUnknown114]")
         

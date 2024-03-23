@@ -82,7 +82,8 @@ def handle_help_button_click(update, context: CallbackContext) -> None:
                 "/info - Get Info about specific User,Bot or Chat 📜\n"
                 "/users - See Echo using Users Chats list 📜\n"
                 "/database - See my mongoDB database stats📊\n"
-                "/moreinfo - Get more information about the bot.📚\n\n[Echo-Verse♾️](https://t.me/Echo_AIO)",
+                "/moreinfo - Get more information about the bot.📚\n"
+                "/addpaid - Add paid users\n/paid - See paid users\n\n[Echo-Verse♾️](https://t.me/Echo_AIO)",
             'brsc': """*Welcome to Echo's Announcement modules⚙️*\n\n"""
                  "/broadcast - Initiate a instant broadcast📢\n"
                  "/scheducast - Scheduled a broadcast for the future!🔮\n"

@@ -1,14 +1,17 @@
 import os
 import logging
 import requests
+from modules.token_system import TokenSystem
+from modules.token_system import TokenSystem
 from modules.configurator import get_env_var_from_db
 from telegram.ext import CallbackContext, CommandHandler
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 
-
 # Set up logging for this module
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+
+token_system = TokenSystem(os.getenv("MONGODB_URI"), "Echo", "user_tokens")
 
 def create_temp_directory(directory_name="temp_tgph_img"):
     if not os.path.exists(directory_name):
@@ -68,6 +71,6 @@ def upload_to_telegraph(update: Update, context: CallbackContext):
     else:
         update.message.reply_text("Telegraph Image Upload Plugin Disabled by the person who deployed this Echo Variant 💔")
 
-def setup_dispatcher(dispatcher):
+def setup_dispatcher(dispatcher):    
     clear_leftover_images()
-    dispatcher.add_handler(CommandHandler('uptotgph', upload_to_telegraph))
+    dispatcher.add_handler(token_system.token_filter(CommandHandler('uptotgph', upload_to_telegraph)))

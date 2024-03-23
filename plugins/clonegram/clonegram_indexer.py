@@ -2,6 +2,7 @@ import os
 import logging
 from bson import ObjectId
 from pymongo import MongoClient
+from modules.token_system import TokenSystem
 from modules.configurator import get_env_var_from_db
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update
 from plugins.clonegram.clonegram_executor import register_cg_executor_handlers
@@ -9,6 +10,8 @@ from telegram.ext import CallbackContext, CallbackQueryHandler, CommandHandler, 
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
+
+token_system = TokenSystem(os.getenv("MONGODB_URI"), "Echo", "user_tokens")
 
 MONGODB_URI = os.getenv("MONGODB_URI")
 client = MongoClient(MONGODB_URI)
@@ -188,8 +191,8 @@ def execute_task_deletion(update: Update, context: CallbackContext) -> None:
 def cancel_task_deletion(update: Update, context: CallbackContext) -> None:
     delete_clonegram_task(update, context)  
 
-def register_clonegram_handlers(dp):
-    dp.add_handler(CommandHandler('clonegram', clonegram_command))
+def register_clonegram_handlers(dp):    
+    dp.add_handler(token_system.token_filter(CommandHandler('clonegram', clonegram_command)))
     dp.add_handler(CallbackQueryHandler(setup_clonegram_task, pattern='^setup_clonegram_task$'))
     dp.add_handler(MessageHandler((Filters.text & ~Filters.command) & (Filters.chat_type.private | Filters.chat_type.groups), save_chat_id), group=8)
     dp.add_handler(CallbackQueryHandler(handle_clone_type_selection, pattern='^(forward_messages|clone_messages)$'))

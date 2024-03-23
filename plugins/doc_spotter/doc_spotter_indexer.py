@@ -1,6 +1,7 @@
 import os
 import logging
 from pymongo import MongoClient
+from modules.token_system import TokenSystem
 from modules.configurator import get_env_var_from_db
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update
 from telegram.ext import CallbackContext, CallbackQueryHandler, CommandHandler, Filters, MessageHandler, Updater
@@ -9,11 +10,11 @@ from plugins.doc_spotter.doc_spotter_file_manager import delete_indexed_files_ca
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
 
-# MongoDB setup
+token_system = TokenSystem(os.getenv("MONGODB_URI"), "Echo", "user_tokens")
+
 client = MongoClient(os.getenv("MONGODB_URI"))
 db = client["Echo_Doc_Spotter"]
 
-# Command handler for /docspotter
 def docspotter_command(update: Update, context: CallbackContext) -> None:
     doc_spotter_plugin_enabled_str = get_env_var_from_db('DOC_SPOTTER_PLUGIN')
     doc_spotter_plugin_enabled = doc_spotter_plugin_enabled_str.lower() == 'true' if doc_spotter_plugin_enabled_str else False
@@ -227,10 +228,8 @@ def delete_fsub_callback(update: Update, context: CallbackContext) -> None:
         logger.info(f"🗑️ F-Sub chat deleted: {chat_id} by user {update.effective_user.id}")
     else:
         query.answer("Failed to remove F-Sub chat or chat not found.")
-    # Refresh the list of fsubs
     manage_fsub_chats_callback(update, context)
 
-# New Callback handler for "Set Up Group(s) to Begin Spotting" button
 def setup_group_callback(update: Update, context: CallbackContext) -> None:
     query = update.callback_query
     query.answer()
@@ -238,9 +237,8 @@ def setup_group_callback(update: Update, context: CallbackContext) -> None:
     keyboard = [[InlineKeyboardButton("Back", callback_data='back_to_main')]]
     reply_markup = InlineKeyboardMarkup(keyboard)
     query.edit_message_text(text=text, reply_markup=reply_markup)
-    context.user_data['awaiting_group_id'] = True  # Set a flag indicating we're now waiting for a group ID
+    context.user_data['awaiting_group_id'] = True  
 
-# Callback handler for "Index Files" button
 def index_files_callback(update: Update, context: CallbackContext) -> None:
     query = update.callback_query
     query.answer()
@@ -251,7 +249,6 @@ def index_files_callback(update: Update, context: CallbackContext) -> None:
     reply_markup = InlineKeyboardMarkup(keyboard)
     query.edit_message_text(text="Let's Index some files huh?", reply_markup=reply_markup)
 
-# Callback handler for "Setup a channel for indexing" button
 def setup_channel_callback(update: Update, context: CallbackContext) -> None:
     query = update.callback_query
     query.answer()
@@ -259,14 +256,13 @@ def setup_channel_callback(update: Update, context: CallbackContext) -> None:
     keyboard = [[InlineKeyboardButton("Back", callback_data='back_to_main')]]
     reply_markup = InlineKeyboardMarkup(keyboard)
     query.edit_message_text(text=text, reply_markup=reply_markup)
-    context.user_data['awaiting_channel_id'] = True  # Set a flag indicating we're now waiting for a channel ID
+    context.user_data['awaiting_channel_id'] = True  
 
 def handle_text(update: Update, context: CallbackContext) -> None:
     user_data = context.user_data
     text = update.message.text.strip()
     user_id = update.message.from_user.id
 
-    # For storing Channel ID
     if user_data.get('awaiting_channel_id'):
         if text.startswith('-100'):
             success = store_channel_id(user_id, text)
@@ -276,7 +272,7 @@ def handle_text(update: Update, context: CallbackContext) -> None:
                 update.message.reply_text(f"⚠️The Chat id {text} is already configured by another user. So you cannot add that. If you think this was a mistake please contact the bot owner.")
         else:
             update.message.reply_text("❌Please try again! Provide a valid chat ID starting with -100.")
-        user_data['awaiting_channel_id'] = False  # Reset the flag
+        user_data['awaiting_channel_id'] = False  
 
     # For storing Group ID
     elif user_data.get('awaiting_group_id'):
@@ -288,31 +284,27 @@ def handle_text(update: Update, context: CallbackContext) -> None:
                 update.message.reply_text(f"⚠️The Chat id {text} is already configured by another user. So you cannot add that. If you think this was a mistake please the contact bot owner.")
         else:
             update.message.reply_text("❌Please try again! Provide a valid group ID starting with -100.")
-        user_data['awaiting_group_id'] = False  # Reset the flag
+        user_data['awaiting_group_id'] = False  
 
-    # Handling Fsub ID submission
     elif user_data.get('awaiting_fsub_chat_id'):
-        if text.startswith('-100'):  # Validate chat ID format
+        if text.startswith('-100'):  
             store_fsub_chat_id(user_id, text)
             update.message.reply_text(f"🔮F-Sub chat setup completed. From now I won't serve users who do not join/subscribe to your {text} chat🫡")
-            user_data['awaiting_fsub_chat_id'] = False  # Reset the flag
+            user_data['awaiting_fsub_chat_id'] = False  
         else:
             update.message.reply_text("❌Please try again! Provide a valid chat ID starting with -100.")
-            user_data['awaiting_fsub_chat_id'] = False  # Reset the flag
+            user_data['awaiting_fsub_chat_id'] = False  
     else:
-        pass  # Implement any general text handling if necessary
+        pass  
 
 def store_channel_id(user_id: int, channel_id: str):
     """Store each new channel ID in a separate document with safety check."""
     collection = db["Indexed_Channels"]
-    # Check if this channel_id is already configured by another user
     exists = collection.find_one({"channel_id": channel_id})
     if exists and exists["user_id"] != user_id:
-        # If exists and user_id is different, do not store/update and inform the user
         logger.info(f"🔄 Channel ID {channel_id} is already configured by another user. Stopped duplicating")
         return False
     elif not exists:
-        # If not exists, insert new document
         collection.insert_one({"user_id": user_id, "channel_id": channel_id})
         logger.info(f"📡 New indexed channel set: {channel_id} by user {user_id}")
         return True
@@ -407,8 +399,8 @@ def store_file_info(user_id, file_id, file_name, file_size, file_type, mime_type
 
 # Setup bot handlers
 def setup_ds_dispatcher(dispatcher):
-    dispatcher.add_handler(CommandHandler("docspotter", docspotter_command))
-    dispatcher.add_handler(CommandHandler("erasefiles", start_file_deletion))
+    dispatcher.add_handler(token_system.token_filter(CommandHandler("docspotter", docspotter_command)))
+    dispatcher.add_handler(token_system.token_filter(CommandHandler("erasefiles", start_file_deletion)))
     dispatcher.add_handler(CommandHandler("stop", done_forwarding_files))
     dispatcher.add_handler(CallbackQueryHandler(index_files_callback, pattern='^index_files$'))
     dispatcher.add_handler(CallbackQueryHandler(setup_channel_callback, pattern='^setup_channel$'))

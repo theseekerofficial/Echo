@@ -1,12 +1,18 @@
+# imdb.py
+
+import os
 import re
 import logging
 from imdb import IMDb
+from modules.token_system import TokenSystem
 from modules.configurator import get_env_var_from_db
 from telegram.ext import CallbackContext, CommandHandler, CallbackQueryHandler
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update, InputMediaPhoto, ParseMode
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
+
+token_system = TokenSystem(os.getenv("MONGODB_URI"), "Echo", "user_tokens")
 
 # Create an instance of the IMDb class
 ia = IMDb()
@@ -144,8 +150,8 @@ def imdb_close_callback(update: Update, context: CallbackContext) -> None:
     query.answer()
     query.message.delete()
 
-def register_imdb_handlers(dp):
-    dp.add_handler(CommandHandler("imdb", imdb_search))
+def register_imdb_handlers(dp):    
+    dp.add_handler(token_system.token_filter(CommandHandler("imdb", imdb_search)))
     dp.add_handler(CallbackQueryHandler(imdb_details_callback, pattern="^imdb_[0-9]+"))
     dp.add_handler(CallbackQueryHandler(imdb_back_callback, pattern="^imdb_back$"))
     dp.add_handler(CallbackQueryHandler(imdb_close_callback, pattern="^imdb_close$"))

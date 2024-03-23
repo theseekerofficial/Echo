@@ -1,6 +1,7 @@
 # shiftx.py
 import os
 import logging
+from modules.token_system import TokenSystem
 from modules.configurator import get_env_var_from_db
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import CallbackContext, CommandHandler, CallbackQueryHandler, MessageHandler, Filters
@@ -9,6 +10,8 @@ from .shiftx_logics import pdf_to_word, jpeg_to_png, png_to_jpeg, svg_to_png, sv
 # Set up logging
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=logging.INFO)
 logger = logging.getLogger(__name__)
+
+token_system = TokenSystem(os.getenv("MONGODB_URI"), "Echo", "user_tokens")
 
 def shiftx_start(update: Update, _: CallbackContext) -> None:
     shiftx_plugin_enabled_str = get_env_var_from_db('SHIFTX_PLUGIN')
@@ -336,11 +339,10 @@ def shiftx_file_handler(update: Update, context: CallbackContext) -> None:
         cleanup_file(temp_file_path)
         cleanup_file(mp3_file_path)
     
-    # Clear the action to prevent unintended conversions
     del context.user_data['shiftx_action']
 
-def register_shiftx_handlers(dp):
-    dp.add_handler(CommandHandler('shiftx', shiftx_start))
+def register_shiftx_handlers(dp):    
+    dp.add_handler(token_system.token_filter(CommandHandler('shiftx', shiftx_start)))
     dp.add_handler(CallbackQueryHandler(shiftx_documents_callback, pattern='^shiftx_documents$'))
     dp.add_handler(CallbackQueryHandler(shiftx_convert_callback, pattern='^shiftx_pdf_to_word$'))
     dp.add_handler(CallbackQueryHandler(shiftx_images_callback, pattern='^shiftx_images$'))  

@@ -25,9 +25,10 @@ def process_message(update: Update, context: CallbackContext) -> None:
 
     chat_id = str(message.chat.id)
 
-    task = db["Clonegram_Tasks"].find_one({"source_chat_id": chat_id})
+    # Retrieve all tasks for the source chat ID
+    tasks = db["Clonegram_Tasks"].find({"source_chat_id": chat_id})
 
-    if task:
+    for task in tasks:
         destination_chat_id = task['destination_chat_id']
         clone_type = task.get('clone_type', 'forward')
 
@@ -43,12 +44,13 @@ def process_message(update: Update, context: CallbackContext) -> None:
 
         if not message_type_allowed:
             logger.info(f"🚫 Message type is not allowed for cloning or forwarding. Chat ID: {chat_id}")
-            return
+            continue
 
         try:
             if clone_type == "forward":
                 message.forward(destination_chat_id)
             elif clone_type == "clone":
+                # Handle each message type accordingly
                 if message.text:
                     context.bot.send_message(destination_chat_id, message.text)
                 elif message.photo:
@@ -65,8 +67,6 @@ def process_message(update: Update, context: CallbackContext) -> None:
                 logger.warning(f"⚠️ Unknown clone type: {clone_type}")
         except TelegramError as e:
             logger.error(f"❌ Error processing message from {chat_id} to {destination_chat_id}: {e}")
-    else:
-        return
 
 def register_cg_executor_handlers(dp):
     dp.add_handler(MessageHandler(Filters.all & (Filters.update.message | Filters.update.channel_post), process_message), group=9)

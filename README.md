@@ -1,4 +1,4 @@
-# ECHO v1.1.4 JD4 #IM (Improvements)
+# ECHO v1.1.5 K6B #IM #NF (Improvements/New Features)
 
 <p align="center">
     <a href="https://github.com/theseekerofficial/Echo">
@@ -59,56 +59,62 @@
 <div align=center>
 </div>
 
-1. **Universal Usage and Portability:** 
-    - Works seamlessly in both private messages and any Telegram group where the bot is an admin.♾️
-    - We have included all the necessary fonts, graphics, and other elements in the repository to ensure Echo functions as expected and to enhance its portability. 🧩
+1. **Universal Usage and Portability:** ♾️
+    - Works seamlessly in both private messages and any Telegram group where the bot is an admin.
+    - We have included all the necessary fonts, graphics, and other elements in the repository to ensure Echo functions as expected and to enhance its portability. 
 
-2. **Persistent Storage:** 
-    - MongoDB integration for storing reminders and user data.💽
+2. **Persistent Storage:** 💽
+    - MongoDB integration for storing reminders and user data.
     - Reminders and other user data persist even if the bot restarts.
+      
+3. **Token System and Paid User system for Monatize Echo with URL Shortners** 💸
+    - A token system available for features/plugins command
+    - A Paid user system for subscription method. Those who are in the paid users list can bypass the token system
+    - The owner can turn on or off the token system as needed.
+    - Manage, Delete, and view paid users effortlessly
 
-3. **Custom Timezones:** 
-    - Set your preferred timezone for personalized reminder notifications.⌚
+4. **Custom Timezones:** ⌚
+    - Set your preferred timezone for personalized reminder notifications.
 
-4. **Imporved Reminders Module:** ⏰
+5. **Imporved Reminders Module:** ⏰
     - No limit on the number of reminders you can set in Echo.
     - Recurring (repeating) reminders for minutely, hourly, daily, weekly, monthly, yearly time periods
     - View all active reminders under one command.
     - Edit Reminders function
     - Delete Reminders function
 
-5. **Deployment Support:**
+6. **Deployment Support:**
     - Deploy on both Render and VPS for flexible hosting options.🚀
 
-6. **Meet Your Personal AI Assistant within Echo**
+7. **Meet Your Personal AI Assistant within Echo**
     - Echo can generate responses from Google's Most Powerful AI Modle aka Google Gemini. Simply put your API key in the Echo and meet Gemini! 🤖
     - Global API setup or user's own API setup mechanism based on your preference.⚙️
 
-7. **Chatbot powered by Google Gemini**
+8. **Chatbot powered by Google Gemini**
     - Feeling bored? Chat with Echo! Play games with Echo!! Echo replies to anything you say with the support of Google's Gemini Pro.💬
     - Global API setup or user's own API setup mechanism based on your preference.⚙️
   
-8. **Image analysis module powered up with Google Gemini**
+9. **Image analysis module powered up with Google Gemini**
     - Analyse or get descriptions about any of your images using Echo! 🔎
   
-9. **Automatically Setting Up Bot Commands**
+10. **Automatically Setting Up Bot Commands**
     - No need to manually set up bot commands in BotFather. We got you. Soon as the bot is deployed bot commands will be set automatically📐
 
-10. **Modern and Advanced Broadcast Module/ Super Improved Scheduled Broadcast Module**
+11. **Modern and Advanced Broadcast Module/ Super Improved Scheduled Broadcast Module**
     - Amplify your voice! Send important updates directly to all your audience with categorized broadcast menu (PM Only Broadcast, Group Only Broadcast, All Chat Broadcast).
       Designed with easy-to-use Telegram Inline Buttons. [Only Available to Pre-authorized users in config.env]
     - Be a time master with Echo's Scheducast module. Schedule your important broadcast messages with a blink! 🌟
 
-11. **Easily Update you Echo using UPSTREAM_REPO:**
+12. **Easily Update you Echo using UPSTREAM_REPO:**
     - Just by sending /restart cmd You can update your echo bot to latest version. ⤴️
     
-12. **External Ping Support:**
+13. **External Ping Support:**
     - Integrated with Uptimerobot to keep Render instances online. 🏓
 
-13. **Custom Ringtones:**
+14. **Custom Ringtones:**
     - Type `/ringtones` to get 4 sample custom ringtones to improve the Reminders. Look at the `/help` message for more info 🎵
    
-14. **All-in-One Calculators**
+15. **All-in-One Calculators**
     - Echo includes all the calculators you need for both day-to-day and academic use.
     - Designed using interactive telegram inline buttons
     - Basic Calculator ✅
@@ -129,15 +135,15 @@
         - Temperature 🌡️
         - Cooking 🍽️
 
-15. **Telegraph Image Uploading**
+16. **Telegraph Image Uploading**
     - Upload any Telegram image to Telegraph and get an instant direct link to your image 🔺
     - Reply to any image as /uptotgph to see the magic! 🪄
 
-16. **Logo Generator**
+17. **Logo Generator**
     - Enhance your creativity using Echo's Logo Generator Plugin🧬
     - /logogen is your magic word! 🪄
 
-17. **ShiftX (Advanced Multifile Converter Plugin)** 🔄️
+18. **ShiftX (Advanced Multifile Converter Plugin)** 🔄️
     - What you want to convert?
         - Images?
         - Videos?
@@ -150,7 +156,7 @@
 19. **Doc Spotter (Advanced Auto Filtering)**
     - Are you an admin that has a movie group? This plugin is for you.🫵
     - Enabled ability to Switch beteen Inline buttons to Inline URL Buttons 🦘
-    - Ad Shortner Support for links 🫰💸
+    - URL Ad Shortner Support for Doc Spotter Buttons 🫰💸
     - Feel the power of DocSpotter Plugin 💪
         - Multiple F-Sub chats (Channels or Groups)
         - IMDB info and poster fetching
@@ -167,7 +173,7 @@
 21. **Chat Cloner [Clonergram]**
     - Want to clone a group or channel? Leave it to Echo, /clonegram is the magic word 💠
     - Working on both groups and channels ✔️
-    - Clone only you selected message/file types only
+    - Clone only selected message/file types you prefer
         - Text Cloning ✅
         - Image Cloning ✅
         - File Cloning ✅
@@ -220,6 +226,9 @@
 - `/removebg`: Remove background from any image 🪄
 - `/rbgusage`: See your RemoveBG API Usage 📈 
 - `/moreinfo`: Unbox the secrets! Type /moreinfo for the full bot lowdown & bonus notes.📚
+- `/users`: Get users and groups list that uses Echo 👥
+- `/addpaid`: Add a paid user 💸
+- `/paid`: see paid user(s) info 📜
 - `/database`: Get database stats 📊
 - `/bsettings`: Config Echo easily ⚙️
 - `/restart`: Restart your bot and Update to the letest version ⤴️
@@ -323,11 +332,13 @@ This section provides detailed information on the required environment variables
      
 3. **URL_SHORTNER** 
    - Fill your shortener's domain.
+   - To disable this URL shortener feature, keep empty these envs
    - Supported Shortners: `atglinks.com, exe.io, gplinks.in, shrinkme.io, urlshortx.com, shortzon.com, shorte.st, ouo.io`
    - Example: `URL_SHORTNER=https://atglinks.com`
      
 4. **URL_SHORTNER_API**
    - Description: Fill your shortener's api.
+   - To disable this URL shortener feature, keep empty these envs
    - Supported Shortners: `atglinks.com, exe.io, gplinks.in, shrinkme.io, urlshortx.com, shortzon.com, shorte.st, ouo.io`
    - Example: `URL_SHORTNER_API=dhoyj96oh4j50j90j5uy3g40y045h32tr473g4t804t`
      

@@ -5,6 +5,7 @@ from imdb import IMDb
 from bson import ObjectId
 from pymongo import MongoClient
 from modules.configurator import get_env_var_from_db
+from modules.utilities.url_shortener import get_short_url
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update, InputMediaPhoto
 from plugins.doc_spotter.doc_spotter_fsub import is_user_member_of_fsub_chats, prompt_to_join_fsub_chats
 from telegram.ext import CallbackContext, CommandHandler, Filters, MessageHandler, Updater, CallbackQueryHandler
@@ -24,9 +25,6 @@ DS_IMDB_ACTIVATE = DS_IMDB_ACTIVATE_str.lower() == 'true' if DS_IMDB_ACTIVATE_st
 
 DS_URL_BUTTONS_str = get_env_var_from_db('DS_URL_BUTTONS')
 DS_URL_BUTTONS = DS_URL_BUTTONS_str.lower() == 'true' if DS_URL_BUTTONS_str else False
-
-AD_SHORTNER_API = get_env_var_from_db('URL_SHORTNER_API')
-AD_SHORTNER = get_env_var_from_db('URL_SHORTNER')
 
 PAGE_SIZE = 10
 doc_spotter_plugin_enabled = None
@@ -62,12 +60,9 @@ def listen_to_groups(update: Update, context: CallbackContext):
     m_user = update.message.from_user
 
     if not db["Listening_Groups"].find_one({"group_id": str(chat_id)}):
-        # If the group is not registered, there's no need to proceed with this function.
         return
     
-    # Check if the user has started the bot
     if not has_user_started_bot(update, message_sender_user_id):
-        # If the user hasn't started the bot in PM, prompt them to do so.
         prompt_user_to_start_bot_in_pm(update, context)
         return
 
@@ -75,18 +70,14 @@ def listen_to_groups(update: Update, context: CallbackContext):
         prompt_to_join_fsub_chats(update, context, client)
         return 
     
-    # Check if the user has a username
     if m_user.username:
         user_mention = f"@{m_user.username}"
     else:
-        # Fallback to just using the first name without mentioning if there's no username
         user_mention = m_user.first_name
     
     if not db["Listening_Groups"].find_one({"group_id": str(chat_id)}):
-        # If the group is not registered, simply return and do nothing
         return
     
-    # If the group is registered, proceed with the rest of the function
     loading_message_text = f"Hold on {user_mention}, searching for '{update.message.text.lower()}'..."
     loading_message = update.message.reply_text(loading_message_text)
     
@@ -144,25 +135,6 @@ def listen_to_groups(update: Update, context: CallbackContext):
             context.bot.delete_message(chat_id=update.message.chat.id, message_id=loading_message.message_id)
             update.message.reply_text("No matching files found.")
 
-def get_short_url(long_url):
-    if not AD_SHORTNER_API or not AD_SHORTNER:
-        return long_url  
-
-    # Ensure the long URL is properly URL encoded
-    encoded_long_url = requests.utils.quote(long_url)
-
-    # Construct the API URL for shortening
-    api_url = f"{AD_SHORTNER}/api?api={AD_SHORTNER_API}&url={encoded_long_url}&format=text"
-
-    try:
-        response = requests.get(api_url)
-        response.raise_for_status()  # Raises an HTTPError if the response status code is 4XX/5XX
-        shortened_url = response.text
-        return shortened_url.strip()  # Remove any leading/trailing whitespace
-    except requests.RequestException as e:
-        print(f"Failed to shorten URL: {e}")
-        return long_url  # Return the original URL in case of any error
-
 def display_page_buttons(update, context, results, page, user_id, imdb_info=None, photo_url=None, is_pagination=False):
     chat_id = update.effective_chat.id
     message_sender_user_id = update.message.from_user.id
@@ -176,11 +148,15 @@ def display_page_buttons(update, context, results, page, user_id, imdb_info=None
 
     if DS_URL_BUTTONS:
         for result in results[start_index:end_index]:
+            file_name = result["file_name"]
             file_id = str(result['_id'])
+            file_size = format_file_size(result.get("file_size", 0))
+            quality = extract_quality(file_name)
+            quality_and_size = f"[{file_size}/{quality}]" if quality else f"[{file_size}]"
             doc_id = f"{file_id}_{message_sender_user_id}"
             long_url = f"https://t.me/{bot_username}?start=file_{doc_id}_{original_group_id}"
             short_url = get_short_url(long_url)  
-            file_name_display = f"{result['file_name']}"
+            file_name_display = f"{quality_and_size} {file_name}"
             buttons.append([InlineKeyboardButton(text=file_name_display, url=short_url)])
     else:
         for result in results[start_index:end_index]:
@@ -189,7 +165,7 @@ def display_page_buttons(update, context, results, page, user_id, imdb_info=None
             quality = extract_quality(file_name)
             quality_and_size = f"[{file_size}/{quality}]" if quality else f"[{file_size}]"
             file_name_display = f"{quality_and_size} {file_name}"
-            doc_id = f"dse_{result['_id']}_{message_sender_user_id}"  # Modify this line
+            doc_id = f"dse_{result['_id']}_{message_sender_user_id}"  
             buttons.append([InlineKeyboardButton(text=file_name_display, callback_data=doc_id)])
 
     # Include the page count display
@@ -283,7 +259,7 @@ def format_file_size(size_in_bytes):
 
 def extract_quality(file_name):
     # Extract quality information from the file name
-    qualities = ["144p", "240p", "360p", "480p", "540p", "720p", "1080p", "4K", "8K"]
+    qualities = ["144p", "240p", "360p", "480p", "540p", "720p", "1080p", "2160p", "4K", "8K"]
     for quality in qualities:
         if quality.lower() in file_name.lower():
             return quality
@@ -404,11 +380,15 @@ def generate_buttons_for_page(update, context, results, page, user_id, message_s
 
     if DS_URL_BUTTONS:
         for result in results[start_index:end_index]:
+            file_name = result["file_name"]
             file_id = str(result['_id'])
+            file_size = format_file_size(result.get("file_size", 0))
+            quality = extract_quality(file_name)
+            quality_and_size = f"[{file_size}/{quality}]" if quality else f"[{file_size}]"
             doc_id = f"{file_id}_{message_sender_user_id}"
             long_url = f"https://t.me/{bot_username}?start=file_{doc_id}_{original_group_id}"
             short_url = get_short_url(long_url)  
-            file_name_display = f"{result['file_name']}"
+            file_name_display = f"{quality_and_size} {file_name}"
             buttons.append([InlineKeyboardButton(text=file_name_display, url=short_url)])
     else:
         for result in results[start_index:end_index]:

@@ -4,6 +4,7 @@ import os
 import re
 import logging
 from asteval import Interpreter
+from modules.token_system import TokenSystem
 from modules.configurator import get_env_var_from_db
 from plugins.calculators.unit_converter import setup_unit_converter  
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update
@@ -14,14 +15,13 @@ from telegram.ext import CallbackQueryHandler, CallbackContext, CommandHandler
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
 
+token_system = TokenSystem(os.getenv("MONGODB_URI"), "Echo", "user_tokens")
 
-# Calculator state for each user
 calculator_state = {}
 
 aeval = Interpreter()
 
 def get_keyboard(expression=""):
-    # Define the keyboard layout with the backspace button
     keyboard = [
         [InlineKeyboardButton("AC", callback_data="AC"), InlineKeyboardButton("+/-", callback_data="+/-"), InlineKeyboardButton("%", callback_data="%"), InlineKeyboardButton("⌫", callback_data="backspace"), InlineKeyboardButton("÷", callback_data="/")],
         [InlineKeyboardButton("7", callback_data="7"), InlineKeyboardButton("8", callback_data="8"), InlineKeyboardButton("9", callback_data="9"), InlineKeyboardButton("×", callback_data="*")],
@@ -29,12 +29,11 @@ def get_keyboard(expression=""):
         [InlineKeyboardButton("1", callback_data="1"), InlineKeyboardButton("2", callback_data="2"), InlineKeyboardButton("3", callback_data="3"), InlineKeyboardButton("+", callback_data="+")],
         [InlineKeyboardButton("0", callback_data="0"), InlineKeyboardButton(".", callback_data="."), InlineKeyboardButton("=", callback_data="=")]
     ]
-    # Row for additional buttons
     additional_buttons = [
         InlineKeyboardButton("Close", callback_data="basic_cal_close"),
         InlineKeyboardButton("Back", callback_data="basic_cal_back")
     ]
-    keyboard.append(additional_buttons)  # Add new row to the existing keyboard
+    keyboard.append(additional_buttons)  
     return InlineKeyboardMarkup(keyboard)
 
 def start_calculator(update: Update, context: CallbackContext):
@@ -127,12 +126,12 @@ def button_handler(update: Update, context: CallbackContext):
     # Handle disabled basic calculator message
     if query.data == "disabled_calculator":
         query.answer(text="Calculator Plugin Disabled by the person who deployed this Echo Variant", show_alert=True)
-        return  # Exit the function
+        return  
 
     # Handle disabled scientific calculator message
     if query.data == "disabled_sci_calculator":
         query.answer(text="Scientific Calculator Plugin Disabled by the person who deployed this Echo Variant", show_alert=True)
-        return  # Exit the function
+        return  
 
     # Handle disabled Unit Converter message
     if query.data == "disabled_unit_converter":
@@ -143,7 +142,7 @@ def button_handler(update: Update, context: CallbackContext):
     if user_id != cal_state.get("user_id"):
         # If not, show an alert and return
         query.answer(text="Mind your own business 😑. Don't disturb him. Use /cal if you want to use calculator(s)", show_alert=True)
-        return  # Exit the function
+        return  
 
     # Handling new button actions
     if query.data == "basic_cal_close":
@@ -159,9 +158,9 @@ def button_handler(update: Update, context: CallbackContext):
     # Existing code for handling calculator button presses
     expression = cal_state.get("expression", "")
     if query.data == "backspace":
-        expression = expression[:-1]  # Remove the last character
+        expression = expression[:-1]  
     elif query.data == "AC":
-        expression = ""  # Clear the expression
+        expression = ""  
     elif query.data == "+/-":
         expression = toggle_sign(expression)
     elif query.data == "%":
@@ -185,54 +184,34 @@ def button_handler(update: Update, context: CallbackContext):
 def toggle_sign(expression):
     # Toggle the sign of the last complete number in the expression
     if not expression or expression[-1] in '+-*/':
-        return expression + '-'  # Start a negative number
-    # Find the last number and toggle its sign
+        return expression + '-' 
     parts = re.split(r'(\D)', expression)
     parts[-1] = str(-float(parts[-1]))
     return ''.join(parts)
 
 def percentage(expression):
-    # Convert the last number in the expression to a percentage
     parts = re.split(r'(\D)', expression)
     parts[-1] = str(float(parts[-1]) / 100)
     return ''.join(parts)
 
 def calculate(expression):
     try:
-        # Replace the division symbol with a slash
         expression = expression.replace("÷", "/")
-        # Replace the multiplication symbol with an asterisk
         expression = expression.replace("×", "*")
-        # Evaluate the expression using asteval
         result = aeval(expression)
-        # Return result as string
         return str(result)
     except Exception as e:
         logger.error(f"Error in calculate function: {e}")
         return "Error: " + str(e)
 
-def setup_calculator(dispatcher):
-    # Register handlers for the calculator
-    dispatcher.add_handler(CommandHandler('calculator', start_calculator))
-    dispatcher.add_handler(CommandHandler('cal', start_calculator))
-    
-    # Handler for normal calculator button operations
+def setup_calculator(dispatcher):    
+    dispatcher.add_handler(token_system.token_filter(CommandHandler('calculator', start_calculator)))
+    dispatcher.add_handler(token_system.token_filter(CommandHandler('cal', start_calculator)))
     dispatcher.add_handler(CallbackQueryHandler(button_handler, pattern='^(basic_cal_close|basic_cal_back|\d|\+|\-|/|\*|AC|\+/\-|%|=|\.|backspace)$'))
-    
-    # Handler for showing the scientific calculator
     dispatcher.add_handler(CallbackQueryHandler(show_scientific_calculator, pattern='^show_scientific_calculator$'))
-    
-    # Handler for showing the basic calculator
     dispatcher.add_handler(CallbackQueryHandler(show_calculator, pattern='^show_calculator$'))
-    
-    # New handler for the disabled calculator scenario
     dispatcher.add_handler(CallbackQueryHandler(button_handler, pattern='^disabled_calculator$'))
     dispatcher.add_handler(CallbackQueryHandler(button_handler, pattern='^disabled_sci_calculator$'))
     dispatcher.add_handler(CallbackQueryHandler(button_handler, pattern='^disabled_unit_converter$'))
  
-    # Handler for the unit converter
     setup_unit_converter(dispatcher)
-
-# This would be called from the main bot file to setup the calculator handlers
-# from plugins.calculator.calculator import setup_calculator
-# setup_calculator(dispatcher)

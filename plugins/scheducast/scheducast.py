@@ -6,6 +6,7 @@ from bson import ObjectId
 from dateutil import parser
 from pymongo import MongoClient
 from datetime import datetime, timedelta
+from modules.token_system import TokenSystem
 from modules.configurator import get_env_var_from_db
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup, InputFile, ParseMode
 from telegram.ext import CallbackContext, CommandHandler, MessageHandler, Filters, CallbackQueryHandler
@@ -16,6 +17,8 @@ logging.basicConfig(
     level=logging.INFO
 )
 logger = logging.getLogger(__name__)
+
+token_system = TokenSystem(os.getenv("MONGODB_URI"), "Echo", "user_tokens")
 
 # Import the authorized users from config.env
 def get_authorized_users():
@@ -257,8 +260,8 @@ def delete_scheducast(update: Update, context: CallbackContext) -> None:
         logger.error("Database connection is not available.")
         query.message.reply_text("An error occurred while deleting the scheducast.")
 
-def setup_dispatcher(dp, db):
-    dp.add_handler(CommandHandler("scheducast", start_scheducast))
+def setup_dispatcher(dp, db):    
+    dp.add_handler(token_system.token_filter(CommandHandler("scheducast", start_scheducast)))
     dp.add_handler(CallbackQueryHandler(setup_scheducast, pattern='^setup$'))
     dp.add_handler(CallbackQueryHandler(select_broadcast_type, pattern='^(pm|group|all)$'))
     dp.add_handler(CommandHandler("scd", get_broadcast_schedule))
@@ -267,5 +270,4 @@ def setup_dispatcher(dp, db):
     dp.add_handler(CallbackQueryHandler(show_schedule_details, pattern='^[0-9a-fA-F]{24}$'))
     dp.add_handler(CallbackQueryHandler(delete_scheducast, pattern='^delete_[0-9a-fA-F]{24}$'))
 
-    # Save the MongoDB connection to the bot_data for later use
     dp.bot_data['db'] = db

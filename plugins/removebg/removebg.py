@@ -5,12 +5,15 @@ import requests
 from pathlib import Path
 from telegram import Update
 from pymongo import MongoClient
+from modules.token_system import TokenSystem
 from modules.configurator import get_env_var_from_db
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import CallbackContext, CommandHandler, CallbackQueryHandler, MessageHandler, Filters
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
+
+token_system = TokenSystem(os.getenv("MONGODB_URI"), "Echo", "user_tokens")
 
 temp_dir = Path(__file__).parent / "Removebg_Temp"
 temp_dir.mkdir(parents=True, exist_ok=True)
@@ -225,8 +228,8 @@ def del_rbg_api(update: Update, context: CallbackContext):
     else:
         update.message.reply_text("No personal API key found to delete. ⛔")
 
-def setup_removebg(dp):
-    dp.add_handler(CommandHandler('removebg', remove_background))
+def setup_removebg(dp):    
+    dp.add_handler(token_system.token_filter(CommandHandler('removebg', remove_background)))
     dp.add_handler(CommandHandler('setrbgapi', set_rbg_api))
     dp.add_handler(CommandHandler('showrbgapi', show_rbg_api))
     dp.add_handler(CommandHandler('delrbgapi', del_rbg_api))
