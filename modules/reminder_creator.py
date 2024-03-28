@@ -25,7 +25,7 @@ def start_reminder_creation(update: Update, context: CallbackContext) -> None:
     keyboard_buttons = [[InlineKeyboardButton(year, callback_data=f"year_{year}") for year in row] for row in keyboard]
     keyboard_buttons.append([InlineKeyboardButton("Close", callback_data="sr_close")])
     reply_markup = InlineKeyboardMarkup(keyboard_buttons)
-    update.message.reply_text(f'Choose a year for your reminder:\n\nAlso if you did not set your timezone set it using /settimezone command. If you did not set a timezone your reminder will be set for global timezone, *{REMINDER_CHECK_TIMEZONE}*. You can find your timezone use [This link](https://telegra.ph/Choose-your-timezone-02-16) to find your timezone easily🪄', reply_markup=reply_markup, parse_mode=ParseMode.MARKDOWN)
+    update.message.reply_text(f'Choose a year for your reminder:\n\nAlso if you did not set your timezone set it using /settimezone command. If you did not set a timezone your reminder will be set for global timezone, *{REMINDER_CHECK_TIMEZONE}*. You can find your timezone using [This link](https://telegra.ph/Choose-your-timezone-02-16) 🪄', reply_markup=reply_markup, parse_mode=ParseMode.MARKDOWN, disable_web_page_preview=True)
 
 # Handle callback queries
 def handle_date_selection(update: Update, context: CallbackContext) -> None:

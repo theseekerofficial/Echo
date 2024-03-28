@@ -1,6 +1,6 @@
 # bot.py (Main bot file)
 ## Don't edit this file unless you know what you are doing!
-from modules.configurator import load_and_store_env_vars, bsettings_command, bsettings_button_callback, show_env_value_callback, handle_new_env_value, edit_env_callback, get_env_var_from_db, close_config_callback, page_navigation_callback, back_to_bot_settings_callback
+from modules.configurator import load_and_store_env_vars, bsettings_command, bsettings_button_callback, show_env_value_callback, handle_new_env_value, edit_env_callback, get_env_var_from_db, close_config_callback, page_navigation_callback, back_to_bot_settings_callback, self_destruct_warning_callback, confirm_destruct_callback, execute_destruct_callback, cancel_destruct_callback, keypad_callback, shutdown_initiate_callback, shutdown_confirm_callback
 load_and_store_env_vars()
 
 import os
@@ -36,8 +36,8 @@ from modules.utilities.overview import overview_command, register_overview_handl
 from modules.edit_reminder import edit_reminders, edit_specific_reminder, edit_reminder
 from modules.reminder_creator import reminder_creator_handlers, start_reminder_creation
 from modules.help import help_command, handle_help_button_click, handle_back_button_click
-from modules.restarter import check_for_updates, restart_bot, write_update_status_to_mongo
 from modules.reminder_manager import handle_delreminder_command, callback_query_handler, handle_confirmation
+from modules.restarter import check_for_updates, restart_bot, write_update_status_to_mongo, check_and_restart_auto
 from modules.broadcast import register_handlers as broadcast_register_handlers, set_bot_variables as broadcast_set_bot_variables, handle_broadcast_message
 
 from plugins.scheducast import scheducast
@@ -460,6 +460,14 @@ def set_timezone(update: Update, context: CallbackContext) -> None:
 
     update.message.reply_text(f'Time zone set to {user_timezone}.')
 
+def update_bot_start_time():
+    bot_info_collection = db['bot_info']
+    bot_info_collection.update_one(
+        {'_id': 'bot_start_time'},
+        {'$set': {'start_time': datetime.utcnow()}},
+        upsert=True
+    )
+
 def install_ffmpeg():
     logger.info("Checking for ffmpeg installation...")
     try:
@@ -570,6 +578,14 @@ if __name__ == '__main__':
     dp.add_handler(CallbackQueryHandler(close_config_callback, pattern='^close_config$'))
     dp.add_handler(CallbackQueryHandler(page_navigation_callback, pattern='^page_\\d+$'))
     dp.add_handler(CallbackQueryHandler(back_to_bot_settings_callback, pattern='^back_to_bot_settings$'))
+    dp.add_handler(CallbackQueryHandler(self_destruct_warning_callback, pattern='^self_destruct$'))
+    dp.add_handler(CallbackQueryHandler(confirm_destruct_callback, pattern='^confirm_destruct$'))
+    dp.add_handler(CallbackQueryHandler(execute_destruct_callback, pattern='^execute_destruct$'))
+    dp.add_handler(CallbackQueryHandler(cancel_destruct_callback, pattern='^cancel_destruct$'))
+    dp.add_handler(CallbackQueryHandler(keypad_callback, pattern='^destruct_authorize_'))
+    dp.add_handler(CallbackQueryHandler(shutdown_initiate_callback, pattern='^shutdown_initiate$'))
+    dp.add_handler(CallbackQueryHandler(shutdown_confirm_callback, pattern='^shutdown_confirm$'))
+    dp.add_handler(CallbackQueryHandler(back_to_bot_settings_callback, pattern='^shutdown_cancel$'))
     dp.add_handler(MessageHandler(Filters.text & ~Filters.command & Filters.chat_type.private, handle_new_env_value), group=0)
      
     send_post_restart_message(updater.bot)
@@ -627,8 +643,11 @@ if __name__ == '__main__':
     dp.add_handler(MessageHandler(filter_bot_added, welcome_message), group=10)
     
     dp.bot_data['start_time'] = datetime.now()
+
+    update_bot_start_time()
+    dp.job_queue.run_repeating(check_and_restart_auto, interval=600, first=10)
     
-    # Start the Bot
+    # Starting Echo
     updater.start_polling()
 
     logger.info(f"{bot_name} [@{bot_username}] Started Successfully ✅. Have Some fun with Echo ✨")

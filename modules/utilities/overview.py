@@ -8,6 +8,8 @@ import platform
 import threading
 from datetime import datetime
 from pymongo import MongoClient
+from datetime import datetime, timedelta
+from modules.configurator import get_env_var_from_db
 from telegram.ext import CallbackContext, CallbackQueryHandler
 from telegram import Update, InlineKeyboardMarkup, InlineKeyboardButton
 
@@ -46,16 +48,38 @@ def bot_status_callback(update: Update, context: CallbackContext) -> None:
     except Exception as e:
         bot_version = 'Unknown'
 
-    # System Information
     cpu_usage = psutil.cpu_percent()
     ram_usage = psutil.virtual_memory().percent
     swap_usage = psutil.swap_memory().percent
 
-    # Dynamic repository path determination
-    repo_path = os.getcwd()  
+    repo_path = os.getcwd()
     disk_usage = psutil.disk_usage(repo_path).percent
 
-    status_message = f"╰──╮ <u><b><i>BOT STATISTICS</i></b></u> ╭──╯\n\n༶•┈┈┈┈┈┈┈┈┈୨💤୧┈┈┈┈┈┈┈┈┈•༶\n🤖 <b>Echo Uptime:</b> <code>{uptime}</code>\n༶•┈┈┈┈┈┈┈┈┈୨💤୧┈┈┈┈┈┈┈┈┈•༶\n\n" \
+    try:
+        restart_at_every = int(get_env_var_from_db("RESTART_AT_EVERY"))
+    except (ValueError, TypeError):
+        restart_at_every = None
+
+    uptime_parts = uptime.split(':')
+    hours = int(uptime_parts[0])
+    minutes = int(uptime_parts[1])
+    seconds = int(uptime_parts[2])
+
+    total_uptime_seconds = hours * 3600 + minutes * 60 + seconds
+
+    if restart_at_every is not None:
+        auto_restart_in_seconds = restart_at_every - total_uptime_seconds
+        if auto_restart_in_seconds < 0:
+            auto_restart_in = "Auto Restart Disabled"
+        else:
+            auto_restart_hours = auto_restart_in_seconds // 3600
+            auto_restart_minutes = (auto_restart_in_seconds % 3600) // 60
+            auto_restart_seconds = auto_restart_in_seconds % 60
+            auto_restart_in = f"{auto_restart_hours:02d}:{auto_restart_minutes:02d}:{auto_restart_seconds:02d}"
+    else:
+        auto_restart_in = "Auto Restart Disabled"
+
+    status_message = f"╰──╮ <u><b><i>BOT STATISTICS</i></b></u> ╭──╯\n\n༶•┈┈┈┈┈┈┈┈┈୨💤୧┈┈┈┈┈┈┈┈┈•༶\n🤖 <b>Echo Uptime:</b> <code>{uptime}</code>\n🌀 <b>Auto Restart in:</b> <code>{auto_restart_in}\n</code>༶•┈┈┈┈┈┈┈┈┈୨💤୧┈┈┈┈┈┈┈┈┈•༶\n\n" \
                      f"༶•┈┈┈┈┈┈┈┈┈୨🔑୧┈┈┈┈┈┈┈┈┈•༶\n💾 <b>Echo Version:</b> <code>{bot_version}</code>\n༶•┈┈┈┈┈┈┈┈┈୨🔑୧┈┈┈┈┈┈┈┈┈•༶\n\n" \
                      f"༶•┈┈┈┈┈┈┈┈┈୨⚡️୧┈┈┈┈┈┈┈┈┈•༶\n🖥 <b>CPU Usage:</b> <code>{cpu_usage}%</code>\n" \
                      f"🧠 <b>RAM Usage:</b> <code>{ram_usage}%</code>\n" \
@@ -64,7 +88,8 @@ def bot_status_callback(update: Update, context: CallbackContext) -> None:
 
     keyboard = [
         [InlineKeyboardButton("Close", callback_data='overview_close'),
-         InlineKeyboardButton("Back", callback_data='overview_back')]
+         InlineKeyboardButton("Back", callback_data='overview_back')],
+        [InlineKeyboardButton("Refresh ♻️", callback_data='overview_bot_status')]
     ]
     reply_markup = InlineKeyboardMarkup(keyboard)
 
@@ -130,7 +155,8 @@ def system_status_callback(update: Update, context: CallbackContext) -> None:
 
     keyboard = [
         [InlineKeyboardButton("Close", callback_data='overview_close'),
-         InlineKeyboardButton("Back", callback_data='overview_back')]
+         InlineKeyboardButton("Back", callback_data='overview_back')],
+        [InlineKeyboardButton("Refresh ♻️", callback_data='overview_bot_status')]
     ]
     reply_markup = InlineKeyboardMarkup(keyboard)
 

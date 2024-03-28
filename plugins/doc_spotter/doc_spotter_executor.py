@@ -3,6 +3,7 @@ import logging
 import requests
 from imdb import IMDb
 from bson import ObjectId
+from datetime import datetime
 from pymongo import MongoClient
 from modules.configurator import get_env_var_from_db
 from modules.utilities.url_shortener import get_short_url
@@ -25,6 +26,10 @@ DS_IMDB_ACTIVATE = DS_IMDB_ACTIVATE_str.lower() == 'true' if DS_IMDB_ACTIVATE_st
 
 DS_URL_BUTTONS_str = get_env_var_from_db('DS_URL_BUTTONS')
 DS_URL_BUTTONS = DS_URL_BUTTONS_str.lower() == 'true' if DS_URL_BUTTONS_str else False
+
+OWNER = int(get_env_var_from_db('OWNER'))
+AUTHORIZED_USERS_str = get_env_var_from_db('AUTHORIZED_USERS')  
+AUTHORIZED_USERS = [int(user_id.strip()) for user_id in AUTHORIZED_USERS_str.split(',')] if AUTHORIZED_USERS_str else []
 
 PAGE_SIZE = 10
 doc_spotter_plugin_enabled = None
@@ -135,6 +140,18 @@ def listen_to_groups(update: Update, context: CallbackContext):
             context.bot.delete_message(chat_id=update.message.chat.id, message_id=loading_message.message_id)
             update.message.reply_text("No matching files found.")
 
+def is_subscription_valid(user_id):
+    current_date = datetime.now().date()
+    user_doc = echo_db["Paid_Users"].find_one({"user_id": user_id})
+
+    if user_doc:
+        expire_date_str = user_doc.get("expire_date", "")
+        expire_date = datetime.strptime(expire_date_str, "%d-%m-%Y").date()
+
+        if current_date <= expire_date:
+            return True  
+    return False  
+
 def display_page_buttons(update, context, results, page, user_id, imdb_info=None, photo_url=None, is_pagination=False):
     chat_id = update.effective_chat.id
     message_sender_user_id = update.message.from_user.id
@@ -155,7 +172,10 @@ def display_page_buttons(update, context, results, page, user_id, imdb_info=None
             quality_and_size = f"[{file_size}/{quality}]" if quality else f"[{file_size}]"
             doc_id = f"{file_id}_{message_sender_user_id}"
             long_url = f"https://t.me/{bot_username}?start=file_{doc_id}_{original_group_id}"
-            short_url = get_short_url(long_url)  
+            if message_sender_user_id == OWNER or message_sender_user_id in AUTHORIZED_USERS or is_subscription_valid(message_sender_user_id):
+                short_url = long_url 
+            else:
+                short_url = get_short_url(long_url)            
             file_name_display = f"{quality_and_size} {file_name}"
             buttons.append([InlineKeyboardButton(text=file_name_display, url=short_url)])
     else:
@@ -387,7 +407,10 @@ def generate_buttons_for_page(update, context, results, page, user_id, message_s
             quality_and_size = f"[{file_size}/{quality}]" if quality else f"[{file_size}]"
             doc_id = f"{file_id}_{message_sender_user_id}"
             long_url = f"https://t.me/{bot_username}?start=file_{doc_id}_{original_group_id}"
-            short_url = get_short_url(long_url)  
+            if message_sender_user_id == OWNER or message_sender_user_id in AUTHORIZED_USERS or is_subscription_valid(message_sender_user_id):
+                short_url = long_url 
+            else:
+                short_url = get_short_url(long_url)            
             file_name_display = f"{quality_and_size} {file_name}"
             buttons.append([InlineKeyboardButton(text=file_name_display, url=short_url)])
     else:

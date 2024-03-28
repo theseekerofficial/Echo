@@ -3,7 +3,9 @@ import sys
 import shutil
 import logging
 import subprocess
+from datetime import datetime
 from pymongo import MongoClient
+from modules.configurator import get_env_var_from_db
 
 # Set up logging
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=logging.INFO)
@@ -100,3 +102,37 @@ def restart_bot():
     # Restart the bot
     current_script = os.path.abspath(sys.argv[0])
     os.execv(sys.executable, [sys.executable, current_script] + sys.argv[1:])
+
+def check_and_restart_auto(context):
+    try:
+        restart_at_every = int(get_env_var_from_db("RESTART_AT_EVERY"))
+    except (TypeError, ValueError):
+        restart_at_every = 86400  
+    
+    if restart_at_every == 0:
+        logger.info("Auto-restart is disabled. 🛡️")
+        return
+
+    try:
+        client = get_mongo_client()
+        db = client.get_database("Echo")
+        bot_info_collection = db['bot_info']
+        bot_start_time_doc = bot_info_collection.find_one({'_id': 'bot_start_time'})
+
+        if not bot_start_time_doc:
+            logger.info("Bot start time is not set in MongoDB. Skipping auto restart check.")
+            return
+
+        start_time = bot_start_time_doc['start_time']
+        uptime_seconds = (datetime.utcnow() - start_time).total_seconds()
+
+        if uptime_seconds >= restart_at_every:
+            logger.info("Uptime threshold reached. Initiating automatic restart. 🚀")
+            write_update_status_to_mongo("Auto-Restart Triggered based on Uptime. ♾️")
+            restart_bot()
+        else:
+            logger.info(f"Auto-restart check passed. Uptime: {uptime_seconds} seconds. Threshold: {restart_at_every} seconds.")
+    except Exception as e:
+        logger.error(f"Error during auto-restart check: {str(e)}")
+
+

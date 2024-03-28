@@ -1,4 +1,4 @@
-# ECHO v1.1.5 K6B #IM #NF (Improvements/New Features)
+# ECHO v1.1.6 L5J #IM (Improvements)
 
 <p align="center">
     <a href="https://github.com/theseekerofficial/Echo">
@@ -381,6 +381,12 @@ This section provides detailed information on the required environment variables
 11. **REMOVEBG_API** [🟩]
    - Description: Set a Global API Key for RemoveBG Plugin. Get one from [RemoveBG](https://www.remove.bg/dashboard#api-key)
    - Example: `REMOVEBG_API=abcdefgh12345678`
+     
+12. **RESTART_AT_EVERY** [🟩]
+   - Description: Set a time to auto restart to Echo (Fill in seconds). 24hours = `86400`
+   - The minimum time that can be set for this env is 600
+   - To Disable auto restart, set this ENV to `0`
+   - Example: `RESTART_AT_EVERY=86400`
 
 ### Plugin On/Off
 

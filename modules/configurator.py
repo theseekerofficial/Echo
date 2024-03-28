@@ -1,11 +1,13 @@
 # configurator.py
 import os
+import time
+import random
 import logging
 import telegram
 from dotenv import load_dotenv
 from pymongo import MongoClient
 from telegram.ext import CallbackContext, CallbackQueryHandler, CommandHandler
-from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update, ParseMode
+from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update, ParseMode, CallbackQuery
 
 # Set up logging
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=logging.INFO)
@@ -65,6 +67,7 @@ def load_and_store_env_vars():
         "TOKEN_RESET_TIME": os.getenv("TOKEN_RESET_TIME"),
         "URL_SHORTNER": os.getenv("URL_SHORTNER"),
         "URL_SHORTNER_API": os.getenv("URL_SHORTNER_API"),
+        "RESTART_AT_EVERY": os.getenv("RESTART_AT_EVERY"),
         "GEMINI_PLUGIN": os.getenv("GEMINI_PLUGIN"),
         "CHAT_BOT_PLUGIN": os.getenv("CHAT_BOT_PLUGIN"),
         "GEMINI_IMAGE_PLUGIN": os.getenv("GEMINI_IMAGE_PLUGIN"),
@@ -140,7 +143,9 @@ def bsettings_command(update: Update, context: CallbackContext):
 
     # Rest of the command for displaying settings in a private chat
     keyboard = [
-        [InlineKeyboardButton("Config ENVs", callback_data='config_envs')]
+        [InlineKeyboardButton("Config ENVs", callback_data='config_envs')],
+        [InlineKeyboardButton("💥Self-destruct💥", callback_data='self_destruct')],
+        [InlineKeyboardButton("Shutdown Echo", callback_data='shutdown_initiate')]
     ]
     reply_markup = InlineKeyboardMarkup(keyboard)
     update.message.reply_text("Bot Settings:", reply_markup=reply_markup)
@@ -150,7 +155,16 @@ def bsettings_button_callback(update: Update, context: CallbackContext):
     query.answer()
 
     if query.data == 'config_envs':
-        show_config_envs(query) 
+        show_config_envs(query)
+
+    elif query.data == 'shutdown_initiate':
+        shutdown_initiate_callback(update, context)
+
+    elif query.data == 'shutdown_confirm':
+        shutdown_confirm_callback(update, context)
+        
+    elif query.data == 'shutdown_cancel':
+        back_to_bot_settings_callback(update, context)
 
 def get_unique_message_for_env(key):
     unique_messages = {
@@ -166,9 +180,10 @@ def get_unique_message_for_env(key):
         "AUTHORIZED_USERS": "🛡️ List of user IDs to give access to Echo's some features.\n\n<b>Required [🔴]</b>\n<b>For new changes, Restart:</b> <u><i>Required</i></u>",
         "SCEDUCAST_TIMEZONE": "🌐 Timezone setting for Sceducast, Your Scheducast will set based on this\n\n<b>Required [🔴]</b>\n<b>For new changes, Restart:</b> <u><i>Required</i></u>",
         "SCEDUCAST_TIME_OFFSET": "⏳ Offset in hours for Sceducast scheduling. Refer Readme for more info adjusting for time zones.\n\n<b>Required [🔴]</b>\n<b>For new changes, Restart:</b> <u><i>Required</i></u>",
-        "TOKEN_RESET_TIME": "Token reset time for all users.\n\nSet to <code>0</code> to deactivate token system\n\n⚠️ Must be an integer (Number)\n\n<b>Optional [🟩]</b>\n<b>For new changes, Restart:</b> <u><i>Required</i></u>",
-        "URL_SHORTNER": "Your Ad Shortner Domain with <code>https://</code>\n\nE.g. <code>https://atglinks.com</code>\n\n<i>Suppoerted Shortners: <code>atglinks.com, exe.io, gplinks.in, shrinkme.io, urlshortx.com, shortzon.com, shorte.st, ouo.io</code></i>\n\n<b>Optional [🟩]</b>\n<b>For new changes, Restart:</b> <u><i>Required</i></u>",
-        "URL_SHORTNER_API": "Your Ad Shortner API\n\n<i>Suppoerted Shortners: <code>atglinks.com, exe.io, gplinks.in, shrinkme.io, urlshortx.com, shortzon.com, shorte.st, ouo.io</code></i>\n\n<b>Optional [🟩]</b>\n<b>For new changes, Restart:</b> <u><i>Required</i></u>",
+        "TOKEN_RESET_TIME": "🎟️ Token reset time for all users.\n\nSet to <code>0</code> to deactivate token system\n\n⚠️ Must be an integer (Number)\n\n<b>Optional [🟩]</b>\n<b>For new changes, Restart:</b> <u><i>Required</i></u>",
+        "URL_SHORTNER": "🔗 Your Ad Shortner Domain with <code>https://</code>\n\nE.g. <code>https://atglinks.com</code>\n\n<i>Suppoerted Shortners: <code>atglinks.com, exe.io, gplinks.in, shrinkme.io, urlshortx.com, shortzon.com, shorte.st, ouo.io</code></i>\n\n<b>Optional [🟩]</b>\n<b>For new changes, Restart:</b> <u><i>Required</i></u>",
+        "URL_SHORTNER_API": "🔗 Your Ad Shortner API\n\n<i>Suppoerted Shortners: <code>atglinks.com, exe.io, gplinks.in, shrinkme.io, urlshortx.com, shortzon.com, shorte.st, ouo.io</code></i>\n\n<b>Optional [🟩]</b>\n<b>For new changes, Restart:</b> <u><i>Required</i></u>",
+        "RESTART_AT_EVERY": "🔁 ENV for Restart Echo automatically. Fill from seconds.\n\nE.g. 24h = <code>86400</code>\n\nTo disable set this env to <code>0</code>\n\n<b>Optional [🟩]</b>\n<b>For new changes, Restart:</b> <u><i>Required</i></u>",
         "GEMINI_PLUGIN": "🔌 Enable or Disable Gemini Plugin\n\n<b>Optional [🟩]</b>\n<b>For new changes, Restart:</b> <u><i>Required</i></u>",
         "CHAT_BOT_PLUGIN": "🔌 Enable or Disable Chatbot Plugin\n\n<b>Optional [🟩]</b>\n<b>For new changes, Restart:</b> <u><i>Required</i></u>",
         "GEMINI_IMAGE_PLUGIN": "🔌 Enable or Disable Gemini Image Analyze Plugin\n\n<b>Optional [🟩]</b>\n<b>For new changes, Restart:</b> <u><i>Not Required</i></u>",
@@ -333,7 +348,9 @@ def back_to_bot_settings_callback(update: Update, context: CallbackContext):
 
     # Display the bot settings message with "Config ENVs" button
     keyboard = [
-        [InlineKeyboardButton("Config ENVs", callback_data='config_envs')]
+        [InlineKeyboardButton("Config ENVs", callback_data='config_envs')],
+        [InlineKeyboardButton("💥Self-destruct💥", callback_data='self_destruct')],
+        [InlineKeyboardButton("Shutdown Echo", callback_data='shutdown_initiate')]
     ]
     reply_markup = InlineKeyboardMarkup(keyboard)
     query.edit_message_text(text="Bot Settings:", reply_markup=reply_markup)
@@ -346,6 +363,141 @@ def close_config_callback(update: Update, context: CallbackContext):
         query.delete_message()
     except Exception as e:
         logger.error(f"Error deleting message: {e}")
+
+def self_destruct_warning_callback(update: Update, context: CallbackContext):
+    query = update.callback_query
+    query.answer()
+    
+    warning_text = ("⚠️ <b>Warning:</b> You are about to initiate the self-destruct sequence. "
+                    "This action will <b>permanently delete all data</b> associated with this bot. "
+                    "Are you sure you want to continue?\n\n"
+                    "🚫 <b>This action is irreversible.</b>")
+    keyboard = [
+        [InlineKeyboardButton("Yes, proceed", callback_data='confirm_destruct')],
+        [InlineKeyboardButton("No, cancel", callback_data='cancel_destruct')]
+    ]
+    reply_markup = InlineKeyboardMarkup(keyboard)
+    query.edit_message_text(text=warning_text, reply_markup=reply_markup, parse_mode=ParseMode.HTML)
+
+def confirm_destruct_callback(update: Update, context: CallbackContext):
+    query = update.callback_query
+    query.answer()
+    
+    final_warning_text = ("Do you really want to proceed with this?\n\n"
+                          "<b>After this, I will go offline. You will have to redeploy me fresh again.</b>")
+    keyboard = [
+        [InlineKeyboardButton("Hell yah!", callback_data='execute_destruct')],
+        [InlineKeyboardButton("Nope. My bad!", callback_data='cancel_destruct')]
+    ]
+    reply_markup = InlineKeyboardMarkup(keyboard)
+    query.edit_message_text(text=final_warning_text, reply_markup=reply_markup, parse_mode=ParseMode.HTML)
+
+def execute_destruct_callback(update: Update, context: CallbackContext):
+    query = update.callback_query
+    query.answer()
+
+    verification_code = random.randint(100000, 999999)
+    context.user_data['verification_code'] = str(verification_code)  
+
+    keypad = [[InlineKeyboardButton(str(i), callback_data=f'destruct_authorize_{i}') for i in range(1, 4)],
+              [InlineKeyboardButton(str(i), callback_data=f'destruct_authorize_{i}') for i in range(4, 7)],
+              [InlineKeyboardButton(str(i), callback_data=f'destruct_authorize_{i}') for i in range(7, 10)],
+              [InlineKeyboardButton("Reset", callback_data='destruct_authorize_reset'),
+               InlineKeyboardButton("0", callback_data='destruct_authorize_0'),
+               InlineKeyboardButton("Enter", callback_data='destruct_authorize_enter')],
+              [InlineKeyboardButton("Back", callback_data='cancel_destruct')]]
+
+    reply_markup = InlineKeyboardMarkup(keypad)
+
+    query.edit_message_text(f"Enter this below code in the keypad and click \"Enter\" to initiate self-destruct\n\n<code>{verification_code}</code>",
+                            reply_markup=reply_markup, parse_mode=ParseMode.HTML)
+
+def keypad_callback(update: Update, context: CallbackContext):
+    query = update.callback_query
+
+    if 'code_input' not in context.user_data:
+        context.user_data['code_input'] = ''
+
+    data = query.data
+    if data.startswith('destruct_authorize_'):
+        action = data.split('_')[2]
+
+        if action.isdigit():
+            query.answer()
+            context.user_data['code_input'] += action  
+        elif action == 'enter':
+            if context.user_data.get('code_input') == context.user_data.get('verification_code'):
+                query.answer()
+                self_destruct_procedure(query, context)
+            else:
+                query.answer("Invalid Code. Try Again!", show_alert=True)
+                context.user_data['code_input'] = ''  
+        elif action == 'reset':
+            query.answer()
+            context.user_data['code_input'] = ''  
+
+def keypad_callback(update: Update, context: CallbackContext):
+    query = update.callback_query
+
+    if 'code_input' not in context.user_data:
+        context.user_data['code_input'] = ''
+
+    data = query.data
+    if data.startswith('destruct_authorize_'):
+        action = data.split('_')[2]
+
+        if action.isdigit():
+            query.answer()
+            context.user_data['code_input'] += action
+        elif action == 'reset':
+            query.answer()
+            context.user_data['code_input'] = ''
+        elif action == 'enter':
+            if context.user_data.get('code_input') == context.user_data.get('verification_code'):
+                query.answer()
+                self_destruct_procedure(query, context)
+                return
+            else:
+                query.answer("Invalid Code. Try Again!", show_alert=True)
+                context.user_data['code_input'] = ''
+
+    current_input = context.user_data.get('code_input', '')
+    message_text = f"Enter this below code in the keypad and click \"Enter\" to initiate self-destruct\n\n<code>{context.user_data.get('verification_code')}</code>\n\nYour input: <code>{current_input}</code>"
+
+    keypad = [[InlineKeyboardButton(str(i), callback_data=f'destruct_authorize_{i}') for i in range(1, 4)],
+              [InlineKeyboardButton(str(i), callback_data=f'destruct_authorize_{i}') for i in range(4, 7)],
+              [InlineKeyboardButton(str(i), callback_data=f'destruct_authorize_{i}') for i in range(7, 10)],
+              [InlineKeyboardButton("Reset", callback_data='destruct_authorize_reset'),
+               InlineKeyboardButton("0", callback_data='destruct_authorize_0'),
+               InlineKeyboardButton("Enter", callback_data='destruct_authorize_enter')],
+              [InlineKeyboardButton("Back", callback_data='cancel_destruct')]]
+    reply_markup = InlineKeyboardMarkup(keypad)
+
+    query.edit_message_text(text=message_text, reply_markup=reply_markup, parse_mode=ParseMode.HTML)
+
+def self_destruct_procedure(query: CallbackQuery, context: CallbackContext):
+    try:
+        client = MongoClient(os.getenv("MONGODB_URI"))
+
+        databases_to_clear = ["Echo", "Echo_Clonegram", "Echo_Doc_Spotter"]
+
+        for db_name in databases_to_clear:
+            db = client[db_name]
+            collections = db.list_collection_names()
+            for collection in collections:
+                db.drop_collection(collection)
+        
+        query.edit_message_text("All collections within the databases have been deleted 💣💥")
+        context.bot.send_message(chat_id=query.message.chat_id, text="Bye 👋")
+        
+    except Exception as e:
+        query.edit_message_text(f"Failed to execute self-destruct due to: {e}")
+        return
+
+    os._exit(1)  
+
+def cancel_destruct_callback(update: Update, context: CallbackContext):
+    back_to_bot_settings_callback(update, context) 
 
 def get_env_var_from_db(key_name):
     db = DatabaseConfig.get_db()
@@ -364,3 +516,30 @@ def get_env_var_from_db(key_name):
     except Exception as e:
         logger.error(f"Error fetching environment variable {key_name} from database: {e}")
         return None
+
+def shutdown_initiate_callback(update: Update, context: CallbackContext):
+    keyboard = [
+        [InlineKeyboardButton("Yes", callback_data='shutdown_confirm')],
+        [InlineKeyboardButton("No", callback_data='shutdown_cancel')]
+    ]
+    reply_markup = InlineKeyboardMarkup(keyboard)
+    query = update.callback_query
+    query.edit_message_text(text="Are you sure you want to shut me down?", reply_markup=reply_markup)
+
+def shutdown_confirm_callback(update: Update, context: CallbackContext):
+    query = update.callback_query
+    initial_message = query.edit_message_text(text="Echo will go down in 10 seconds. After that, you will have to redeploy me.", parse_mode=ParseMode.HTML)
+
+    for i in range(10, 0, -1):
+        time.sleep(1) 
+        countdown_message = context.bot.edit_message_text(chat_id=query.message.chat_id, message_id=initial_message.message_id, text=f"Echo will go down in 10 seconds. After that, you will have to redeploy me.\n\nShutting down in <code>{i}</code>...", parse_mode=ParseMode.HTML)
+    
+    try:
+        context.bot.delete_message(chat_id=query.message.chat_id, message_id=countdown_message.message_id)
+    except Exception as e:
+        print(f"Error deleting countdown message: {e}")
+
+    goodbye_message = context.bot.send_message(chat_id=query.message.chat_id, text="Bye 👋")
+    time.sleep(1)
+
+    os._exit(1)
