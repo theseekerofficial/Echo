@@ -81,6 +81,7 @@ def load_and_store_env_vars():
         "REMOVEBG_PLUGIN": os.getenv("REMOVEBG_PLUGIN"),
         "IMDb_PLUGIN": os.getenv("IMDb_PLUGIN"),
         "CLONEGRAM_PLUGIN": os.getenv("CLONEGRAM_PLUGIN"),
+        "F_SUB_PLUGIN": os.getenv("F_SUB_PLUGIN"),
         "DS_IMDB_ACTIVATE": os.getenv("DS_IMDB_ACTIVATE"),
         "DS_URL_BUTTONS": os.getenv("DS_URL_BUTTONS"),
         "GH_CD_URLS": os.getenv("GH_CD_URLS"),
@@ -92,7 +93,8 @@ def load_and_store_env_vars():
         "SHIFTX_AAC_TO_MP3_BITRATE": os.getenv("SHIFTX_AAC_TO_MP3_BITRATE"),
         "SHIFTX_OGG_TO_MP3_QUALITY": os.getenv("SHIFTX_OGG_TO_MP3_QUALITY"),
         "SHIFTX_MP3_TO_OGG_QUALITY": os.getenv("SHIFTX_MP3_TO_OGG_QUALITY"),
-        "REMOVEBG_API": os.getenv("REMOVEBG_API")
+        "REMOVEBG_API": os.getenv("REMOVEBG_API"),
+        "FSUB_INFO_IN_PM": os.getenv("FSUB_INFO_IN_PM")
     }
 
     create_configs_collection() 
@@ -197,6 +199,7 @@ def get_unique_message_for_env(key):
         "REMOVEBG_PLUGIN": "🔌 Enable or Disable RemoveBG Plugin\n\n<b>Optional [🟩]</b>\n<b>For new changes, Restart:</b> <u><i>Not Required</i></u>",
         "IMDb_PLUGIN": "🔌 Enable or Disable IMDb Plugin\n\n<b>Optional [🟩]</b>\n<b>For new changes, Restart:</b> <u><i>Not Required</i></u>",
         "CLONEGRAM_PLUGIN": "🔌 Enable or Disable Clonegram Plugin\n\n<b>Optional [🟩]</b>\n<b>For new changes, Restart:</b> <u><i>Not Required</i></u>",
+        "F_SUB_PLUGIN": "🔌 Enable or Disable F-Sub Plugin\n\n<b>Optional [🟩]</b>\n<b>For new changes, Restart:</b> <u><i>Required</i></u>",
         "DS_IMDB_ACTIVATE": "🎥 Enable or Disable Doc Spotter's IIPS (IMDb Info and Poster Sending) in Button List\n\n<b>Optional [🟩]</b>\n<b>For new changes, Restart:</b> <u><i>Required</i></u>",
         "GH_CD_URLS": "🔗 GitHub Repo URLs for Commit Detector Plugin\n\n<b>Optional [🟩], But necessary if GH_CD_CHANNEL_IDS was filled</b>\n<b>For new changes, Restart:</b> <u><i>Required</i></u>",
         "GH_CD_CHANNEL_IDS": "📢 Lists Telegram chat IDs Where Commit Detector Notifications are Sent.\n\n<b>Optional [🟩], But necessary if GH_CD_URLS was filled</b>\n<b>For new changes, Restart:</b> <u><i>Required</i></u>",
@@ -208,7 +211,8 @@ def get_unique_message_for_env(key):
         "SHIFTX_OGG_TO_MP3_QUALITY": "🔊 Set quality for OGG to MP3 Outputs.\n\n<code>Set a value from 0 to 9</code>\n\n<b>Optional [🟩]</b>\n<b>For new changes, Restart:</b> <u><i>Required</i></u>",
         "SHIFTX_MP3_TO_OGG_QUALITY": "🔊 Set quality for MP3 to OGG Outputs.\n\n<code>Set a value from -1 to 10</code>\n\n<b>Optional [🟩]</b>\n<b>For new changes, Restart:</b> <u><i>Required</i></u>",
         "REMOVEBG_API": "🔊 Set Global API Key for RemoveBG Plugin.\n\n<i>Gen an API Key from https://www.remove.bg/dashboard#api-key</i>\n\n<b>Optional [🟩]</b>\n<b>For new changes, Restart:</b> <u><i>Required</i></u>",
-        "DS_URL_BUTTONS": "Enable or Desable URL buttons for Doc Spotter\n\n<b>Optional [🟩]</b>\n<b>For new changes, Restart:</b> <u><i>Required</i></u>"
+        "DS_URL_BUTTONS": "Enable or Desable URL buttons for Doc Spotter\n\n<b>Optional [🟩]</b>\n<b>For new changes, Restart:</b> <u><i>Required</i></u>",
+        "FSUB_INFO_IN_PM": "Enable or Disable sending F-Sub info message in user pm for F-Sub Plugin\n\n<b>Optional [🟩]</b>\n<b>For new changes, Restart:</b> <u><i>Required</i></u>",
     }
 
     return unique_messages.get(key, "<b>Please fill in the environment variables accordingly. Refer to the README for more information about these variables.</b>")
@@ -411,30 +415,6 @@ def execute_destruct_callback(update: Update, context: CallbackContext):
 
     query.edit_message_text(f"Enter this below code in the keypad and click \"Enter\" to initiate self-destruct\n\n<code>{verification_code}</code>",
                             reply_markup=reply_markup, parse_mode=ParseMode.HTML)
-
-def keypad_callback(update: Update, context: CallbackContext):
-    query = update.callback_query
-
-    if 'code_input' not in context.user_data:
-        context.user_data['code_input'] = ''
-
-    data = query.data
-    if data.startswith('destruct_authorize_'):
-        action = data.split('_')[2]
-
-        if action.isdigit():
-            query.answer()
-            context.user_data['code_input'] += action  
-        elif action == 'enter':
-            if context.user_data.get('code_input') == context.user_data.get('verification_code'):
-                query.answer()
-                self_destruct_procedure(query, context)
-            else:
-                query.answer("Invalid Code. Try Again!", show_alert=True)
-                context.user_data['code_input'] = ''  
-        elif action == 'reset':
-            query.answer()
-            context.user_data['code_input'] = ''  
 
 def keypad_callback(update: Update, context: CallbackContext):
     query = update.callback_query

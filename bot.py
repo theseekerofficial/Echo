@@ -45,6 +45,7 @@ from plugins.removebg.removebg import setup_removebg
 from plugins.imdb.imdb import register_imdb_handlers
 from plugins.shiftx.shiftx import register_shiftx_handlers
 from plugins.calculators.calculator import setup_calculator
+from plugins.fsub.fsub_configurator import register_fsub_handlers
 from plugins.logo_gen.logo_generator import handle_logogen, button
 from plugins.calculators.sci_calculator import setup_sci_calculator
 from plugins.doc_spotter.doc_spotter_indexer import setup_ds_dispatcher
@@ -506,9 +507,10 @@ bot_commands = [
     BotCommand("logogen", "Craft Your Logos with Echo!🖌️🎨"),
     BotCommand("imdb", "Seach Movies and TV-Shows in IMDb 🔎🎥"),
     BotCommand("docspotter", "Enhanced Auto Filter Module ⛈️"),
+    BotCommand("erasefiles", "Delete indexed files ♻️"),
     BotCommand("shiftx", "Convert Various range of files to another type 🔄️"),
     BotCommand("clonegram", "Clone any type of message between chats 🔀"),
-    BotCommand("erasefiles", "Delete indexed files ♻️"),
+    BotCommand("fsub", "Create a Force Subscribe Taks for a chat ⚖️"),
     BotCommand("ringtones", "Explore sample ringtones♫"),
     BotCommand("info", "See User/Chat info 📜"),
     BotCommand("removebg", "Remove background from any image 🪄"),
@@ -633,6 +635,8 @@ if __name__ == '__main__':
     register_clonegram_handlers(dp)
 
     paid_users_handlers(dp)
+
+    register_fsub_handlers(dp)
     
     bot_info = updater.bot.get_me()
     bot_name = bot_info.first_name

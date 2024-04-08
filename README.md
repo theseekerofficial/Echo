@@ -1,4 +1,4 @@
-# ECHO v1.1.6 L5J #IM (Improvements)
+# ECHO v1.1.7 I3V #IM #NF (Improvements/New Features)
 
 <p align="center">
     <a href="https://github.com/theseekerofficial/Echo">
@@ -182,9 +182,13 @@
         - Video Cloneing ✅
       
 23. **IMDb Search**
-    - Find your fav movies and TV shows using /imdb 🍿🎞️
+    - Find your favorite movies and TV shows using /imdb 🍿🎞️
+     
+25. **Force Subscribe Function**
+    - Grow your chats with the advanced feature-rich F-Sub Plugin. This plugin will give the opportunity for it 💪
+    - Subscription checking support for both groups and channels
 
-24. **Info & Utility Modules**
+26. **Info & Utility Modules**
     - Simple Modules that cloud be help to you in day-to-day telegram usage 📅
     - Status of Echo 📈
         - See Database Usage for Each Database in Echo (/database)
@@ -194,7 +198,7 @@
         - See a stats report about Echo and Host Server (/overview)
         - /users Command for Owner to See Echo Using User's and Group Chats list
 
-25. **Commit Detector Function**
+27. **Commit Detector Function**
     - Keep updated about your fav GitHub repo within the telegram environment. This feature can detect new commits from any public repo and send them to your telegram channel(s)/group(s)🪄
     - Exclusively for Echo deploying owners only 
 
@@ -216,6 +220,8 @@
 - `/docspotter`: Advanced auto filter feature packed with all feature you need for file managing 🗃️
 - `/erasefiles`: Delete indexed files easily ♻️
 - `/shiftx`: Convert wide range of files using Echo's ShiftX Plugin ♻️
+- `/clonegram`: Clone any type of message between chats 🔀
+- `/fsub`: Create a Force Subscribe Taks for a chat ⚖️ 
 - `/setreminder`: Set a reminder for a specific date and time.🗓️
 - `/myreminders`: To see all your active reminders.📃
 - `/editreminders`: Edit Your reminders✍️
@@ -383,6 +389,10 @@ This section provides detailed information on the required environment variables
    - Example: `REMOVEBG_API=abcdefgh12345678`
      
 12. **RESTART_AT_EVERY** [🟩]
+   - Description: Set `True` to send F-Sub user to inform message in PM and Group. Set `False` to send F-Sub user to inform message only in Group.
+   - Example: `FSUB_INFO_IN_PM=True`
+     
+13. **FSUB_INFO_IN_PM** [🟩]
    - Description: Set a time to auto restart to Echo (Fill in seconds). 24hours = `86400`
    - The minimum time that can be set for this env is 600
    - To Disable auto restart, set this ENV to `0`
@@ -441,6 +451,10 @@ This section provides detailed information on the required environment variables
 13. **CLONEGRAM_PLUGIN** [🟩]
    - Description: Set to `True` or `False` to Enable or Disable the Clonegram Plugin.
    - Example: `CLONEGRAM_PLUGIN=True`
+     
+14. **F_SUB_PLUGIN** [🟩]
+   - Description: Set to `True` or `False` to Enable or Disable the F-Sub Plugin.
+   - Example: `F_SUB_PLUGIN=True`
 
 Make sure to replace the placeholder values with your actual configuration settings. These environment variables are crucial for customizing and configuring the behavior of your Echo bot. Ensure that they are correctly set before running the bot to ensure its proper functionality.
 

@@ -156,7 +156,7 @@ def system_status_callback(update: Update, context: CallbackContext) -> None:
     keyboard = [
         [InlineKeyboardButton("Close", callback_data='overview_close'),
          InlineKeyboardButton("Back", callback_data='overview_back')],
-        [InlineKeyboardButton("Refresh ♻️", callback_data='overview_bot_status')]
+        [InlineKeyboardButton("Refresh ♻️", callback_data='overview_system_status')]
     ]
     reply_markup = InlineKeyboardMarkup(keyboard)
 
@@ -199,6 +199,8 @@ def plugin_status_callback(update: Update, context: CallbackContext) -> None:
         "REMOVEBG_API": "Global API for Background Remover",
         "IMDb_PLUGIN": "IMDb Movie/TV Show Finder",
         "CLONEGRAM_PLUGIN": "Chat Cloner [Clonegram]",
+        "F_SUB_PLUGIN": "Force Subscriber [F-Sub]",
+        "FSUB_INFO_IN_PM": "F-Sub info in PM",
         "DS_IMDB_ACTIVATE": "IMDb in DS",
         "DS_URL_BUTTONS": "URL Buttons for Doc Spotter",
         "GH_CD_URLS": "Commit Detector"
