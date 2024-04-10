@@ -21,6 +21,7 @@ fsub_info_in_pm = fsub_info_in_pm_str.lower() == 'true' if fsub_info_in_pm_str e
 
 def check_membership_and_restrict(update: Update, context: CallbackContext) -> None:
     message = update.effective_message
+    
     user = update.effective_user
 
     if not f_sub_plugin_enabled:
@@ -47,6 +48,11 @@ def check_membership_and_restrict(update: Update, context: CallbackContext) -> N
             non_member_chats.append(chat_id)
 
     if non_member_chats:
+        if message and non_member_chats:
+            try:
+                update.message.delete()
+            except:
+                logger.warning(f"⚠️ Failed to delete message")
         restrict_user(monitoring_chat_id, user.id, context)
         inform_user(update, non_member_chats, user.id, context, monitoring_chat_id)
 

@@ -6,6 +6,7 @@ from pathlib import Path
 from telegram import Update
 from pymongo import MongoClient
 from modules.token_system import TokenSystem
+from modules.allowed_chats import allowed_chats_only
 from modules.configurator import get_env_var_from_db
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import CallbackContext, CommandHandler, CallbackQueryHandler, MessageHandler, Filters
@@ -230,9 +231,9 @@ def del_rbg_api(update: Update, context: CallbackContext):
 
 def setup_removebg(dp):    
     dp.add_handler(token_system.token_filter(CommandHandler('removebg', remove_background)))
-    dp.add_handler(CommandHandler('setrbgapi', set_rbg_api))
-    dp.add_handler(CommandHandler('showrbgapi', show_rbg_api))
-    dp.add_handler(CommandHandler('delrbgapi', del_rbg_api))
-    dp.add_handler(CommandHandler('rbgusage', rbg_usage))
+    dp.add_handler(CommandHandler('setrbgapi', allowed_chats_only(set_rbg_api)))
+    dp.add_handler(CommandHandler('showrbgapi', allowed_chats_only(show_rbg_api)))
+    dp.add_handler(CommandHandler('delrbgapi', allowed_chats_only(del_rbg_api)))
+    dp.add_handler(CommandHandler('rbgusage', allowed_chats_only(rbg_usage)))
     dp.add_handler(CallbackQueryHandler(background_choice_callback, pattern='^background_'))
 

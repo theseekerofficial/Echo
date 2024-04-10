@@ -7,6 +7,7 @@ from dateutil import parser
 from pymongo import MongoClient
 from datetime import datetime, timedelta
 from modules.token_system import TokenSystem
+from modules.allowed_chats import allowed_chats_only
 from modules.configurator import get_env_var_from_db
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup, InputFile, ParseMode
 from telegram.ext import CallbackContext, CommandHandler, MessageHandler, Filters, CallbackQueryHandler
@@ -264,8 +265,8 @@ def setup_dispatcher(dp, db):
     dp.add_handler(token_system.token_filter(CommandHandler("scheducast", start_scheducast)))
     dp.add_handler(CallbackQueryHandler(setup_scheducast, pattern='^setup$'))
     dp.add_handler(CallbackQueryHandler(select_broadcast_type, pattern='^(pm|group|all)$'))
-    dp.add_handler(CommandHandler("scd", get_broadcast_schedule))
-    dp.add_handler(CommandHandler("scm", complete_scheducast_setup))
+    dp.add_handler(CommandHandler("scd", allowed_chats_only(get_broadcast_schedule)))
+    dp.add_handler(CommandHandler("scm", allowed_chats_only(complete_scheducast_setup)))
     dp.add_handler(CallbackQueryHandler(my_scheducasts, pattern='^my_scheducasts$'))
     dp.add_handler(CallbackQueryHandler(show_schedule_details, pattern='^[0-9a-fA-F]{24}$'))
     dp.add_handler(CallbackQueryHandler(delete_scheducast, pattern='^delete_[0-9a-fA-F]{24}$'))

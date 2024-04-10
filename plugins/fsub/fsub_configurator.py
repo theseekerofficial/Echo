@@ -43,7 +43,15 @@ def fsub_setup_callback(update: Update, context: CallbackContext) -> None:
     query.edit_message_text(text="♻️ Now, send your Group ID.\n\n💥 Tip: This is the chat ID that the bot checks incoming messages from users.\n\n🔴 Chat ID should need to start as '-100'\n🔴 Only Group chat ids acceptable\n🔴 Bot Must Be Admin ⚠️")
     context.user_data['fsub_setup_step'] = 'awaiting_monitoring_chat_id'
     context.user_data['fsub_setup_message_id'] = query.message.message_id  
-    
+
+def is_group_chat(provided_chat_id, context):
+    try:
+        chat = context.bot.get_chat(chat_id=provided_chat_id)
+        return chat.type in ['group', 'supergroup']
+    except Exception as e:
+        logger.error(f"🚫 Error checking chat type for {provided_chat_id}: {str(e)}")
+        return False
+
 def fsub_collect_chat_id(update: Update, context: CallbackContext) -> None:
     chat_id = update.effective_chat.id
     message_id = context.user_data.get('fsub_setup_message_id')
@@ -63,14 +71,14 @@ def fsub_collect_chat_id(update: Update, context: CallbackContext) -> None:
         return all(re.match(r"^-100\d+$", chat_id.strip()) and bot_is_admin(chat_id.strip()) for chat_id in chat_ids_list)
 
     if step == 'awaiting_monitoring_chat_id':
-        if re.match(r"^-100\d+$", message_text) and bot_is_admin(message_text):
+        if re.match(r"^-100\d+$", message_text) and bot_is_admin(message_text) and is_group_chat(message_text, context):
             try:
                 update.message.delete()
             except Exception as e:
                 logger.error(f"🚫 Error deleting message: {str(e)}")
 
             if db['Fsub_Configs'].find_one({'monitoring_chat_id': message_text}):
-                context.bot.send_message(chat_id=chat_id, text="🚫 This monitoring chat ID is already assigned for a task. Task setup cancelled.\n\n💡If you are the task owner delete F-Sub task and add new one")
+                context.bot.send_message(chat_id=chat_id, text="🚫 This monitoring chat ID is already assigned for a task. Task setup cancelled.\n\n💡If you are this F-Sub task owner, delete F-Sub task and add again")
                 del context.user_data['fsub_setup_step']
                 del context.user_data['fsub_setup_message_id']
                 return
@@ -79,6 +87,11 @@ def fsub_collect_chat_id(update: Update, context: CallbackContext) -> None:
             context.user_data['fsub_setup_step'] = 'awaiting_checking_chat_id'
             context.bot.edit_message_text(chat_id=chat_id, message_id=message_id,
                                           text="♻️ Now, send the chat IDs your users need to subscribe to, separated by commas.\n\nE.g. <code>-100123456789,-100987654321,-100918273645</code>\n\n💥 Tip: These are the chat IDs where the bot checks if the user is a member of specific chats.\n\n🔴 Chat IDs should start with '-100'\n🔴 Both Channel and Group IDs acceptable\n🔴 Bot Must Be Admin ⚠️", parse_mode=ParseMode.HTML)
+        
+        elif not is_group_chat(message_text, context):
+            context.bot.send_message(chat_id=chat_id, reply_to_message_id=message_id,
+                                      text="⚠️ Provided Chat ID is not a group. Please provide a valid group chat ID where the bot is an admin.")
+        
         else:
             context.bot.send_message(chat_id=chat_id, reply_to_message_id=message_id,
                                       text="⚠️ Bot is not an admin in the provided chat or the chat ID is incorrect. Please add the bot as an admin and ensure the Chat ID starts with '-100'.")
@@ -109,23 +122,22 @@ def fsub_collect_chat_id(update: Update, context: CallbackContext) -> None:
 def delete_fsub_task_menu(update: Update, context: CallbackContext) -> None:
     query = update.callback_query
     user_id = query.from_user.id
-    tasks = db['Fsub_Configs'].find({'user_id': user_id})
+    tasks = list(db['Fsub_Configs'].find({'user_id': user_id}))
     
-    keyboard = []
-    for task in tasks:
-        chat_name = get_chat_name(task['monitoring_chat_id'], context)
-        button_text = chat_name or task['monitoring_chat_id']
-        keyboard.append([InlineKeyboardButton(button_text, callback_data=f"e_fsub_select_{task['monitoring_chat_id']}")])
-    keyboard.append([InlineKeyboardButton("Back", callback_data="e_fsub_back")])
-
-    if not keyboard:
+    if not tasks:
         keyboard = [[InlineKeyboardButton("Back", callback_data="e_fsub_back")]]
         reply_markup = InlineKeyboardMarkup(keyboard)
         query.edit_message_text(text="🚫 No tasks found for you. Create one!", reply_markup=reply_markup)
-        return
-
-    reply_markup = InlineKeyboardMarkup(keyboard)
-    query.edit_message_text(text="Select a task to delete:", reply_markup=reply_markup)
+    else:
+        keyboard = []
+        for task in tasks:
+            chat_name = get_chat_name(task['monitoring_chat_id'], context)
+            button_text = chat_name or task['monitoring_chat_id']
+            keyboard.append([InlineKeyboardButton(button_text, callback_data=f"e_fsub_select_{task['monitoring_chat_id']}")])
+        keyboard.append([InlineKeyboardButton("Back", callback_data="e_fsub_back")])
+        
+        reply_markup = InlineKeyboardMarkup(keyboard)
+        query.edit_message_text(text="♻️ Select a task to delete:", reply_markup=reply_markup)
 
 def confirm_delete_fsub_task(update: Update, context: CallbackContext) -> None:
     query = update.callback_query

@@ -2,8 +2,9 @@ import os
 import logging
 from pymongo import MongoClient
 from modules.token_system import TokenSystem
+from modules.allowed_chats import allowed_chats_only
 from modules.configurator import get_env_var_from_db
-from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update
+from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update, ParseMode
 from telegram.ext import CallbackContext, CallbackQueryHandler, CommandHandler, Filters, MessageHandler, Updater
 from plugins.doc_spotter.doc_spotter_file_manager import delete_indexed_files_callback, process_file_deletion, done_forwarding_files, start_file_deletion
 
@@ -258,6 +259,38 @@ def setup_channel_callback(update: Update, context: CallbackContext) -> None:
     query.edit_message_text(text=text, reply_markup=reply_markup)
     context.user_data['awaiting_channel_id'] = True  
 
+def is_bot_admin_in_channel(bot, chat_id) -> bool:
+    try:
+        chat = bot.get_chat(chat_id)
+        if chat.type != 'channel':
+            return False  
+        
+        member = bot.get_chat_member(chat_id, bot.id)
+        return member.status in ['administrator', 'creator']
+    except Exception as e:
+        logging.error(f"Failed to get bot's status or chat type for {chat_id}: {e}")
+        return False
+
+def is_bot_admin_in_group(bot, chat_id) -> bool:
+    try:
+        chat = bot.get_chat(chat_id)
+        if chat.type not in ['group', 'supergroup']:
+            return False  
+        
+        member = bot.get_chat_member(chat_id, bot.id)
+        return member.status in ['administrator', 'creator']
+    except Exception as e:
+        logging.error(f"Failed to get bot's status or chat type for {chat_id}: {e}")
+        return False
+
+def is_bot_admin_in_chat(bot, chat_id) -> bool:
+    try:
+        member = bot.get_chat_member(chat_id, bot.id)
+        return member.status in ['administrator', 'creator']
+    except Exception as e:
+        logging.error(f"Failed to get bot's status in the chat {chat_id}: {e}")
+        return False
+
 def handle_text(update: Update, context: CallbackContext) -> None:
     user_data = context.user_data
     text = update.message.text.strip()
@@ -265,35 +298,42 @@ def handle_text(update: Update, context: CallbackContext) -> None:
 
     if user_data.get('awaiting_channel_id'):
         if text.startswith('-100'):
-            success = store_channel_id(user_id, text)
-            if success:
-                update.message.reply_text(f"🗂️Index Channel {text} saved successfully. From now I will index every file you send to this chat.")
+            if is_bot_admin_in_channel(context.bot, text):
+                success = store_channel_id(user_id, text)
+                if success:
+                    update.message.reply_text(f"🗂️Index Channel <code>{text}</code> saved successfully. From now I will index every file you send to this chat.", parse_mode=ParseMode.HTML)
+                    user_data['awaiting_channel_id'] = False  
+                else:
+                    update.message.reply_text(f"⚠️The Channel ID <code>{text}</code> is already configured by another user. So you cannot add that. If you think this was a mistake please contact the bot owner.", parse_mode=ParseMode.HTML)
             else:
-                update.message.reply_text(f"⚠️The Chat id {text} is already configured by another user. So you cannot add that. If you think this was a mistake please contact the bot owner.")
+                update.message.reply_text("❌ Please provide a valid channel ID where I am an admin.")
         else:
             update.message.reply_text("❌Please try again! Provide a valid chat ID starting with -100.")
-        user_data['awaiting_channel_id'] = False  
 
-    # For storing Group ID
     elif user_data.get('awaiting_group_id'):
         if text.startswith('-100'):
-            success = store_group_id(user_id, text)
-            if success:
-                update.message.reply_text(f"👂Listening Group {text} saved successfully. From now on, I'll listen to messages sent to this group.")
+            if is_bot_admin_in_group(context.bot, text):
+                success = store_group_id(user_id, text)
+                if success:
+                    update.message.reply_text(f"👂Listening Group <code>{text}</code> saved successfully. From now on, I'll listen to messages sent to this group.", parse_mode=ParseMode.HTML)
+                    user_data['awaiting_group_id'] = False
+                else:
+                    update.message.reply_text(f"⚠️The Group ID <code>{text}</code> is already configured by another user. So you cannot add that. If you think this was a mistake please the contact bot owner.", parse_mode=ParseMode.HTML)
             else:
-                update.message.reply_text(f"⚠️The Chat id {text} is already configured by another user. So you cannot add that. If you think this was a mistake please the contact bot owner.")
+                update.message.reply_text("❌ The provided ID does not belong to a group where I'm an admin. Please provide a valid group ID where I am an admin.")
         else:
             update.message.reply_text("❌Please try again! Provide a valid group ID starting with -100.")
-        user_data['awaiting_group_id'] = False  
 
     elif user_data.get('awaiting_fsub_chat_id'):
-        if text.startswith('-100'):  
-            store_fsub_chat_id(user_id, text)
-            update.message.reply_text(f"🔮F-Sub chat setup completed. From now I won't serve users who do not join/subscribe to your {text} chat🫡")
-            user_data['awaiting_fsub_chat_id'] = False  
+        if text.startswith('-100'):
+            if is_bot_admin_in_chat(context.bot, text):
+                store_fsub_chat_id(user_id, text)
+                update.message.reply_text(f"🔮 F-Sub chat setup completed. Now, every user who uses Doc Spotter in your listing groups must join the <code>{text}</code> chat in order to use Doc Spotter.", parse_mode=ParseMode.HTML)
+                user_data['awaiting_fsub_chat_id'] = False  
+            else:
+                update.message.reply_text("❌ The provided ID does not belong to a chat where I'm an admin. Please provide a valid chat ID where I am an admin.")
         else:
-            update.message.reply_text("❌Please try again! Provide a valid chat ID starting with -100.")
-            user_data['awaiting_fsub_chat_id'] = False  
+            update.message.reply_text("❌ Please try again! Provide a valid chat ID starting with -100.") 
     else:
         pass  
 
@@ -401,7 +441,7 @@ def store_file_info(user_id, file_id, file_name, file_size, file_type, mime_type
 def setup_ds_dispatcher(dispatcher):
     dispatcher.add_handler(token_system.token_filter(CommandHandler("docspotter", docspotter_command)))
     dispatcher.add_handler(token_system.token_filter(CommandHandler("erasefiles", start_file_deletion)))
-    dispatcher.add_handler(CommandHandler("stop", done_forwarding_files))
+    dispatcher.add_handler(CommandHandler("stop", allowed_chats_only(done_forwarding_files)))
     dispatcher.add_handler(CallbackQueryHandler(index_files_callback, pattern='^index_files$'))
     dispatcher.add_handler(CallbackQueryHandler(setup_channel_callback, pattern='^setup_channel$'))
     dispatcher.add_handler(CallbackQueryHandler(setup_group_callback, pattern='^setup_group$'))

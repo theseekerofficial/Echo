@@ -27,6 +27,9 @@ class TokenSystem:
         self.owner_id = get_env_var_from_db("OWNER")
         authorized_user_ids_str = get_env_var_from_db("AUTHORIZED_USERS")
         self.authorized_user_ids = [int(uid.strip()) for uid in authorized_user_ids_str.split(',')] if authorized_user_ids_str else []
+        self.go_public = get_env_var_from_db("GO_PUBLIC").strip().lower() == "true"
+        allowed_chats_str = get_env_var_from_db("ALLOWED_CHATS")
+        self.allowed_chats = set(int(cid.strip()) for cid in allowed_chats_str.split(',')) if allowed_chats_str else set()
     
     def generate_token(self, user_id):
         self.collection.delete_many({
@@ -42,12 +45,17 @@ class TokenSystem:
         return token
 
     def verify_token(self, update: Update, context: CallbackContext, next):
-        if self.token_reset_time == 0:
-            return next(update, context)
-        
         user_id = update.effective_user.id
 
         if user_id == self.owner_id or user_id in self.authorized_user_ids:
+            return next(update, context)
+
+        chat_id = update.effective_chat.id
+        
+        if not self.go_public and chat_id not in self.allowed_chats:
+            return
+        
+        if self.token_reset_time == 0:
             return next(update, context)
 
         paid_user_record = self.db["Paid_Users"].find_one({'user_id': user_id})

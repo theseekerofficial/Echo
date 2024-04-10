@@ -1,4 +1,4 @@
-# ECHO v1.1.7 I3V #IM #NF (Improvements/New Features)
+# ECHO v1.1.8 AY6 #IM #NF (Improvements/New Feature)
 
 <p align="center">
     <a href="https://github.com/theseekerofficial/Echo">
@@ -255,8 +255,8 @@
 ⚙️. **Group Friendly:**
    - Set reminders effortlessly in groups by mentioning the bot (@YourBotUsername) followed by the `/setreminder` command.
 
-⚙️. **Modern Broadcast**
-   - Type /broadcast to start the broadcast module. Select Broadcast type and send your message need to broadcast
+⚙️. **Control Usage of Echo**
+   - Control the bot access to users using "GO_PUBLIC" and "ALLOWED_CHATS" ENVs
 
 # Configure Echo
 
@@ -336,67 +336,76 @@ This section provides detailed information on the required environment variables
    - Description: Set True or Flase to Enable or Disable URL Buttons for Result list in DS Plugin | `This ENV needs to set True for URL Shortner feature to work`
    - Example: `DS_URL_BUTTONS=True`
      
-3. **URL_SHORTNER** 
+3. **GO_PUBLIC** [🟩]
+   - Description: Set to True for available Echo for all users in telegram. | Set to False to restrict Echo's usage to chats in ALLOWED_CHATS
+   - Example: `GO_PUBLIC=True`
+     
+4. **ALLOWED_CHATS** [🟩]
+   - Description: List of chat IDs (USER IDs or GROUP IDs | Both types acceptable) that allow to use Echo
+   - Note: `This ENV only works if the GO_PUBLIC env is set to "False"`
+   - Example: `ALLOWED_CHATS=123456789,-100987654321,192837465`
+     
+5. **URL_SHORTNER** 
    - Fill your shortener's domain.
    - To disable this URL shortener feature, keep empty these envs
    - Supported Shortners: `atglinks.com, exe.io, gplinks.in, shrinkme.io, urlshortx.com, shortzon.com, shorte.st, ouo.io`
    - Example: `URL_SHORTNER=https://atglinks.com`
      
-4. **URL_SHORTNER_API**
+6. **URL_SHORTNER_API**
    - Description: Fill your shortener's api.
    - To disable this URL shortener feature, keep empty these envs
    - Supported Shortners: `atglinks.com, exe.io, gplinks.in, shrinkme.io, urlshortx.com, shortzon.com, shorte.st, ouo.io`
    - Example: `URL_SHORTNER_API=dhoyj96oh4j50j90j5uy3g40y045h32tr473g4t804t`
      
-5.  **GH_CD_URLS** [🟩 (Required if GH_CD_CHANNEL_IDS ENV was Filled)]
+7. **GH_CD_URLS** [🟩 (Required if GH_CD_CHANNEL_IDS ENV was Filled)]
    - Description: Fill in the repo URL in the format theseekerofficial/Echo.
    - Example: `GH_CD_URLS=theseekerofficial/Echo`
   
-6. **GH_CD_CHANNEL_IDS** [🟩 (Required if GH_CD_URLS ENV was Filled)]
+8. **GH_CD_CHANNEL_IDS** [🟩 (Required if GH_CD_URLS ENV was Filled)]
    - Description: Add the Channel ID(s)/Group ID(s) that you need to post-commit update.
    - Example: `GH_CD_CHANNEL_IDS=-100123456789`
 
-7. **GH_CD_PAT** [🟩]
+9. **GH_CD_PAT** [🟩]
    - Description: Your GitHub Personal Authorization Token for 5000 requests per hour API calls.
    - Example: `GH_CD_CHANNEL_IDS=ujb32uvb579g29824t89v245h8`
 
-8. **ENABLE_GLOBAL_G_API** [🟩]
-   - Description: Enable Global API for AI-related features (True or False)
-   - Example: `ENABLE_GLOBAL_G_API=True`
+10. **ENABLE_GLOBAL_G_API** [🟩]
+    - Description: Enable Global API for AI-related features (True or False)
+    - Example: `ENABLE_GLOBAL_G_API=True`
   
-9. **GLOBAL_G_API** [🟩]
-   - Description: Add your API key from [Google AI Studios](https://aistudio.google.com/app/apikey)
-   - Example: `GLOBAL_G_API=urwgui598t42598bgt589t5`
+11. **GLOBAL_G_API** [🟩]
+    - Description: Add your API key from [Google AI Studios](https://aistudio.google.com/app/apikey)
+    - Example: `GLOBAL_G_API=urwgui598t42598bgt589t5`
      
-10. **SHIFTX_MP3_TO_AAC_BITRATE** [🟩]
-   - Description: Set a quality for MP3 to AAC Outputs. Set a value among 128k, 192k, 256k, 320k | 128k = Lowest quality, smallest file size / 320k = highest quality, largest file size.
-   - Example: `SHIFTX_MP3_TO_AAC_BITRATE=192k`
+12. **SHIFTX_MP3_TO_AAC_BITRATE** [🟩]
+    - Description: Set a quality for MP3 to AAC Outputs. Set a value among 128k, 192k, 256k, 320k | 128k = Lowest quality, smallest file size / 320k = highest quality, largest file size.
+    - Example: `SHIFTX_MP3_TO_AAC_BITRATE=192k`
 
-11. **SHIFTX_AAC_TO_MP3_BITRATE** [🟩]
-   - Description: Set a quality for ACC to MP3 Outputs. Set a value among 128k, 192k, 256k, 320k | 128k = Lowest quality, smallest file size / 320k = highest quality, largest file size.
-   - Example: `SHIFTX_AAC_TO_MP3_BITRATE=256k`
+13. **SHIFTX_AAC_TO_MP3_BITRATE** [🟩]
+    - Description: Set a quality for ACC to MP3 Outputs. Set a value among 128k, 192k, 256k, 320k | 128k = Lowest quality, smallest file size / 320k = highest quality, largest file size.
+    - Example: `SHIFTX_AAC_TO_MP3_BITRATE=256k`
   
-11. **SHIFTX_OGG_TO_MP3_QUALITY** [🟩]
-   - Description: Set a quality for OGG to MP3 Outputs. Set a value from 0 to 9 | 9 = Lowest quality, smallest file size / 0 = highest quality, largest file size.
-   - Example: `SHIFTX_OGG_TO_MP3_QUALITY=5`
+14. **SHIFTX_OGG_TO_MP3_QUALITY** [🟩]
+    - Description: Set a quality for OGG to MP3 Outputs. Set a value from 0 to 9 | 9 = Lowest quality, smallest file size / 0 = highest quality, largest file size.
+    - Example: `SHIFTX_OGG_TO_MP3_QUALITY=5`
   
-11. **SHIFTX_MP3_TO_OGG_QUALITY** [🟩]
-   - Description: Set a quality for MP3 to OGG Outputs. Set a value from -1 to 10 | -1 = Lowest quality, smallest file size / 10 = highest quality, largest file size.
-   - Example: `SHIFTX_MP3_TO_OGG_QUALITY=4`
+15. **SHIFTX_MP3_TO_OGG_QUALITY** [🟩]
+    - Description: Set a quality for MP3 to OGG Outputs. Set a value from -1 to 10 | -1 = Lowest quality, smallest file size / 10 = highest quality, largest file size.
+    - Example: `SHIFTX_MP3_TO_OGG_QUALITY=4`
      
-11. **REMOVEBG_API** [🟩]
-   - Description: Set a Global API Key for RemoveBG Plugin. Get one from [RemoveBG](https://www.remove.bg/dashboard#api-key)
-   - Example: `REMOVEBG_API=abcdefgh12345678`
+16. **REMOVEBG_API** [🟩]
+    - Description: Set a Global API Key for RemoveBG Plugin. Get one from [RemoveBG](https://www.remove.bg/dashboard#api-key)
+    - Example: `REMOVEBG_API=abcdefgh12345678`
      
-12. **RESTART_AT_EVERY** [🟩]
-   - Description: Set `True` to send F-Sub user to inform message in PM and Group. Set `False` to send F-Sub user to inform message only in Group.
-   - Example: `FSUB_INFO_IN_PM=True`
+17. **RESTART_AT_EVERY** [🟩]
+    - Description: Set `True` to send F-Sub user to inform message in PM and Group. Set `False` to send F-Sub user to inform message only in Group.
+    - Example: `FSUB_INFO_IN_PM=True`
      
-13. **FSUB_INFO_IN_PM** [🟩]
-   - Description: Set a time to auto restart to Echo (Fill in seconds). 24hours = `86400`
-   - The minimum time that can be set for this env is 600
-   - To Disable auto restart, set this ENV to `0`
-   - Example: `RESTART_AT_EVERY=86400`
+18. **FSUB_INFO_IN_PM** [🟩]
+    - Description: Set a time to auto restart to Echo (Fill in seconds). 24hours = `86400`
+    - The minimum time that can be set for this env is 600
+    - To Disable auto restart, set this ENV to `0`
+    - Example: `RESTART_AT_EVERY=86400`
 
 ### Plugin On/Off
 
@@ -437,24 +446,24 @@ This section provides detailed information on the required environment variables
    - Example: `DOC_SPOTTER_PLUGIN=True`
 
 10. **SHIFTX_PLUGIN** [🟩]
-   - Description: Set to `True` or `False` to Enable or Disable the ShiftX Plugin.
-   - Example: `SHIFTX_PLUGIN=True`
+    - Description: Set to `True` or `False` to Enable or Disable the ShiftX Plugin.
+    - Example: `SHIFTX_PLUGIN=True`
      
 11. **REMOVEBG_PLUGIN** [🟩]
-   - Description: Set to `True` or `False` to Enable or Disable the RemoveBG Plugin.
-   - Example: `REMOVEBG_PLUGIN=True`
+    - Description: Set to `True` or `False` to Enable or Disable the RemoveBG Plugin.
+    - Example: `REMOVEBG_PLUGIN=True`
      
 12. **IMDb_PLUGIN** [🟩]
-   - Description: Set to `True` or `False` to Enable or Disable the IMDb Plugin.
-   - Example: `IMDb_PLUGIN=True`
+    - Description: Set to `True` or `False` to Enable or Disable the IMDb Plugin.
+    - Example: `IMDb_PLUGIN=True`
 
 13. **CLONEGRAM_PLUGIN** [🟩]
-   - Description: Set to `True` or `False` to Enable or Disable the Clonegram Plugin.
-   - Example: `CLONEGRAM_PLUGIN=True`
+    - Description: Set to `True` or `False` to Enable or Disable the Clonegram Plugin.
+    - Example: `CLONEGRAM_PLUGIN=True`
      
 14. **F_SUB_PLUGIN** [🟩]
-   - Description: Set to `True` or `False` to Enable or Disable the F-Sub Plugin.
-   - Example: `F_SUB_PLUGIN=True`
+    - Description: Set to `True` or `False` to Enable or Disable the F-Sub Plugin.
+    - Example: `F_SUB_PLUGIN=True`
 
 Make sure to replace the placeholder values with your actual configuration settings. These environment variables are crucial for customizing and configuring the behavior of your Echo bot. Ensure that they are correctly set before running the bot to ensure its proper functionality.
 

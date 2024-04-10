@@ -183,7 +183,7 @@ def replace_symbols(match):
     elif symbol == "sci_tan":
         return "tan"
     elif symbol == "sci_log":
-        return "log10"  # Assumes base 10 for simplicity
+        return "log10"  
     elif symbol == "sci_sqrt":
         return "sqrt"
     elif symbol == "sci_fact":
@@ -193,15 +193,12 @@ def replace_symbols(match):
     elif symbol == "sci_e":
         return "e"
     elif symbol == "sci_percent":
-        # Convert the last number in the expression to a percentage
         return "/100.0"
     elif symbol.startswith("sci_"):
-        # Handle numbers and basic operators by stripping off 'sci_' prefix
         return symbol[4:]
     else:
         return symbol
 
-# Add math functions to aeval's symtable for direct use
 aeval.symtable['sin'] = math.sin
 aeval.symtable['cos'] = math.cos
 aeval.symtable['tan'] = math.tan
@@ -210,17 +207,12 @@ aeval.symtable['sqrt'] = math.sqrt
 aeval.symtable['factorial'] = math.factorial
 aeval.symtable['pi'] = math.pi
 aeval.symtable['e'] = math.e
-aeval.symtable['**'] = pow  # For power calculations
+aeval.symtable['**'] = pow  
 
 def sci_calculator_disabled(update: Update, context: CallbackContext):
     query = update.callback_query
     query.answer(text="Scientific Calculator Plugin Disabled by the person who deployed this Echo Variant", show_alert=True)
 
 def setup_sci_calculator(dispatcher):
-    # Register handlers for the scientific calculator
     dispatcher.add_handler(CallbackQueryHandler(sci_button_handler, pattern='^sci_.*$'))
     dispatcher.add_handler(CallbackQueryHandler(sci_calculator_disabled, pattern='^disabled_sci_calculator$'))
-
-# This would be called from the main bot file to setup the scientific calculator handlers
-# from plugins.calculators.sci_calculator import setup_sci_calculator
-# setup_sci_calculator(dispatcher)

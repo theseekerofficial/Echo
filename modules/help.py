@@ -39,6 +39,9 @@ _Echo the Multifunctional User assistant has arrived to save your schedule and m
         ],
         [
             InlineKeyboardButton("Clonegram Feature", callback_data='clonegram_help'),
+            InlineKeyboardButton("F-Sub Feature", callback_data='f_sub_help'),
+        ],
+        [
             InlineKeyboardButton("Misc Commands", callback_data='misc'),
         ],
     ]
@@ -271,13 +274,29 @@ Enjoy the IMDb Plugin!
 
 *Setup a Task* ⚙️
 
-🔶 *Initiate Set up*: Simply send /clonegram and fallow the guide provide by the bot. 
-🔶 In this step you need to provide source chat id , destination chat id (Use /info command to find your chats ids), clone type and media types
-🔶 After successful setup bot will start to clone you source chat to destination chat
+🔶 *Initiate Set up*: Simply send /clonegram and follow the guide provided by the bot. 
+🔶 In this step you need to provide the source chat id , destination chat id (Use /info command to find your chat ids), clone type, and media types
+🔶 After successful setup bot will start to clone your source chat to the destination chat
 
 _Tips_ ✔️
 
-Admin Role is required for channels. But for groups, it's not necessary if the bot's 'Group Privacy' is disabled in @BotFather. Contect the deployed person to know about that
+Admin Role is required for channels. But for groups, it's unnecessary if the bot's 'Group Privacy' is disabled in @BotFather. Contact the deployed person to know about that
+
+Enjoy the Clonegram Plugin!
+
+[Echo-Verse♾️](https://t.me/Echo_AIO)
+""",
+   'f_sub_help' : """💨 *Welcome to F-Sub Plugin help! Here's how you can start using it:*
+
+*Setup a Task* ⚙️
+
+♦️ *Initiate Set up*: Simply send /fsub and follow the guide provided by the bot. 
+♦️ In this step, you need to provide the monitoring chat ID (It must be a group chat ID) and check chat IDs (Both groups and channels support)
+♦️ After successful setup, Echo will monitor every message in the monitor chat ID and check whether is user sub to checking chat or not
+
+_Tips_ ✔️
+
+Admin Role is required for both monitoring chat and checking chats
 
 Enjoy the Clonegram Plugin!
 
@@ -286,35 +305,27 @@ Enjoy the Clonegram Plugin!
         
     }
 
-    # Get the message for the clicked button
     message_text = messages.get(data, "Sorry, no information available for this category.")
 
-    # Add a "Back" button to go back to the main menu
     keyboard = [[InlineKeyboardButton("Back", callback_data='back')]]
     reply_markup = InlineKeyboardMarkup(keyboard)
 
-    # Send the detailed help message with the "Back" button
     query.edit_message_caption(
         caption=message_text,
         reply_markup=reply_markup,
         parse_mode=ParseMode.MARKDOWN,
     )
 
-    # Save the current category in user data for "Back" button handling
     context.user_data['category_stack'].append(data)
 
 def handle_back_button_click(update, context: CallbackContext) -> None:
-    # Get the current category stack from user data
     category_stack = context.user_data.get('category_stack', [])
 
     if category_stack:
-        # Pop the previous category from the stack
         previous_category = category_stack.pop()
 
-        # Get the inline keyboard for the previous category
         previous_keyboard = get_inline_keyboard_for_category(previous_category)
 
-        # Edit the message back to the original caption with the inline keyboard
         update.callback_query.edit_message_caption(
             caption="""Ah! The help menu, my fav! Select Help Category to Proceed:
     
@@ -322,7 +333,6 @@ Echo the Multifunctional User assistant has arrived to save your schedule and ma
             reply_markup=previous_keyboard
         )
     else:
-        # If the stack is empty, edit back to the main menu
         update.callback_query.edit_message_caption(
             caption="""Ah! The help menu, my fav! Select Help Category to Proceed:
     
@@ -330,10 +340,8 @@ Echo the Multifunctional User assistant has arrived to save your schedule and ma
             reply_markup=get_inline_keyboard_for_category(None)
         )
 
-    # Update the category stack in user data
     context.user_data['category_stack'] = category_stack
 
-# Helper function to get the inline keyboard for a specific category
 def get_inline_keyboard_for_category(category):
     keyboard = [
         [
@@ -366,6 +374,9 @@ def get_inline_keyboard_for_category(category):
         ],
         [
             InlineKeyboardButton("Clonegram Feature", callback_data='clonegram_help'),
+            InlineKeyboardButton("F-Sub Feature", callback_data='f_sub_help'),
+        ],
+        [
             InlineKeyboardButton("Misc Commands", callback_data='misc'),
         ],
     ]

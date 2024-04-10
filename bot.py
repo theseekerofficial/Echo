@@ -28,6 +28,7 @@ from telegram import Update, ParseMode, Message, User, Chat, BotCommand, BotComm
 from modules.token_system import TokenSystem
 from modules.set_my_info import setup_bot_info
 from modules.utilities.users import show_users
+from modules.allowed_chats import allowed_chats_only
 from modules.utilities.paid_users import paid_users_handlers
 from modules.utilities.database_info import database_command
 from modules.utilities.info_fetcher import register_id_command
@@ -545,28 +546,28 @@ if __name__ == '__main__':
     token_system = TokenSystem(os.getenv("MONGODB_URI"), "Echo", "user_tokens")
     
     dp.add_handler(CommandHandler("start", start))
-    dp.add_handler(CommandHandler("help", help_command))
+    dp.add_handler(CommandHandler("help", allowed_chats_only(help_command)))
     dp.add_handler(token_system.token_filter(CommandHandler("sr", set_reminder)))
     dp.add_handler(token_system.token_filter(CommandHandler("setreminder", start_reminder_creation)))
     dp.add_handler(token_system.token_filter(CommandHandler("settimezone", set_timezone)))
-    dp.add_handler(CommandHandler("myreminders", show_my_reminders))
-    dp.add_handler(CommandHandler("delreminder", handle_delreminder_command))
+    dp.add_handler(CommandHandler("myreminders", allowed_chats_only(show_my_reminders)))
+    dp.add_handler(CommandHandler("delreminder", allowed_chats_only(handle_delreminder_command)))
     dp.add_handler(token_system.token_filter(CommandHandler("ringtones", send_ringtones)))
     dp.add_handler(CommandHandler("moreinfo", more_info))
-    dp.add_handler(CommandHandler("editreminders", edit_reminders))
+    dp.add_handler(CommandHandler("editreminders", allowed_chats_only(edit_reminders)))
     dp.add_handler(MessageHandler(Filters.regex(r'^/editreminder_\w+$'), edit_specific_reminder))
-    dp.add_handler(CommandHandler("er", edit_reminder))
-    dp.add_handler(CommandHandler("database", database_command))
-    dp.add_handler(CommandHandler("users", show_users))
-    dp.add_handler(CommandHandler("bsettings", bsettings_command))
-    dp.add_handler(CommandHandler("overview", overview_command))
-    dp.add_handler(CommandHandler("restart", restart_command))
+    dp.add_handler(CommandHandler("er", allowed_chats_only(edit_reminder)))
+    dp.add_handler(CommandHandler("database", allowed_chats_only(database_command)))
+    dp.add_handler(CommandHandler("users", allowed_chats_only(show_users)))
+    dp.add_handler(CommandHandler("bsettings", allowed_chats_only(bsettings_command)))
+    dp.add_handler(CommandHandler("overview", allowed_chats_only(overview_command)))
+    dp.add_handler(CommandHandler("restart", allowed_chats_only(restart_command)))
     dp.add_handler(CallbackQueryHandler(reminder_reaction_button_callback, pattern='^re_b_re_'))
 
     dp.add_handler(token_system.token_filter(CommandHandler('gemini', handle_gemini_command)))
-    dp.add_handler(CommandHandler("mygapi", handle_mygapi_command)) 
-    dp.add_handler(CommandHandler("delmygapi", handle_delmygapi_command))
-    dp.add_handler(CommandHandler("showmygapi", handle_showmygapi_command))
+    dp.add_handler(CommandHandler("mygapi", allowed_chats_only(handle_mygapi_command))) 
+    dp.add_handler(CommandHandler("delmygapi", allowed_chats_only(handle_delmygapi_command)))
+    dp.add_handler(CommandHandler("showmygapi", allowed_chats_only(handle_showmygapi_command)))
     dp.add_handler(token_system.token_filter(CommandHandler('analyze4to', analyze4to_handler)))
     dp.add_handler(token_system.token_filter(CommandHandler("chatbot", toggle_chatbot)))
     dp.add_handler(MessageHandler((Filters.text & ~Filters.command) & (Filters.chat_type.private | Filters.chat_type.groups), handle_chat_message), group=5)
@@ -595,7 +596,7 @@ if __name__ == '__main__':
     dp.job_queue.run_repeating(check_reminders, interval=60, first=0)
     dp.job_queue.run_repeating(lambda context: check_scheduled_broadcasts(context.bot), interval=60, first=0)
     dp.bot.set_my_commands(bot_commands, scope=BotCommandScopeDefault())
-    dp.add_handler(CallbackQueryHandler(handle_help_button_click, pattern='^(basic|reminder|misc|brsc|gemini|calculator_help|tgphup|logogen_help|doc_spotter_help|info_help|chatbot_help|commit_detector_help|shiftx_help|removebg_help|imdb_help|clonegram_help)$'))
+    dp.add_handler(CallbackQueryHandler(handle_help_button_click, pattern='^(basic|reminder|misc|brsc|gemini|calculator_help|tgphup|logogen_help|doc_spotter_help|info_help|chatbot_help|commit_detector_help|shiftx_help|removebg_help|imdb_help|clonegram_help|f_sub_help)$'))
     dp.add_handler(callback_query_handler)
     dp.add_handler(CallbackQueryHandler(handle_confirmation, pattern='^(yes|no):'))
     dp.add_handler(CallbackQueryHandler(handle_back_button_click, pattern='^back$'))

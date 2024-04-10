@@ -63,17 +63,17 @@ TIME_UNITS = {
     "Hour": 3600,
     "Day": 86400,
     "Week": 604800,
-    "Month": 2629800,  # Average month in seconds (30.44 days)
-    "Year": 31557600   # Average year in seconds (365.25 days)
+    "Month": 2629800,  
+    "Year": 31557600   
 }
 
 SPEED_UNITS = {
     "Meters Per Second": 1,
-    "Kilometers Per Hour": 0.277778,  # 1 m/s = 0.277778 km/h
-    "Miles Per Hour": 0.44704,      # 1 m/s = 0.44704 mph
-    "Feet Per Second": 0.3048,     # 1 m/s = 3.28084 ft/s
-    "Knots": 0.514444,              # 1 m/s = 0.514444 knots
-    "Mach": 343              # 1 m/s = 0.00293858 mach
+    "Kilometers Per Hour": 0.277778,  
+    "Miles Per Hour": 0.44704,      
+    "Feet Per Second": 0.3048,    
+    "Knots": 0.514444,              
+    "Mach": 343              
 }
 
 PRESSURE_UNITS = {
@@ -128,17 +128,17 @@ FUEL_EFFICIENCY_UNITS = {
 COOKING_UNITS = {
     "Teaspoon": 1,
     "Tablespoon": 3,
-    "Cup": 48,            # Assuming 1 cup = 48 teaspoons
-    "Fluid Ounce": 6,     # Assuming 1 fluid ounce = 6 teaspoons
-    "Milliliter": 0.202884,  # Assuming 1 milliliter = 0.202884 teaspoons
-    "Gram": 0.00591939,      # Assuming 1 gram = 0.00591939 teaspoons
-    "Pound": 96             # Assuming 1 pound = 96 teaspoons
+    "Cup": 48,            
+    "Fluid Ounce": 6,     
+    "Milliliter": 0.202884,  
+    "Gram": 0.00591939,      
+    "Pound": 96             
 }
 
 TEMPERATURE_UNITS = {
-    "Celsius": 1,  # Using 1 as a placeholder, actual conversion will be done using a function
-    "Fahrenheit": 2,  # Using 2 as a placeholder
-    "Kelvin": 3  # Using 3 as a placeholder
+    "Celsius": 1,  
+    "Fahrenheit": 2,  
+    "Kelvin": 3  
 }
 
 # State of the unit conversion for each user
@@ -155,11 +155,11 @@ def start_unit_converter(update: Update, context: CallbackContext):
 
     # Initialize state for the user
     unit_converter_state[(chat_id, message_id)] = {
-        "user_id": user_id,  # Storing the user ID who started the session
-        "category": None,    # The category of units to be converted; will be set in subsequent steps
-        "first_unit": None,  # The first unit selected by the user
-        "second_unit": None, # The second unit selected by the user
-        "value": ""          # The numeric value entered by the user for conversion
+        "user_id": user_id,  
+        "category": None,    
+        "first_unit": None,  
+        "second_unit": None, 
+        "value": ""          
     }
 
     # Display category selection
@@ -634,8 +634,7 @@ def setup_unit_converter(dispatcher):
     dispatcher.add_handler(CallbackQueryHandler(start_unit_converter, pattern='^unit_converter$'))
     dispatcher.add_handler(CallbackQueryHandler(handle_back_to_category, pattern='^unit_cat_to_cho_back$'))
     
-    # Separate handlers for Length and Area unit selections
-    dispatcher.add_handler(CallbackQueryHandler(handle_unit_selection, pattern='^l_(first|second)_.*$'))  # For Length
+    dispatcher.add_handler(CallbackQueryHandler(handle_unit_selection, pattern='^l_(first|second)_.*$'))  
     dispatcher.add_handler(CallbackQueryHandler(handle_unit_selection, pattern='^a_(first|second)_.*$'))
     dispatcher.add_handler(CallbackQueryHandler(handle_unit_selection, pattern='^v_(first|second)_.*$'))
     dispatcher.add_handler(CallbackQueryHandler(handle_unit_selection, pattern='^w_(first|second)_.*$'))
@@ -652,8 +651,8 @@ def setup_unit_converter(dispatcher):
 
 
     dispatcher.add_handler(CallbackQueryHandler(handle_numeric_input, pattern='^unit_cal_(\d|backspace|enter)$'))
-    dispatcher.add_handler(CallbackQueryHandler(handle_numeric_input, pattern='^unit_cal_ac$'))  # Handler for "AC" button
-    dispatcher.add_handler(CallbackQueryHandler(handle_numeric_input, pattern='^unit_cal_dot$'))  # Handler for "." button
+    dispatcher.add_handler(CallbackQueryHandler(handle_numeric_input, pattern='^unit_cal_ac$'))  
+    dispatcher.add_handler(CallbackQueryHandler(handle_numeric_input, pattern='^unit_cal_dot$'))  
 
     dispatcher.add_handler(CallbackQueryHandler(select_volume_unit, pattern='^volume$'))
     dispatcher.add_handler(CallbackQueryHandler(select_length_unit, pattern='^length$'))

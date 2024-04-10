@@ -21,15 +21,21 @@ def clonegram_command(update: Update, context: CallbackContext) -> None:
     clonegram_plugin_enabled_str = get_env_var_from_db('CLONEGRAM_PLUGIN')
     clonegram_plugin_enabled = clonegram_plugin_enabled_str.lower() == 'true' if clonegram_plugin_enabled_str else False
 
+    keyboard = [
+        [InlineKeyboardButton("Set up Clonegram Task", callback_data='setup_clonegram_task')],
+        [InlineKeyboardButton("Delete a Clonegram Task", callback_data='delete_clonegram_task')]
+    ]
+    reply_markup = InlineKeyboardMarkup(keyboard)
+
     if clonegram_plugin_enabled:
-        keyboard = [
-            [InlineKeyboardButton("Set up Clonegram Task", callback_data='setup_clonegram_task')],
-            [InlineKeyboardButton("Delete a Clonegram Task", callback_data='delete_clonegram_task')] 
-        ]
-        reply_markup = InlineKeyboardMarkup(keyboard)
-        update.message.reply_text('Choose a method to configure Clonegram:', reply_markup=reply_markup)
+        text = 'Choose a method to configure Clonegram:'
     else:
-        update.message.reply_text("Clonegram Plugin Disabled by the person who deployed this Echo Variant 💔")
+        text = "Clonegram Plugin Disabled by the person who deployed this Echo Variant 💔"
+
+    if update.message:
+        update.message.reply_text(text, reply_markup=reply_markup)
+    elif update.callback_query:
+        update.callback_query.edit_message_text(text, reply_markup=reply_markup)
 
 def setup_clonegram_task(update: Update, context: CallbackContext) -> None:
     query = update.callback_query
@@ -150,6 +156,7 @@ def delete_clonegram_task(update: Update, context: CallbackContext, check_remain
         button_text = f"{source_chat_name} to {destination_chat_name}"
         keyboard.append([InlineKeyboardButton(button_text, callback_data=f"clonegram_delete_{task['_id']}")])
 
+    keyboard.append([InlineKeyboardButton("Back", callback_data=f"clonegram_back_to_main_menu")])
     reply_markup = InlineKeyboardMarkup(keyboard)
     query.edit_message_text(text="Choose a task to delete:", reply_markup=reply_markup)
 
@@ -202,5 +209,6 @@ def register_clonegram_handlers(dp):
     dp.add_handler(CallbackQueryHandler(confirm_task_deletion, pattern='^clonegram_delete_[\w\d]+$'))
     dp.add_handler(CallbackQueryHandler(execute_task_deletion, pattern='^clonegram_confirm_delete_[\w\d]+$'))
     dp.add_handler(CallbackQueryHandler(cancel_task_deletion, pattern='^delete_clonegram_task$'))
+    dp.add_handler(CallbackQueryHandler(clonegram_command, pattern='^clonegram_back_to_main_menu$'))
     
     register_cg_executor_handlers(dp)

@@ -203,7 +203,8 @@ def plugin_status_callback(update: Update, context: CallbackContext) -> None:
         "FSUB_INFO_IN_PM": "F-Sub info in PM",
         "DS_IMDB_ACTIVATE": "IMDb in DS",
         "DS_URL_BUTTONS": "URL Buttons for Doc Spotter",
-        "GH_CD_URLS": "Commit Detector"
+        "GH_CD_URLS": "Commit Detector",
+        "GO_PUBLIC": "Echo Public Availability",
     }
 
     status_message = "╰──╮ <u><b><i>PLUGIN/FEATURE STATUS</i></b></u> ╭──╯\n\n༶•┈┈┈┈┈┈┈┈┈୨🧩୧┈┈┈┈┈┈┈┈┈•༶\n"

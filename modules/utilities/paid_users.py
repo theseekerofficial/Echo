@@ -3,6 +3,7 @@ import os
 import logging
 from pymongo import MongoClient
 from datetime import datetime, timedelta
+from modules.allowed_chats import allowed_chats_only
 from modules.configurator import get_env_var_from_db
 from telegram.ext.callbackcontext import CallbackContext
 from telegram.ext import CommandHandler, CallbackQueryHandler
@@ -212,8 +213,8 @@ def delete_paid_user(update: Update, context: CallbackContext):
     show_paid_users(update, context)
 
 def paid_users_handlers(dp):
-    dp.add_handler(CommandHandler('addpaid', add_paid))
-    dp.add_handler(CommandHandler('paid', show_paid_users))
+    dp.add_handler(CommandHandler('addpaid', allowed_chats_only(add_paid)))
+    dp.add_handler(CommandHandler('paid', allowed_chats_only(show_paid_users)))
     dp.add_handler(CallbackQueryHandler(back_to_list, pattern='^pu_back_'))
     dp.add_handler(CallbackQueryHandler(paid_user_details, pattern='^pu_user_'))
     dp.add_handler(CallbackQueryHandler(show_paid_users, pattern='^pu_page_'))
