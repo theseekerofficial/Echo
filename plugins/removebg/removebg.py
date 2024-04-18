@@ -20,7 +20,7 @@ temp_dir = Path(__file__).parent / "Removebg_Temp"
 temp_dir.mkdir(parents=True, exist_ok=True)
 
 REMOVEBG_API_KEY = get_env_var_from_db("REMOVEBG_API")
-MONGODB_URI = get_env_var_from_db("MONGODB_URI")
+MONGODB_URI = os.getenv("MONGODB_URI")
 
 client = MongoClient(MONGODB_URI)
 db = client["Echo"]

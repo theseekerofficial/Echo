@@ -11,38 +11,33 @@ _Echo the Multifunctional User assistant has arrived to save your schedule and m
     keyboard = [
         [
             InlineKeyboardButton("Basics", callback_data='basic'),
-            InlineKeyboardButton("Reminder Feature", callback_data='reminder'),
+            InlineKeyboardButton("Reminders", callback_data='reminder'),
+            InlineKeyboardButton("Gemini AI", callback_data='gemini'),
         ],
         [
-            InlineKeyboardButton("Gemini AI Feature", callback_data='gemini'),
-            InlineKeyboardButton("Broad/Schedu cast Features", callback_data='brsc'),
+            InlineKeyboardButton("(Broad/Schedu)cast", callback_data='brsc'),
+            InlineKeyboardButton("ChatBot", callback_data='chatbot_help'),
+            InlineKeyboardButton("Calculator(s)", callback_data='calculator_help'),
         ],
         [
-            InlineKeyboardButton("ChatBot Feature", callback_data='chatbot_help'),
-            InlineKeyboardButton("Calculator Feature", callback_data='calculator_help'),
+            InlineKeyboardButton("Telegraph Up", callback_data='tgphup'),
+            InlineKeyboardButton("Logo Gen", callback_data='logogen_help'),
+            InlineKeyboardButton("DocSpotter", callback_data='doc_spotter_help'),
         ],
         [
-            InlineKeyboardButton("Telegraph Feature", callback_data='tgphup'),
-            InlineKeyboardButton("Logo Gen Feature", callback_data='logogen_help'),
-        ],
-        [
-            InlineKeyboardButton("DocSpotter Feature", callback_data='doc_spotter_help'),
-            InlineKeyboardButton("ShiftX Feature", callback_data='shiftx_help'),
-        ],
-        [
-            InlineKeyboardButton("RemoveBG Feature", callback_data='removebg_help'),
+            InlineKeyboardButton("ShiftX", callback_data='shiftx_help'),
+            InlineKeyboardButton("RemoveBG", callback_data='removebg_help'),
             InlineKeyboardButton("Info Feature", callback_data='info_help'),
         ],
         [
-            InlineKeyboardButton("Commit Detector Feature", callback_data='commit_detector_help'),
-            InlineKeyboardButton("IMDb Feature", callback_data='imdb_help'),
+            InlineKeyboardButton("Commit Detector", callback_data='commit_detector_help'),
+            InlineKeyboardButton("IMDb", callback_data='imdb_help'),
+            InlineKeyboardButton("Clonegram", callback_data='clonegram_help'),
         ],
         [
-            InlineKeyboardButton("Clonegram Feature", callback_data='clonegram_help'),
-            InlineKeyboardButton("F-Sub Feature", callback_data='f_sub_help'),
-        ],
-        [
-            InlineKeyboardButton("Misc Commands", callback_data='misc'),
+            InlineKeyboardButton("F-Sub", callback_data='f_sub_help'),
+            InlineKeyboardButton("FileFlex", callback_data='file_flex_help'),
+            InlineKeyboardButton("Misc", callback_data='misc'),
         ],
     ]
 
@@ -86,7 +81,8 @@ def handle_help_button_click(update, context: CallbackContext) -> None:
                 "/users - See Echo using Users Chats list 📜\n"
                 "/database - See my mongoDB database stats📊\n"
                 "/moreinfo - Get more information about the bot.📚\n"
-                "/addpaid - Add paid users\n/paid - See paid users\n\n[Echo-Verse♾️](https://t.me/Echo_AIO)",
+                "/addpaid - Add paid users\n/paid - See paid users\n\n[Echo-Verse♾️](https://t.me/Echo_AIO)"
+                "/cancel - Stop all ongoing operation states and clear cache user data 🧹\n\n[Echo-Verse♾️](https://t.me/Echo_AIO)",
             'brsc': """*Welcome to Echo's Announcement modules⚙️*\n\n"""
                  "/broadcast - Initiate a instant broadcast📢\n"
                  "/scheducast - Scheduled a broadcast for the future!🔮\n"
@@ -301,6 +297,28 @@ Admin Role is required for both monitoring chat and checking chats
 Enjoy the Clonegram Plugin!
 
 [Echo-Verse♾️](https://t.me/Echo_AIO)
+""",
+   'file_flex_help' : """*📂 Welcome to FileFlex Plugin Help! Here's how you can start using it:*
+
+*Managing Your File Templates and Jobs ⚙️*
+
+♦️ Initiate Set up: Simply send /fileflex and choose a mode from the menu.
+♦️ Instant Flex for quick flex, Pre-Config Flex for flex using Global Template
+♦️ Add/Edit Template: Use this option to create or edit G-Templates for your files.
+♦️ FileFlex Chat Job: Set up a job to automatically apply your templates to files shared within specific Telegram chats.
+♦️ Delete Chat Jobs: Manage or delete existing jobs.
+
+*Setting Up a Job 🛠️*
+❄️ Click 'FileFlex Chat' Job, Provide a valid Telegram chat ID. The bot must be an admin in this chat.
+
+*Using Templates 🖼️*
+❄️ Select 'Add/Edit Template', Utilize placeholders like `{file__name}`, `{file__size}`, ... to craft your captions dynamically. Define buttons using a format Text - URL. You can create multiple rows of buttons for different links.
+
+_Tips_ ✔️
+
+Ensure the bot is an admin in chats where you want to automate file handling.
+
+[Echo-Verse♾️](https://t.me/Echo_AIO)
 """
         
     }
@@ -346,38 +364,33 @@ def get_inline_keyboard_for_category(category):
     keyboard = [
         [
             InlineKeyboardButton("Basics", callback_data='basic'),
-            InlineKeyboardButton("Reminder Feature", callback_data='reminder'),
+            InlineKeyboardButton("Reminders", callback_data='reminder'),
+            InlineKeyboardButton("Gemini AI", callback_data='gemini'),
         ],
         [
-            InlineKeyboardButton("Gemini AI Feature", callback_data='gemini'),
-            InlineKeyboardButton("Broad/Schedu cast Features", callback_data='brsc'),
+            InlineKeyboardButton("(Broad/Schedu)cast", callback_data='brsc'),
+            InlineKeyboardButton("ChatBot", callback_data='chatbot_help'),
+            InlineKeyboardButton("Calculator(s)", callback_data='calculator_help'),
         ],
         [
-            InlineKeyboardButton("ChatBot Feature", callback_data='chatbot_help'),
-            InlineKeyboardButton("Calculator Feature", callback_data='calculator_help'),
+            InlineKeyboardButton("Telegraph Up", callback_data='tgphup'),
+            InlineKeyboardButton("Logo Gen", callback_data='logogen_help'),
+            InlineKeyboardButton("DocSpotter", callback_data='doc_spotter_help'),
         ],
         [
-            InlineKeyboardButton("Telegraph Feature", callback_data='tgphup'),
-            InlineKeyboardButton("Logo Gen Feature", callback_data='logogen_help'),
-        ],
-        [
-            InlineKeyboardButton("DocSpotter Feature", callback_data='doc_spotter_help'),
-            InlineKeyboardButton("ShiftX Feature", callback_data='shiftx_help'),
-        ],
-        [
-            InlineKeyboardButton("RemoveBG Feature", callback_data='removebg_help'),
+            InlineKeyboardButton("ShiftX", callback_data='shiftx_help'),
+            InlineKeyboardButton("RemoveBG", callback_data='removebg_help'),
             InlineKeyboardButton("Info Feature", callback_data='info_help'),
         ],
         [
-            InlineKeyboardButton("Commit Detector Feature", callback_data='commit_detector_help'),
-            InlineKeyboardButton("IMDb Feature", callback_data='imdb_help'),
+            InlineKeyboardButton("Commit Detector", callback_data='commit_detector_help'),
+            InlineKeyboardButton("IMDb", callback_data='imdb_help'),
+            InlineKeyboardButton("Clonegram", callback_data='clonegram_help'),
         ],
         [
-            InlineKeyboardButton("Clonegram Feature", callback_data='clonegram_help'),
-            InlineKeyboardButton("F-Sub Feature", callback_data='f_sub_help'),
-        ],
-        [
-            InlineKeyboardButton("Misc Commands", callback_data='misc'),
+            InlineKeyboardButton("F-Sub", callback_data='f_sub_help'),
+            InlineKeyboardButton("FileFlex", callback_data='file_flex_help'),
+            InlineKeyboardButton("Misc", callback_data='misc'),
         ],
     ]
 

@@ -4,8 +4,8 @@ from bson import ObjectId
 from pymongo import MongoClient
 from modules.token_system import TokenSystem
 from modules.configurator import get_env_var_from_db
-from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update
 from plugins.clonegram.clonegram_executor import register_cg_executor_handlers
+from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update, ParseMode
 from telegram.ext import CallbackContext, CallbackQueryHandler, CommandHandler, MessageHandler, Filters
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
@@ -41,7 +41,17 @@ def setup_clonegram_task(update: Update, context: CallbackContext) -> None:
     query = update.callback_query
     query.answer()
     context.user_data['setup_step'] = 'source'
-    query.edit_message_text(text="Okay, follow this:\n\n1) Add me to your source chat (Group or Channel)\n\n2) Now send me that source chat id\n\nTip:\nAdmin Role is required for channels. But for groups, it's not necessary if the bot's 'Group Privacy' is disabled in @BotFather. Contect the deployed person to know about that")
+    query.edit_message_text(text="""<b>🚀To Get Start to follow this</b>
+    
+1️⃣ <i>Add me to your chat</i> (Group or Channel).
+2️⃣ <i>Send me the chat ID</i> where you've added me.
+
+⚠️ <u>Important Notes:</u>
+♦️<i>If the chat is a group and you want to clone messages from bots,</i> <b>this won't work</b>. <i>Telegram does not allow capturing messages sent by bots.</i>
+♦️<i>Solution: If you want to clone messages sent by bots, use channels. Echo can catch the bot's message sent in channels</i>
+
+Tip:
+Admin Role is required for channels. But for groups, it's unnecessary if the bot's 'Group Privacy' is disabled in @BotFather. Contact the deployed person to know about that""", parse_mode=ParseMode.HTML)
 
 def save_chat_id(update: Update, context: CallbackContext) -> None:
     setup_step = context.user_data.get('setup_step')
@@ -52,10 +62,14 @@ def save_chat_id(update: Update, context: CallbackContext) -> None:
             if setup_step == 'source':
                 context.user_data['source_chat_id'] = chat_id
                 context.user_data['setup_step'] = 'destination'
-                update.message.reply_text("Okay, follow this:\n\n1) Add me to your destination chat (Group or Channel) and make me a admin\n\n2) Now send me that destination chat id")
+                update.message.reply_text("""<b>🌟 Setp 2</b>
+
+1️⃣ <i>Add me to your destination chat</i> (Group or Channel) and make me an admin.
+
+2️⃣ <b>Send me the destination chat ID.</b>""", parse_mode=ParseMode.HTML)
+                
             elif setup_step == 'destination':
                 context.user_data['destination_chat_id'] = chat_id
-                # Move to the next step - choosing clone type
                 context.user_data['setup_step'] = 'clone_type'
                 keyboard = [
                     [InlineKeyboardButton("Forward Messages", callback_data='forward_messages')],

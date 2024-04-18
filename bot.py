@@ -22,6 +22,7 @@ from datetime import datetime, timezone, timedelta
 from ringtone_manager import send_ringtones 
 from reminders_manager import show_user_reminders
 
+from telegram.error import Unauthorized
 from telegram.ext import Updater, CommandHandler, MessageHandler, CallbackContext, Filters, CallbackQueryHandler, BaseFilter
 from telegram import Update, ParseMode, Message, User, Chat, BotCommand, BotCommandScopeDefault, Bot, InlineKeyboardButton, InlineKeyboardMarkup
 
@@ -46,6 +47,7 @@ from plugins.removebg.removebg import setup_removebg
 from plugins.imdb.imdb import register_imdb_handlers
 from plugins.shiftx.shiftx import register_shiftx_handlers
 from plugins.calculators.calculator import setup_calculator
+from plugins.fileflex.fileflex import register_fileflex_handlers
 from plugins.fsub.fsub_configurator import register_fsub_handlers
 from plugins.logo_gen.logo_generator import handle_logogen, button
 from plugins.calculators.sci_calculator import setup_sci_calculator
@@ -326,19 +328,16 @@ def set_reminder(update: Update, context: CallbackContext) -> None:
         update.message.reply_text('Invalid command. Use /sr followed by the date and time in the format '
                                   'YYYY-MM-DD HH:MM:SS. For example, /sr 2024-01-01 12:00:00 My reminder message.')
 
-# Function to check and send reminders
 def check_reminders(context: CallbackContext) -> None:
     current_time = datetime.now(pytz.utc)
-
     reminders = db.reminders.find()
+
     for reminder in reminders:
         reminder_datetime_utc = reminder['datetime'].replace(tzinfo=pytz.utc)
-
         if reminder_datetime_utc <= current_time:
             user_id = reminder['user_id']
             message_text = f'#Reminder: {reminder["message"]}'
 
-            # Define the inline keyboard buttons with "re_b_re" prefix
             keyboard = [
                 [InlineKeyboardButton("Mark as Completed 🔖", callback_data=f"re_b_re_complete_{reminder['_id']}"),
                  InlineKeyboardButton("Mark as Incompleted ⛔", callback_data=f"re_b_re_notcomplete_{reminder['_id']}")],
@@ -346,11 +345,15 @@ def check_reminders(context: CallbackContext) -> None:
             ]
             reply_markup = InlineKeyboardMarkup(keyboard)
 
-            # Send the message with inline buttons
-            context.bot.send_message(chat_id=user_id, text=message_text, reply_markup=reply_markup)
+            try:
+                context.bot.send_message(chat_id=user_id, text=message_text, reply_markup=reply_markup)
+            except Unauthorized:
+                db.reminders.delete_one({'_id': reminder['_id']})
+                logging.error(f"⚠️ User ({user_id}) Blcoked the Bot. So reminder was deleted")
+                continue
             
             if 'recurring' in reminder:
-                new_datetime = reminder_datetime_utc  # Use the UTC-aware datetime
+                new_datetime = reminder_datetime_utc  
                 if reminder['recurring'] == 'minutely':
                     new_datetime += timedelta(minutes=1)
                 elif reminder['recurring'] == 'hourly':
@@ -364,7 +367,6 @@ def check_reminders(context: CallbackContext) -> None:
                 elif reminder['recurring'] == 'yearly':
                     new_datetime += relativedelta(years=+1)
                 
-                # Update the reminder's datetime in MongoDB for the next occurrence
                 db.reminders.update_one({'_id': reminder['_id']}, {'$set': {'datetime': new_datetime}})
             else:
                 db.reminders.delete_one({'_id': reminder['_id']})
@@ -374,7 +376,6 @@ def reminder_reaction_button_callback(update: Update, context: CallbackContext) 
     query.answer()
     callback_data = query.data
 
-    # Adjusted to handle additional segments in callback_data
     parts = callback_data.split('_')
     action = parts[3] 
     reminder_id = '_'.join(parts[4:])  
@@ -395,29 +396,35 @@ def reminder_reaction_button_callback(update: Update, context: CallbackContext) 
     query.edit_message_text(text=f"#Reminder: {query.message.text.split(':', 1)[1]}",
                             reply_markup=InlineKeyboardMarkup([[noop_button]]))
 
-def show_my_reminders(update: Update, context: CallbackContext) -> None:
+def show_my_reminders(update, context):
+    from pytz import timezone as pytz_timezone
     user_id = update.message.from_user.id
+
     user_timezone_record = db.user_timezones.find_one({'user_id': user_id}, {'timezone': 1})
     user_timezone = user_timezone_record['timezone'] if user_timezone_record else None
-    target_timezone = pytz.timezone(user_timezone) if user_timezone else pytz.timezone(REMINDER_CHECK_TIMEZONE)
-    timezone_message = f'🌐 Your current timezone: *{user_timezone if user_timezone else REMINDER_CHECK_TIMEZONE}* 🕒'
 
     reminders = list(db.reminders.find({'user_id': user_id}))
+
     if reminders:
+        target_timezone = pytz_timezone(user_timezone) if user_timezone else pytz_timezone(REMINDER_CHECK_TIMEZONE)
+        timezone_message = f'🌐 Your current timezone: *{user_timezone if user_timezone else REMINDER_CHECK_TIMEZONE}* 🕒'
         messages = [timezone_message + '\n']
         current_msg = ''
 
         for reminder in reminders:
-            reminder_datetime = reminder["datetime"].astimezone(target_timezone)
-            time_remaining = reminder_datetime - datetime.now(target_timezone)
-            remaining_time_str = str(timedelta(seconds=round(time_remaining.total_seconds())))
-            recurring_info = f'Recurring: `{reminder["recurring"].capitalize()}`' if 'recurring' in reminder else '`One-time Reminder`'
+            utc_datetime = reminder['datetime']
+            local_datetime = utc_datetime.replace(tzinfo=pytz.utc).astimezone(target_timezone)
 
-            message = (f'📅 *{reminder["message"]}*'
-                        f'\n\tDate & Time - `{reminder_datetime.strftime("%Y-%m-%d %H:%M:%S")}`'
-                        f'\n\tRemaining Time - `{remaining_time_str}`'
-                        f'\n\t{recurring_info}'
-                        f'\n\n»»————-　★　-————««\n\n')
+            time_remaining = local_datetime - datetime.now(target_timezone)
+            remaining_time_str = str(time_remaining) if time_remaining.total_seconds() > 0 else 'Time has passed'
+
+            recurring_info = f'Recurring: `{reminder.get("recurring", "One-time Reminder").capitalize()}`'
+
+            message = (f'📅 *{reminder["message"]}*\n'
+                       f'\tDate & Time - `{local_datetime.strftime("%Y-%m-%d %H:%M:%S")}`\n'
+                       f'\tRemaining Time - `{remaining_time_str}`\n'
+                       f'\t{recurring_info}\n'
+                       f'\n»»————-　★　————««\n\n')
 
             if len(current_msg + message) <= 4096:
                 current_msg += message
@@ -425,18 +432,21 @@ def show_my_reminders(update: Update, context: CallbackContext) -> None:
                 messages.append(current_msg)
                 current_msg = message
 
-        # Append the last part of the message if it's not empty
         if current_msg.strip():
             messages.append(current_msg)
 
         for msg in messages:
-            if msg.strip():  # Check if the message is not just whitespace
+            if msg.strip():  
                 update.message.reply_text(msg, parse_mode=ParseMode.MARKDOWN, disable_web_page_preview=True)
     else:
-        no_reminders_message = ('You have no reminders.'
-                                f'\n\n*Note:* You haven\'t set a custom timezone, so your reminders and other time-related activities are set to the global timezone (*{REMINDER_CHECK_TIMEZONE}*) 🌐.'
-                                '\n\n Use [This link](https://telegra.ph/Choose-your-timezone-02-16) to find your timezone easily🪄')
-        update.message.reply_text(no_reminders_message, parse_mode=ParseMode.MARKDOWN, disable_web_page_preview=True)
+        if user_timezone:
+            update.message.reply_text("No Reminders for you at the moment 🚫", parse_mode=ParseMode.MARKDOWN, disable_web_page_preview=True)
+        else:
+            no_reminders_message = (f'You have no reminders.\n\n'
+                                    f'*Note:* You haven\'t set a custom timezone, so your reminders and other time-related '
+                                    f'activities are set to the global timezone (*{REMINDER_CHECK_TIMEZONE}*) 🌐.\n\n'
+                                    'Use [This link](https://telegra.ph/Choose-your-timezone-02-16) to find your timezone easily🪄')
+            update.message.reply_text(no_reminders_message, parse_mode=ParseMode.MARKDOWN, disable_web_page_preview=True)
         
 # Function to set the user's time zone
 def set_timezone(update: Update, context: CallbackContext) -> None:
@@ -456,9 +466,6 @@ def set_timezone(update: Update, context: CallbackContext) -> None:
     else:
         # Create a new document for the user
         db[USER_TIMEZONES_COLLECTION].insert_one({'user_id': user_id, 'timezone': user_timezone})
-
-    # Update the in-memory user_data
-    context.user_data['timezone'] = user_timezone
 
     update.message.reply_text(f'Time zone set to {user_timezone}.')
 
@@ -484,6 +491,10 @@ def install_ffmpeg():
         except subprocess.CalledProcessError as e:
             logger.info(f"Failed to install ffmpeg: {e}")
             sys.exit(1)
+
+def cancel(update: Update, context: CallbackContext) -> None:
+    context.user_data.clear()
+    update.message.reply_text("Process Stopped and cache user data cleared ✅")
 
 # List of bot commands
 bot_commands = [
@@ -512,6 +523,7 @@ bot_commands = [
     BotCommand("shiftx", "Convert Various range of files to another type 🔄️"),
     BotCommand("clonegram", "Clone any type of message between chats 🔀"),
     BotCommand("fsub", "Create a Force Subscribe Taks for a chat ⚖️"),
+    BotCommand("fileflex", "Manipulate files as you like 🔮🪄"),
     BotCommand("ringtones", "Explore sample ringtones♫"),
     BotCommand("info", "See User/Chat info 📜"),
     BotCommand("removebg", "Remove background from any image 🪄"),
@@ -522,6 +534,7 @@ bot_commands = [
     BotCommand("paid", "[Only for Owner] see paid user(s) info 📜"),
     BotCommand("overview", "See a stats report about Echo and Host Server 📝"),
     BotCommand("database", "Get database stats📊"),
+    BotCommand("cancel", "Stop all ongoing operation states and clear cache user data 🧹"),
     BotCommand("bsettings", "Config Echo! ⚙️"),
     BotCommand("restart", "Restart Echo (And get latest update from REPO)!🔁"),
 ]
@@ -539,9 +552,6 @@ if __name__ == '__main__':
     
     from moreinfo_handler import more_info
     from modules.broadcast import register_handlers as broadcast_register_handlers, set_bot_variables as broadcast_set_bot_variables, handle_broadcast_message
-
-    default_timezone = db.user_timezones.find_one({'user_id': 0}, {'timezone': 1})
-    dp.user_data['timezone'] = default_timezone['timezone'] if default_timezone else REMINDER_CHECK_TIMEZONE
 
     token_system = TokenSystem(os.getenv("MONGODB_URI"), "Echo", "user_tokens")
     
@@ -562,6 +572,7 @@ if __name__ == '__main__':
     dp.add_handler(CommandHandler("bsettings", allowed_chats_only(bsettings_command)))
     dp.add_handler(CommandHandler("overview", allowed_chats_only(overview_command)))
     dp.add_handler(CommandHandler("restart", allowed_chats_only(restart_command)))
+    dp.add_handler(CommandHandler("cancel", allowed_chats_only(cancel)))
     dp.add_handler(CallbackQueryHandler(reminder_reaction_button_callback, pattern='^re_b_re_'))
 
     dp.add_handler(token_system.token_filter(CommandHandler('gemini', handle_gemini_command)))
@@ -596,7 +607,7 @@ if __name__ == '__main__':
     dp.job_queue.run_repeating(check_reminders, interval=60, first=0)
     dp.job_queue.run_repeating(lambda context: check_scheduled_broadcasts(context.bot), interval=60, first=0)
     dp.bot.set_my_commands(bot_commands, scope=BotCommandScopeDefault())
-    dp.add_handler(CallbackQueryHandler(handle_help_button_click, pattern='^(basic|reminder|misc|brsc|gemini|calculator_help|tgphup|logogen_help|doc_spotter_help|info_help|chatbot_help|commit_detector_help|shiftx_help|removebg_help|imdb_help|clonegram_help|f_sub_help)$'))
+    dp.add_handler(CallbackQueryHandler(handle_help_button_click, pattern='^(basic|reminder|misc|brsc|gemini|calculator_help|tgphup|logogen_help|doc_spotter_help|info_help|chatbot_help|commit_detector_help|shiftx_help|removebg_help|imdb_help|clonegram_help|f_sub_help|file_flex_help)$'))
     dp.add_handler(callback_query_handler)
     dp.add_handler(CallbackQueryHandler(handle_confirmation, pattern='^(yes|no):'))
     dp.add_handler(CallbackQueryHandler(handle_back_button_click, pattern='^back$'))
@@ -638,6 +649,8 @@ if __name__ == '__main__':
     paid_users_handlers(dp)
 
     register_fsub_handlers(dp)
+
+    register_fileflex_handlers(dp)
     
     bot_info = updater.bot.get_me()
     bot_name = bot_info.first_name

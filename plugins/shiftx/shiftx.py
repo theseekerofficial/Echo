@@ -24,10 +24,15 @@ def shiftx_start(update: Update, _: CallbackContext) -> None:
     keyboard = [
         [InlineKeyboardButton("Documents", callback_data='shiftx_documents')],
         [InlineKeyboardButton("Images", callback_data='shiftx_images')],
-        [InlineKeyboardButton("Audio", callback_data='shiftx_audio')] 
+        [InlineKeyboardButton("Audio", callback_data='shiftx_audio')]
     ]
     reply_markup = InlineKeyboardMarkup(keyboard)
-    update.message.reply_text('Choose a category to start ShiftX 🔄️', reply_markup=reply_markup)
+    
+    if update.callback_query:
+        query = update.callback_query
+        query.edit_message_text(text='Choose a category to start ShiftX 🔄️', reply_markup=reply_markup)
+    else:
+        update.message.reply_text('Choose a category to start ShiftX 🔄️', reply_markup=reply_markup)
 
 def shiftx_documents_callback(update: Update, context: CallbackContext) -> None:
     query = update.callback_query
@@ -35,7 +40,8 @@ def shiftx_documents_callback(update: Update, context: CallbackContext) -> None:
     keyboard = [
         [InlineKeyboardButton("PDF to Word", callback_data='shiftx_pdf_to_word')],
         [InlineKeyboardButton("PDF to TXT", callback_data='shiftx_pdf_to_txt')],
-        [InlineKeyboardButton("TXT to PDF", callback_data='shiftx_txt_to_pdf')]
+        [InlineKeyboardButton("TXT to PDF", callback_data='shiftx_txt_to_pdf')],
+        [InlineKeyboardButton("Back", callback_data='shiftx_back_to_main_menu')] 
     ]
     reply_markup = InlineKeyboardMarkup(keyboard)
     query.edit_message_text(text="Now choose a file pair!", reply_markup=reply_markup)
@@ -60,7 +66,9 @@ def shiftx_images_callback(update: Update, context: CallbackContext) -> None:
          InlineKeyboardButton("TIFF to JPEG", callback_data='shiftx_tiff_to_jpeg')],
         
         [InlineKeyboardButton("WebP to PNG", callback_data='shiftx_webp_to_png'),
-         InlineKeyboardButton("WebP to JPEG", callback_data='shiftx_webp_to_jpeg')]
+         InlineKeyboardButton("WebP to JPEG", callback_data='shiftx_webp_to_jpeg')],
+
+        [InlineKeyboardButton("Back", callback_data='shiftx_back_to_main_menu')]
     ]
     reply_markup = InlineKeyboardMarkup(keyboard)
     query.edit_message_text(text="Select the conversion type:", reply_markup=reply_markup)
@@ -72,7 +80,8 @@ def shiftx_audio_callback(update: Update, context: CallbackContext) -> None:
         [InlineKeyboardButton("MP3 to AAC", callback_data='shiftx_mp3_to_aac')],
         [InlineKeyboardButton("AAC to MP3", callback_data='shiftx_aac_to_mp3')],
         [InlineKeyboardButton("MP3 to OGG", callback_data='shiftx_mp3_to_ogg')],  
-        [InlineKeyboardButton("OGG to MP3", callback_data='shiftx_ogg_to_mp3')] 
+        [InlineKeyboardButton("OGG to MP3", callback_data='shiftx_ogg_to_mp3')],
+        [InlineKeyboardButton("Back", callback_data='shiftx_back_to_main_menu')] 
     ]
     reply_markup = InlineKeyboardMarkup(keyboard)
     query.edit_message_text(text="Now choose a file pair!", reply_markup=reply_markup)
@@ -165,7 +174,7 @@ def shiftx_file_handler(update: Update, context: CallbackContext) -> None:
     
     elif action == 'jpeg_to_png': 
         if not is_correct_file_type(file_name, '.jpeg'):
-            update.message.reply_text("Please send a JPEG file.")
+            update.message.reply_text("Please send a JPEG file. Send as a File not as a Image")
             return
         new_file.download(temp_file_path)
         png_file_path = temp_file_path.replace('.jpeg', '.png').replace('.jpg', '.png')
@@ -176,7 +185,7 @@ def shiftx_file_handler(update: Update, context: CallbackContext) -> None:
 
     elif action == 'png_to_jpeg': 
         if not is_correct_file_type(file_name, '.png'):
-            update.message.reply_text("Please send a PNG file.")
+            update.message.reply_text("Please send a PNG file. Send as a File not as a Image")
             return
         new_file.download(temp_file_path)
         jpeg_file_path = temp_file_path.replace('.png', '_converted.jpeg')
@@ -187,7 +196,7 @@ def shiftx_file_handler(update: Update, context: CallbackContext) -> None:
 
     elif action == 'svg_to_png':
         if not is_correct_file_type(file_name, '.svg'):
-            update.message.reply_text("Please send a SVG file.")
+            update.message.reply_text("Please send a SVG file. Send as a File not as a Image")
             return
         new_file.download(temp_file_path)
         png_file_path = temp_file_path.replace('.svg', '_converted.png')
@@ -198,7 +207,7 @@ def shiftx_file_handler(update: Update, context: CallbackContext) -> None:
 
     elif action == 'svg_to_jpeg':
         if not is_correct_file_type(file_name, '.svg'):
-            update.message.reply_text("Please send a SVG file.")
+            update.message.reply_text("Please send a SVG file. Send as a File not as a Image")
             return
         new_file.download(temp_file_path)
         jpeg_file_path = temp_file_path.replace('.svg', '_converted.jpeg')
@@ -209,7 +218,7 @@ def shiftx_file_handler(update: Update, context: CallbackContext) -> None:
 
     elif action == 'tiff_to_png':
         if not is_correct_file_type(file_name, '.tiff'):
-            update.message.reply_text("Please send a TIFF file.")
+            update.message.reply_text("Please send a TIFF file. Send as a File not as a Image")
             return
         new_file.download(temp_file_path)
         png_file_path = temp_file_path.replace('.tiff', '_converted.png').replace('.tif', '_converted.png')
@@ -220,7 +229,7 @@ def shiftx_file_handler(update: Update, context: CallbackContext) -> None:
 
     elif action == 'tiff_to_jpeg':
         if not is_correct_file_type(file_name, '.tiff'):
-            update.message.reply_text("Please send a TIFF file.")
+            update.message.reply_text("Please send a TIFF file. Send as a File not as a Image")
             return
         new_file.download(temp_file_path)
         jpeg_file_path = temp_file_path.replace('.tiff', '_converted.jpeg').replace('.tif', '_converted.jpeg')
@@ -231,7 +240,7 @@ def shiftx_file_handler(update: Update, context: CallbackContext) -> None:
 
     elif action == 'webp_to_png':
         if not is_correct_file_type(file_name, '.webp'):
-            update.message.reply_text("Please send a WEBP file.")
+            update.message.reply_text("Please send a WEBP file. Send as a File not as a Image")
             return
         new_file.download(temp_file_path)
         png_file_path = temp_file_path.replace('.webp', '_converted.png')
@@ -242,7 +251,7 @@ def shiftx_file_handler(update: Update, context: CallbackContext) -> None:
 
     elif action == 'webp_to_jpeg':
         if not is_correct_file_type(file_name, '.webp'):
-            update.message.reply_text("Please send a WEBP file.")
+            update.message.reply_text("Please send a WEBP file. Send as a File not as a Image")
             return
         new_file.download(temp_file_path)
         jpeg_file_path = temp_file_path.replace('.webp', '_converted.jpeg')
@@ -253,7 +262,7 @@ def shiftx_file_handler(update: Update, context: CallbackContext) -> None:
 
     elif action == 'png_to_tiff':
         if not is_correct_file_type(file_name, '.png'):
-            update.message.reply_text("Please send a PNG file.")
+            update.message.reply_text("Please send a PNG file. Send as a File not as a Image")
             return
         new_file.download(temp_file_path)
         tiff_file_path = temp_file_path.replace('.png', '_converted.tiff')
@@ -264,7 +273,7 @@ def shiftx_file_handler(update: Update, context: CallbackContext) -> None:
 
     elif action == 'jpeg_to_tiff':
         if not is_correct_file_type(file_name, '.jpeg'):
-            update.message.reply_text("Please send a JPEG file.")
+            update.message.reply_text("Please send a JPEG file. Send as a File not as a Image")
             return
         new_file.download(temp_file_path)
         tiff_file_path = temp_file_path.replace('.jpeg', '_converted.tiff').replace('.jpg', '_converted.tiff')
@@ -275,7 +284,7 @@ def shiftx_file_handler(update: Update, context: CallbackContext) -> None:
 
     elif action == 'png_to_webp':
         if not is_correct_file_type(file_name, '.png'):
-            update.message.reply_text("Please send a PNG file.")
+            update.message.reply_text("Please send a PNG file. Send as a File not as a Image")
             return
         new_file.download(temp_file_path)
         webp_file_path = temp_file_path.replace('.png', '_converted.webp')
@@ -286,7 +295,7 @@ def shiftx_file_handler(update: Update, context: CallbackContext) -> None:
 
     elif action == 'jpeg_to_webp':
         if not is_correct_file_type(file_name, '.jpeg'):
-            update.message.reply_text("Please send a JPEG file.")
+            update.message.reply_text("Please send a JPEG file. Send as a File not as a Image")
             return
         new_file.download(temp_file_path)
         webp_file_path = temp_file_path.replace('.jpeg', '_converted.webp').replace('.jpg', '_converted.webp')
@@ -348,5 +357,6 @@ def register_shiftx_handlers(dp):
     dp.add_handler(CallbackQueryHandler(shiftx_images_callback, pattern='^shiftx_images$'))  
     dp.add_handler(CallbackQueryHandler(shiftx_audio_callback, pattern='^shiftx_audio$'))
     dp.add_handler(CallbackQueryHandler(shiftx_convert_callback, pattern='^shiftx_(pdf_to_word|pdf_to_txt|txt_to_pdf|jpeg_to_png|png_to_jpeg|svg_to_png|svg_to_jpeg|tiff_to_png|tiff_to_jpeg|webp_to_png|webp_to_jpeg|png_to_tiff|jpeg_to_tiff|png_to_webp|jpeg_to_webp|mp3_to_aac|aac_to_mp3|mp3_to_ogg|ogg_to_mp3)$'))
-    dp.add_handler(MessageHandler(Filters.document & Filters.chat_type.private, shiftx_file_handler), group=7)
-    dp.add_handler(MessageHandler(Filters.audio & Filters.chat_type.private, shiftx_file_handler), group=7)
+    dp.add_handler(CallbackQueryHandler(shiftx_start, pattern='^shiftx_back_to_main_menu$'))
+    dp.add_handler(MessageHandler(Filters.document & (Filters.chat_type.private | Filters.chat_type.groups), shiftx_file_handler), group=7)
+    dp.add_handler(MessageHandler(Filters.audio & (Filters.chat_type.private | Filters.chat_type.groups), shiftx_file_handler), group=7)

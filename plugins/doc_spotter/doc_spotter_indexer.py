@@ -147,12 +147,13 @@ def back_to_main_callback(update: Update, context: CallbackContext) -> None:
 def setup_fsub_callback(update: Update, context: CallbackContext) -> None:
     query = update.callback_query
     query.answer()
-    text = "Let's setup F-Sub for your Listening Group(s). Follow these steps.\n\n" \
-           "1) Add me to your F-Sub chat [channel/group] as an admin\n" \
-           "2) Send Telegram id of your F-Sub chat."
-    keyboard = [[InlineKeyboardButton("Back", callback_data='back_to_main')]]  # Optionally provide a way back
+    text = """<b>🎧 Let's Set Up F-Sub for Your Listening Group(s)!</b>
+
+1️⃣ <b>Add me to your F-Sub chat</b> [channel/group] as an admin. 👤
+2️⃣ <b>Send the Telegram ID of your F-Sub chat.</b> 🔢"""
+    keyboard = [[InlineKeyboardButton("Back", callback_data='back_to_main')]]  
     reply_markup = InlineKeyboardMarkup(keyboard)
-    query.edit_message_text(text=text, reply_markup=reply_markup)
+    query.edit_message_text(text=text, reply_markup=reply_markup, parse_mode=ParseMode.HTML)
     context.user_data['awaiting_fsub_chat_id'] = True 
 
 # Implement the channel selection callback with Yes/No options for deletion
@@ -234,10 +235,13 @@ def delete_fsub_callback(update: Update, context: CallbackContext) -> None:
 def setup_group_callback(update: Update, context: CallbackContext) -> None:
     query = update.callback_query
     query.answer()
-    text = "Okay, Now here are the steps.\n\n1) Add me to your group as an Admin with necessary permissions\n2) Send me your group's ID [e.g. -100123456789]"
+    text = """<b>🔧 Setup Instructions</b>
+
+1️⃣ <b>Add me to your listning group as an admin.</b> 🛠️
+2️⃣ <b>Then, send me your group's ID.</b> 🆔 (It should start with -100, e.g., -1001654958246)"""
     keyboard = [[InlineKeyboardButton("Back", callback_data='back_to_main')]]
     reply_markup = InlineKeyboardMarkup(keyboard)
-    query.edit_message_text(text=text, reply_markup=reply_markup)
+    query.edit_message_text(text=text, reply_markup=reply_markup, parse_mode=ParseMode.HTML)
     context.user_data['awaiting_group_id'] = True  
 
 def index_files_callback(update: Update, context: CallbackContext) -> None:
@@ -253,10 +257,17 @@ def index_files_callback(update: Update, context: CallbackContext) -> None:
 def setup_channel_callback(update: Update, context: CallbackContext) -> None:
     query = update.callback_query
     query.answer()
-    text = "Okay, follow this,\n\n1) Add me to your source channel as admin\n2) After that, send me your channel's ID [Starting with -100| e.g. -1001654958246]"
+    text = """<b>🔧 Setup Instructions</b>
+
+1️⃣ <b>Add me to your source channel as an admin.</b> 🛠️
+2️⃣ <b>Then, send me your channel's ID.</b> 🆔 (It should start with -100, e.g., -1001654958246)
+
+⚠️ <u>Important Notes:</u>
+♦️<i>If the chat is a group and you want to clone messages from bots,</i> <b>this won't work</b>. <i>Telegram does not allow capturing messages sent by bots.</i>
+♦️<i>Solution: If you want to clone messages sent by bots, use channels. Echo can catch the bot's message sent in channels</i>"""
     keyboard = [[InlineKeyboardButton("Back", callback_data='back_to_main')]]
     reply_markup = InlineKeyboardMarkup(keyboard)
-    query.edit_message_text(text=text, reply_markup=reply_markup)
+    query.edit_message_text(text=text, reply_markup=reply_markup, parse_mode=ParseMode.HTML)
     context.user_data['awaiting_channel_id'] = True  
 
 def is_bot_admin_in_channel(bot, chat_id) -> bool:

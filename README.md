@@ -1,4 +1,4 @@
-# ECHO v1.1.8 AY6 #IM #NF (Improvements/New Feature)
+# ECHO v1.1.9 B5X #IM #NF (Improvements/New Features)
 
 <p align="center">
     <a href="https://github.com/theseekerofficial/Echo">
@@ -187,9 +187,19 @@
 25. **Force Subscribe Function**
     - Grow your chats with the advanced feature-rich F-Sub Plugin. This plugin will give the opportunity for it 💪
     - Subscription checking support for both groups and channels
+      
+26. **FileFlex, File Manipulation Plugin (Echo Original Plugin)**
+    - Add custom captions with custom handlers and HTML Handlers to your files 🧋
+    - Add URL Buttons to your files super easily 
+    - Plugin Modes,
+        - Instant Flex ⏩
+        - Pre-Configured Flex ⚙️
+        - FileFlex Jobs for Chats for automatic FileFlexes 💼
+        - Custom Global Templates 🖼️
+    - You can modify your files with a ton of possibility using FileFlex Plugin
 
-26. **Info & Utility Modules**
-    - Simple Modules that cloud be help to you in day-to-day telegram usage 📅
+27. **Info & Utility Modules**
+    - Simple Modules that could help to you in day-to-day telegram usage 📅
     - Status of Echo 📈
         - See Database Usage for Each Database in Echo (/database)
         - Find Your Telegram ID (/info)
@@ -198,7 +208,7 @@
         - See a stats report about Echo and Host Server (/overview)
         - /users Command for Owner to See Echo Using User's and Group Chats list
 
-27. **Commit Detector Function**
+28. **Commit Detector Function**
     - Keep updated about your fav GitHub repo within the telegram environment. This feature can detect new commits from any public repo and send them to your telegram channel(s)/group(s)🪄
     - Exclusively for Echo deploying owners only 
 
@@ -464,6 +474,10 @@ This section provides detailed information on the required environment variables
 14. **F_SUB_PLUGIN** [🟩]
     - Description: Set to `True` or `False` to Enable or Disable the F-Sub Plugin.
     - Example: `F_SUB_PLUGIN=True`
+      
+15. **FILEFLEX_PLUGIN** [🟩]
+    - Description: Set `True` or `False` to Enable or Disable Fileflex Plugin
+    - Example: `FILEFLEX_PLUGIN=True`
 
 Make sure to replace the placeholder values with your actual configuration settings. These environment variables are crucial for customizing and configuring the behavior of your Echo bot. Ensure that they are correctly set before running the bot to ensure its proper functionality.
 
@@ -490,7 +504,7 @@ If you have any questions or need further assistance, please refer to the docume
 8. Activate the virtual environment using `source venv/bin/activate` 
 9. Install required Python packages: `pip install -r requirements.txt`
 10. Update System `sudo apt update`
-11. Install ffmpeg for ShiftX Plugin (Optional | If you skip installation, Echo will dynamically install ffmpeg itself) `sudo apt install ffmpeg`
+11. Install ffmpeg for ShiftX Plugin ( Optional but Recommended | If you skip installation, Echo will dynamically install ffmpeg itself ) `sudo apt install ffmpeg`
 12. Run the bot: `python bot.py` or `python3 bot.py`
 
 ___All-in-One Deploy CMDs for VPS (Make Sure to install python3.10 in your server)___

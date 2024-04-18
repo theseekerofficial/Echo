@@ -84,6 +84,7 @@ def load_and_store_env_vars():
         "IMDb_PLUGIN": os.getenv("IMDb_PLUGIN"),
         "CLONEGRAM_PLUGIN": os.getenv("CLONEGRAM_PLUGIN"),
         "F_SUB_PLUGIN": os.getenv("F_SUB_PLUGIN"),
+        "FILEFLEX_PLUGIN": os.getenv("FILEFLEX_PLUGIN"),
         "DS_IMDB_ACTIVATE": os.getenv("DS_IMDB_ACTIVATE"),
         "DS_URL_BUTTONS": os.getenv("DS_URL_BUTTONS"),
         "GH_CD_URLS": os.getenv("GH_CD_URLS"),
@@ -203,7 +204,8 @@ def get_unique_message_for_env(key):
         "REMOVEBG_PLUGIN": "🔌 Enable or Disable RemoveBG Plugin\n\n<b>Optional [🟩]</b>\n<b>For new changes, Restart:</b> <u><i>Not Required</i></u>",
         "IMDb_PLUGIN": "🔌 Enable or Disable IMDb Plugin\n\n<b>Optional [🟩]</b>\n<b>For new changes, Restart:</b> <u><i>Not Required</i></u>",
         "CLONEGRAM_PLUGIN": "🔌 Enable or Disable Clonegram Plugin\n\n<b>Optional [🟩]</b>\n<b>For new changes, Restart:</b> <u><i>Not Required</i></u>",
-        "F_SUB_PLUGIN": "🔌 Enable or Disable F-Sub Plugin\n\n<b>Optional [🟩]</b>\n<b>For new changes, Restart:</b> <u><i>Required</i></u>",
+        "F_SUB_PLUGIN": "🔌 Enable or Disable F-Sub Plugin\n\n<b>Optional [🟩]</b>\n<b>For new changes, Restart:</b> <u><i>Not Required</i></u>",
+        "FILEFLEX_PLUGIN": "🔌 Enable or Disable Fileflex (File Manipulation Plugin) Plugin\n\n<b>Optional [🟩]</b>\n<b>For new changes, Restart:</b> <u><i>Not Required</i></u>",
         "DS_IMDB_ACTIVATE": "🎥 Enable or Disable Doc Spotter's IIPS (IMDb Info and Poster Sending) in Button List\n\n<b>Optional [🟩]</b>\n<b>For new changes, Restart:</b> <u><i>Required</i></u>",
         "GH_CD_URLS": "🔗 GitHub Repo URLs for Commit Detector Plugin\n\n<b>Optional [🟩], But necessary if GH_CD_CHANNEL_IDS was filled</b>\n<b>For new changes, Restart:</b> <u><i>Required</i></u>",
         "GH_CD_CHANNEL_IDS": "📢 Lists Telegram chat IDs Where Commit Detector Notifications are Sent.\n\n<b>Optional [🟩], But necessary if GH_CD_URLS was filled</b>\n<b>For new changes, Restart:</b> <u><i>Required</i></u>",
@@ -298,17 +300,14 @@ def show_config_envs(query, page=0):
     db = client.get_database("Echo")
     configs_collection = db["configs"]
 
-    # Fetch all environment variables and calculate the number of pages
     all_envs = list(configs_collection.find({}))
     total_envs = len(all_envs)
     total_pages = (total_envs + ENV_VARS_PER_PAGE - 1) // ENV_VARS_PER_PAGE
 
-    # Calculate the range of envs to display on the current page
     start = page * ENV_VARS_PER_PAGE
     end = start + ENV_VARS_PER_PAGE
     page_envs = all_envs[start:end]
 
-    # Create a two-column grid of buttons for the current page of envs
     keyboard = []
     for i in range(0, len(page_envs), 2):
         row = [
@@ -319,13 +318,10 @@ def show_config_envs(query, page=0):
         ]
         keyboard.append(row)
 
-    # Pagination buttons logic
     page_buttons = [InlineKeyboardButton(str(p + 1), callback_data=f"page_{p}") for p in range(total_pages)]
     
-    # Split page buttons into groups for each row
     page_btn_groups = [page_buttons[i:i + MAX_PAGE_BTNS_PER_ROW] for i in range(0, len(page_buttons), MAX_PAGE_BTNS_PER_ROW)]
 
-    # Add each group of page buttons as a new row in the keyboard
     for btn_group in page_btn_groups:
         keyboard.append(btn_group)
 
@@ -354,7 +350,6 @@ def back_to_bot_settings_callback(update: Update, context: CallbackContext):
     query = update.callback_query
     query.answer()
 
-    # Display the bot settings message with "Config ENVs" button
     keyboard = [
         [InlineKeyboardButton("Config ENVs", callback_data='config_envs')],
         [InlineKeyboardButton("💥Self-destruct💥", callback_data='self_destruct')],

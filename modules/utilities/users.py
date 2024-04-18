@@ -4,7 +4,7 @@ from telegram import Update, ParseMode
 from telegram.ext import CallbackContext
 from modules.configurator import get_env_var_from_db
 
-MONGODB_URI = get_env_var_from_db("MONGODB_URI")
+MONGODB_URI = os.getenv("MONGODB_URI")
 
 def show_users(update: Update, context: CallbackContext) -> None:
     owner_id = get_env_var_from_db("OWNER")

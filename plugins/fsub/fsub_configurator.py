@@ -200,5 +200,5 @@ def register_fsub_handlers(dp):
     dp.add_handler(CallbackQueryHandler(execute_delete_fsub_task, pattern='^e_fsub_confirm_delete_'))
     dp.add_handler(CallbackQueryHandler(delete_fsub_task_menu, pattern='^e_fsub_delete_cancel$'))
     dp.add_handler(CallbackQueryHandler(handle_try_now, pattern='^try_now_'))
-    dp.add_handler(MessageHandler(Filters.text & ~Filters.command & Filters.chat_type.private, fsub_collect_chat_id, pass_user_data=True), group=11)
+    dp.add_handler(MessageHandler(Filters.text & ~Filters.command & (Filters.chat_type.private | Filters.chat_type.groups), fsub_collect_chat_id, pass_user_data=True), group=11)
     dp.add_handler(MessageHandler(Filters.chat_type.groups, check_membership_and_restrict), group=12)
