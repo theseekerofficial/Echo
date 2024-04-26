@@ -1,7 +1,11 @@
 # modules/encrypted_data.py
 import base64
+import logging
 from Crypto.Cipher import AES
 from Crypto.Util.Padding import pad, unpad
+
+logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 key = b'Ks9dNp3R7a2TqBhE5WjX6Zy8cVfUgHm4'
 
@@ -24,8 +28,8 @@ def decrypt(encrypted_data):
         decrypted_data = unpad(cipher.decrypt(ciphertext), AES.block_size)
         return decrypted_data.decode('utf-8')
     except ValueError as e:
-        print(f"Error during decryption: {e}")
+        logger.error(f"Error during decryption: {e}")
         return None
     except Exception as e:
-        print(f"An unexpected error occurred during decryption: {e}")
+        logger.error(f"An unexpected error occurred during decryption: {e}")
         return None

@@ -47,7 +47,7 @@ For example:
 ⛔ <b>Type /cancel to stop the process</b>"""
 
 custom_buttons_instruction_text = """<b>🔗 Step 2: URL Buttons</b>
-<i>Now, send the buttons for your file(s). Use the ' - ' to separate button text from the URL, and ' | ' to place buttons side by side. To start a new line of buttons, press Enter for a new line.</i>
+<i>Now, send the buttons for your file(s). Use the ' - ' to separate button text from the URL, and ' | ' to place buttons side by side. To start a new line of buttons, Type in a new line.</i>
 
 For example:
 <code>Website - https://example.com | Help - https://example.com/help</code>

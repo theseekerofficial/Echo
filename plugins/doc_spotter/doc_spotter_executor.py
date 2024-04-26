@@ -7,7 +7,7 @@ from datetime import datetime
 from pymongo import MongoClient
 from modules.configurator import get_env_var_from_db
 from modules.utilities.url_shortener import get_short_url
-from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update, InputMediaPhoto
+from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update, InputMediaPhoto, ParseMode
 from plugins.doc_spotter.doc_spotter_fsub import is_user_member_of_fsub_chats, prompt_to_join_fsub_chats
 from telegram.ext import CallbackContext, CommandHandler, Filters, MessageHandler, Updater, CallbackQueryHandler
 
@@ -83,8 +83,8 @@ def listen_to_groups(update: Update, context: CallbackContext):
     if not db["Listening_Groups"].find_one({"group_id": str(chat_id)}):
         return
     
-    loading_message_text = f"Hold on {user_mention}, searching for '{update.message.text.lower()}'..."
-    loading_message = update.message.reply_text(loading_message_text)
+    loading_message_text = f"<code>Hold on </code>{user_mention},<code> searching for </code><i>'{update.message.text.lower()}'</i>..."
+    loading_message = update.message.reply_text(loading_message_text, parse_mode=ParseMode.HTML)
     
     if user_id:
         collection_name = f"DS_collection_{user_id}"
@@ -228,6 +228,20 @@ def display_page_buttons(update, context, results, page, user_id, imdb_info=None
             context.bot.send_photo(chat_id=chat_id, photo=photo, caption=caption, reply_markup=reply_markup)
     logging.info(f"✅ User {update.effective_user.id} received IMDB info and poster for '{update.message.text}' in chat {update.message.chat.id}")
 
+def get_user_buttons(user_id):
+    user_buttons = db["URL_Buttons_Sets"].find_one({"user_id": user_id})
+    if not user_buttons:
+        return None  
+
+    buttons_raw = user_buttons["buttons_raw"]
+    buttons_list = []
+    button_lines = buttons_raw.split('\n')
+    for line in button_lines:
+        button_row = [InlineKeyboardButton(text=part.split(' - ')[0].strip(), url=part.split(' - ')[1].strip())
+                      for part in line.split('|')]
+        buttons_list.append(button_row)
+    return buttons_list
+
 def send_file_to_user(chat_id, doc_id, original_group_id, context):
     user_id = find_user_by_group(original_group_id)  
     
@@ -248,21 +262,22 @@ def send_file_to_user(chat_id, doc_id, original_group_id, context):
             file_name = file_document.get('file_name')
             file_type = file_document.get('file_type')
             caption = file_document.get('caption', '')
+            custom_buttons = get_user_buttons(user_id)
+
+            reply_markup = InlineKeyboardMarkup(custom_buttons) if custom_buttons else None
             
             # Send the file based on its type
             if file_type == 'photo':
-                context.bot.send_photo(chat_id=chat_id, photo=file_id, caption=caption)
+                context.bot.send_photo(chat_id=chat_id, photo=file_id, caption=caption, reply_markup=reply_markup)
             elif file_type == 'video':
-                context.bot.send_video(chat_id=chat_id, video=file_id, caption=caption)
+                context.bot.send_video(chat_id=chat_id, video=file_id, caption=caption, reply_markup=reply_markup)
             elif file_type == 'audio':
-                context.bot.send_audio(chat_id=chat_id, audio=file_id, caption=caption)
+                context.bot.send_audio(chat_id=chat_id, audio=file_id, caption=caption, reply_markup=reply_markup)
             else:  
-                context.bot.send_document(chat_id=chat_id, document=file_id, caption=caption)
+                context.bot.send_document(chat_id=chat_id, document=file_id, caption=caption, reply_markup=reply_markup)
         else:
-            # Handle the case where the document is not found
             context.bot.send_message(chat_id=chat_id, text="Sorry, the requested file could not be found.")
     except Exception as e:
-        # Log or handle any errors encountered
         logging.error(f"Error sending file to user: {e}")
         context.bot.send_message(chat_id=chat_id, text="Sorry, there was an error processing your request.")
         
@@ -300,10 +315,9 @@ def find_user_by_group(group_id):
 def file_callback_handler(update: Update, context: CallbackContext):
     query = update.callback_query
     callback_data = query.data
-    # This seems to be the intended user_id for sending files back.
     user_id = query.from_user.id
     chat_id = query.message.chat.id
-    s_user_id = find_user_by_group(chat_id)  # The user_id associated with the chat_id from the groups.
+    s_user_id = find_user_by_group(chat_id)  
 
     parts = callback_data.split("_")
     
@@ -325,23 +339,24 @@ def file_callback_handler(update: Update, context: CallbackContext):
 
         if result:
             file_id = result['file_id']
-            caption = result.get('caption', '')  # Get the caption if it exists, else default to empty string
+            caption = result.get('caption', '')
+            custom_buttons = get_user_buttons(s_user_id)
+            reply_markup = InlineKeyboardMarkup(custom_buttons) if custom_buttons else None
+            
             try:
-                # Check the file type and send accordingly with caption
                 if result.get('file_type') in ['photo', 'image']: 
-                    context.bot.send_photo(chat_id=user_id, photo=file_id, caption=caption)
+                    context.bot.send_photo(chat_id=user_id, photo=file_id, caption=caption, reply_markup=reply_markup)
                 elif result.get('file_type') == 'video':
-                    context.bot.send_video(chat_id=user_id, video=file_id, caption=caption)
+                    context.bot.send_video(chat_id=user_id, video=file_id, caption=caption, reply_markup=reply_markup)
                 elif result.get('file_type') == 'audio':
-                    context.bot.send_audio(chat_id=user_id, audio=file_id, caption=caption)
-                else:  # Default to document if not matching specific types
-                    context.bot.send_document(chat_id=user_id, document=file_id, caption=caption)
+                    context.bot.send_audio(chat_id=user_id, audio=file_id, caption=caption, reply_markup=reply_markup)
+                else:  
+                    context.bot.send_document(chat_id=user_id, document=file_id, caption=caption, reply_markup=reply_markup)
                 
-                # Answer the query with a notification message
                 alert_message = f"Check PM of {bot_name} [@{bot_username}]. Your file will be there 📨"
-                query.answer(alert_message, show_alert=False)  # Use 'False' for a toast notification
+                query.answer(alert_message, show_alert=False)  
             except Exception as e:
-                print(f"Error sending file: {e}")
+                logging.error(f"Error sending file: {e}")
                 query.answer("Failed to send the file.", show_alert=True)
         else:
             query.answer("File not found.", show_alert=True)

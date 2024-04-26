@@ -30,6 +30,7 @@ from modules.token_system import TokenSystem
 from modules.set_my_info import setup_bot_info
 from modules.utilities.users import show_users
 from modules.allowed_chats import allowed_chats_only
+from modules.codecapsule import setup_codecapsule_handlers
 from modules.utilities.paid_users import paid_users_handlers
 from modules.utilities.database_info import database_command
 from modules.utilities.info_fetcher import register_id_command
@@ -77,19 +78,19 @@ For support and community engagement, join our support group:
 dotenv_path = os.path.join(os.path.dirname(__file__), 'config.env')
 load_dotenv(dotenv_path)
 
-# Validate environment variables
-if not all([os.getenv("TOKEN"), os.getenv("MONGODB_URI"), os.getenv("REMINDER_CHECK_TIMEZONE"), os.getenv("AUTHORIZED_USERS"), os.getenv("SCEDUCAST_TIMEZONE"), os.getenv("SCEDUCAST_TIME_OFFSET"), os.getenv("OWNER"), os.getenv("UPSTREAM_REPO_URL")]):
-    print("Please provide all required environment variables.")
-    exit(1)
-
 # Set up logging
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=logging.INFO)
 logger = logging.getLogger(__name__)
 
+# Validate environment variables
+if not all([os.getenv("TOKEN"), os.getenv("MONGODB_URI"), os.getenv("REMINDER_CHECK_TIMEZONE"), os.getenv("AUTHORIZED_USERS"), os.getenv("SCEDUCAST_TIMEZONE"), os.getenv("SCEDUCAST_TIME_OFFSET"), os.getenv("OWNER"), os.getenv("UPSTREAM_REPO_URL")]):
+    logger.warning("Please provide all required environment variables.")
+    exit(1)
+
 # Assign the environment variables to variables
 TOKEN = get_env_var_from_db("TOKEN")
 MONGODB_URI = os.getenv("MONGODB_URI")
-TOKEN_RESET_TIME = os.getenv("TOKEN_RESET_TIME")
+TOKEN_RESET_TIME = get_env_var_from_db("TOKEN_RESET_TIME")
 REMINDER_CHECK_TIMEZONE = get_env_var_from_db("REMINDER_CHECK_TIMEZONE")
 
 # log the environment variables
@@ -100,7 +101,7 @@ try:
     decrypted_creator_info = decrypt(encrypted_creator_info)
 
     if creator_credits != decrypted_creator_info:
-        print("""⚠️ Attention!
+        logger.warning("""⚠️ Attention!
 
 Echo's Copyright Cops are here! Dare to crack the code, trespasser? 
 
@@ -111,8 +112,8 @@ The chosen ones laugh in the face of your puny edits.A labyrinth for the unworth
         exit(1)
 
 except Exception as e:
-    print("Respect to the Creator. Deployment stopped due to integrity check failure.")
-    print(e)
+    logger.warning("Respect to the Creator. Deployment stopped due to integrity check failure.")
+    logger.error(e)
     exit(1)
 
 USER_AND_CHAT_DATA_COLLECTION = 'user_and_chat_data'
@@ -210,8 +211,8 @@ def start(update: Update, context: CallbackContext) -> None:
 
     # Common keyboard setup for both chat types
     keyboard = [
-        [InlineKeyboardButton("Update Channel 📢", url="https://t.me/Echo_AIO")],
-        [InlineKeyboardButton("Support Group 🫂", url="https://t.me/ECHO_Support_Unit")]
+        [InlineKeyboardButton("Update Channel 📢", url="https://t.me/Echo_AIO"), InlineKeyboardButton("Support Group 🫂", url="https://t.me/ECHO_Support_Unit")],
+        [InlineKeyboardButton("Repo 👨‍💻", url="https://github.com/theseekerofficial/Echo")]
     ]
     reply_markup = InlineKeyboardMarkup(keyboard)
 
@@ -489,7 +490,22 @@ def install_ffmpeg():
             subprocess.run(["sudo", "apt-get", "install", "-y", "ffmpeg"], check=True)
             logger.info("ffmpeg installation successful.")
         except subprocess.CalledProcessError as e:
-            logger.info(f"Failed to install ffmpeg: {e}")
+            logger.info(f"Failed to install ffmpeg: {e} | Try to manually install it and deploy the Echo")
+            sys.exit(1)
+
+def install_screen():
+    logger.info("Checking for screen installation...")
+    try:
+        subprocess.run(["screen", "-version"], check=True, stdout=subprocess.PIPE)
+        logger.info("Screen is already installed.")
+    except (subprocess.CalledProcessError, FileNotFoundError):
+        logger.info("Screen not found. Attempting installation...")
+        try:
+            subprocess.run(["sudo", "apt-get", "update"], check=True)
+            subprocess.run(["sudo", "apt-get", "install", "-y", "screen"], check=True)
+            logger.info("Screen installation successful.")
+        except subprocess.CalledProcessError as e:
+            logger.error(f"Failed to install screen: {e} | Try to manually install it and deploy the Echo")
             sys.exit(1)
 
 def cancel(update: Update, context: CallbackContext) -> None:
@@ -518,6 +534,7 @@ bot_commands = [
     BotCommand("uptotgph", "Upload any telegram image to telegraph ⤴️"),
     BotCommand("logogen", "Craft Your Logos with Echo!🖌️🎨"),
     BotCommand("imdb", "Seach Movies and TV-Shows in IMDb 🔎🎥"),
+    BotCommand("codecapsule", "Run Supporter Plugins 🚀⚡"),
     BotCommand("docspotter", "Enhanced Auto Filter Module ⛈️"),
     BotCommand("erasefiles", "Delete indexed files ♻️"),
     BotCommand("shiftx", "Convert Various range of files to another type 🔄️"),
@@ -639,6 +656,7 @@ if __name__ == '__main__':
     setup_removebg(dp)
     
     install_ffmpeg()
+    install_screen()
     
     setup_bot_info()
 
@@ -651,6 +669,8 @@ if __name__ == '__main__':
     register_fsub_handlers(dp)
 
     register_fileflex_handlers(dp)
+
+    setup_codecapsule_handlers(dp)
     
     bot_info = updater.bot.get_me()
     bot_name = bot_info.first_name

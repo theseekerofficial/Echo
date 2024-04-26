@@ -1,4 +1,4 @@
-# ECHO v1.1.9 B5X #IM #NF (Improvements/New Features)
+# ECHO v1.2.0 MAI2 #IM #NF #SP (Improvements/New Features/Supporter Plugins)
 
 <p align="center">
     <a href="https://github.com/theseekerofficial/Echo">
@@ -22,6 +22,8 @@
 
 ## Readme Contents
 - [Introduction](#introduction)
+- [Supporter Plugins](https://github.com/theseekerofficial/Echo/tree/supporter-plugins)
+    - [What are Supporter Plugins](#what-are-supporter-plugins-)
 - [Features](#features)
 - [Commands](#commands)
 - [Usage](#usage)
@@ -210,7 +212,12 @@
 
 28. **Commit Detector Function**
     - Keep updated about your fav GitHub repo within the telegram environment. This feature can detect new commits from any public repo and send them to your telegram channel(s)/group(s)🪄
-    - Exclusively for Echo deploying owners only 
+    - Exclusively for Echo deploying owners only
+    - 
+29. **CadeCapsule Module for Run Supporter Plugins**
+    - Codecapsule is a file management system that allows Echo to run separate supporter plugins in different screen sessions. 🚀
+    - These supporter plugins are improve to functionality of the main plugins in Echo
+
 
 # Commands
 
@@ -226,6 +233,7 @@
 - `/delmygapi`: Delete Your G-API from Echo's Database 🗑️
 - `/uptotgph`: Upload any telegram image to Telegraph and get instant direct link 🚀
 - `/logogen`: Craft your own logo with endless possibilities. (with Support for adding your own graphics, frames and more) 🎨🖌️
+- `/codecapsule` : Run Supporter Plugins 🚀⚡
 - `/imdb` : Find your fav movies and TV shows using /imdb 🍿🎞️
 - `/docspotter`: Advanced auto filter feature packed with all feature you need for file managing 🗃️
 - `/erasefiles`: Delete indexed files easily ♻️
@@ -250,6 +258,21 @@
 - `/restart`: Restart your bot and Update to the letest version ⤴️
 
 **You can discover additional sub-commands within the /help command that may not be explicitly listed.**
+
+## What are Supporter Plugins 🤝
+
+❓ Supporter Plugins are auxiliary scripts that work in conjunction with the main Echo Environment, designed to enhance the functionality of the primary plugins used by an Echo bot. These plugins are separate codes that do not run directly within the main Echo Environment but are managed through it. Here’s a bit more detail about how they operate and the available plugins
+
+❓ Supporter Plugins utilize the codecapsule.py module within the Echo client, ensuring seamless integration and control from the main Echo Environment.
+
+❓ They use Linux screen sessions to remain active and operational, ensuring that they can continue running independently without requiring constant user intervention.
+
+⚡ You can find more info in the supporter-plugins branch
+
+⚡ current Available Supporter Plugins:
+   - TeleFileDex.py (For index history of a channel or group for Doc Spotter Plugin)
+   - TeleCloner.py (For Clone chat history to destination chat. Supporter Plugin for Clonegram main Plugin)
+   - SafeSync.py (Mongodb Backup code for main Echo Client database)
 
 # Usage
 
@@ -504,7 +527,7 @@ If you have any questions or need further assistance, please refer to the docume
 8. Activate the virtual environment using `source venv/bin/activate` 
 9. Install required Python packages: `pip install -r requirements.txt`
 10. Update System `sudo apt update`
-11. Install ffmpeg for ShiftX Plugin ( Optional but Recommended | If you skip installation, Echo will dynamically install ffmpeg itself ) `sudo apt install ffmpeg`
+11. Install ffmpeg for ShiftX Plugin and screen for CodeCapsule Module ( Optional but Recommended | If you skip installation, Echo will dynamically install ffmpeg and screen itself ) `sudo apt install -y ffmpeg screen`
 12. Run the bot: `python bot.py` or `python3 bot.py`
 
 ___All-in-One Deploy CMDs for VPS (Make Sure to install python3.10 in your server)___
@@ -517,7 +540,7 @@ cd Echo
 python3.10 -m venv venv
 source venv/bin/activate
 sudo apt update
-sudo apt install ffmpeg
+sudo apt install -y ffmpeg screen
 pip install -r requirements.txt
 python3 bot.py
 ```

@@ -516,7 +516,7 @@ def shutdown_confirm_callback(update: Update, context: CallbackContext):
     try:
         context.bot.delete_message(chat_id=query.message.chat_id, message_id=countdown_message.message_id)
     except Exception as e:
-        print(f"Error deleting countdown message: {e}")
+        logger.error(f"Error deleting countdown message: {e}")
 
     goodbye_message = context.bot.send_message(chat_id=query.message.chat_id, text="Bye 👋")
     time.sleep(1)

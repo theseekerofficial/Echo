@@ -200,7 +200,7 @@ def show_schedule_details(update: Update, context: CallbackContext) -> None:
 
             selected_schedule = db['schedule_broadcasts'].find_one({'_id': selected_broadcast_id})
 
-            print("Selected Schedule:", selected_schedule)
+            logger.info("Selected Schedule:", selected_schedule)
 
             if selected_schedule:
                 broadcast_type = selected_schedule.get('broadcast_type', 'N/A')

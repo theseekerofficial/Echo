@@ -57,19 +57,41 @@ def save_chat_id(update: Update, context: CallbackContext) -> None:
     setup_step = context.user_data.get('setup_step')
     
     if setup_step in ['source', 'destination']:
-        chat_id = update.message.text.strip()
+        text = update.message.text.strip()
+        parts = text.split()
+        chat_id = parts[0]
+
         if chat_id.startswith('-100'):
             if setup_step == 'source':
                 context.user_data['source_chat_id'] = chat_id
-                context.user_data['setup_step'] = 'destination'
-                update.message.reply_text("""<b>🌟 Setp 2</b>
+                update.message.reply_text("""<b>🌟 Step 2</b>
 
 1️⃣ <i>Add me to your destination chat</i> (Group or Channel) and make me an admin.
 
-2️⃣ <b>Send me the destination chat ID.</b>""", parse_mode=ParseMode.HTML)
-                
+2️⃣ <b>Send me the destination chat ID.</b> Optionally, for supergroups, you can include a topic ID separated by space after the chat ID.
+
+⚠️ Only work for supergroups that have enabled topics within them.""", parse_mode=ParseMode.HTML)
+                context.user_data['setup_step'] = 'destination'
+
             elif setup_step == 'destination':
-                context.user_data['destination_chat_id'] = chat_id
+                if len(parts) == 2:
+                    try:
+                        chat_type = context.bot.get_chat(chat_id).type
+                        if chat_type == 'supergroup':
+                            context.user_data['destination_chat_id'] = chat_id
+                            context.user_data['topic_id'] = parts[1] 
+                        else:
+                            update.message.reply_text("A topic ID can only be provided for supergroups.")
+                            return
+                    except Exception as e:
+                        update.message.reply_text(f"Failed to fetch chat details: {str(e)}")
+                        return
+                elif len(parts) == 1:
+                    context.user_data['destination_chat_id'] = chat_id
+                else:
+                    update.message.reply_text("Invalid input format. Please send the chat ID optionally followed by a topic ID for supergroups.")
+                    return
+                
                 context.user_data['setup_step'] = 'clone_type'
                 keyboard = [
                     [InlineKeyboardButton("Forward Messages", callback_data='forward_messages')],
@@ -86,7 +108,6 @@ def handle_clone_type_selection(update: Update, context: CallbackContext) -> Non
     query = update.callback_query
     query.answer()
     context.user_data['clone_type'] = 'forward' if query.data == 'forward_messages' else 'clone'
-    # Prepare message type selection buttons
     message_types = ["Text", "Photos", "Videos", "Documents", "Audios", "Stickers"]
     keyboard = [[InlineKeyboardButton(msg_type, callback_data=msg_type.lower()) for msg_type in message_types[i:i+2]] for i in range(0, len(message_types), 2)]
     keyboard.append([InlineKeyboardButton("Done Selecting", callback_data='done_selecting')])
@@ -106,10 +127,8 @@ def handle_message_type_selection(update: Update, context: CallbackContext) -> N
         finalize_selection(update, context)
         return
 
-    # Toggle selection for the media type
     context.user_data['message_types'][msg_type] = not context.user_data['message_types'][msg_type]
 
-    # Update the list of media types with the current selections
     message_types = ["text", "photos", "videos", "documents", "audios", "stickers"]
     keyboard = []
 
@@ -131,16 +150,22 @@ def finalize_selection(update: Update, context: CallbackContext):
     source_chat_id = context.user_data.get('source_chat_id')
     destination_chat_id = context.user_data.get('destination_chat_id')
     clone_type = context.user_data.get('clone_type')
+    topic_id = context.user_data.get('topic_id', None) 
+    
     document = {
         'source_chat_id': source_chat_id,
         'destination_chat_id': destination_chat_id,
         'user_id': user_id,
         'clone_type': clone_type,
-        **{f"allow_{k}": str(v).lower() for k, v in selections.items()}  
+        **{f"allow_{k}": str(v).lower() for k, v in selections.items()}
     }
+    
+    if topic_id:  
+        document['topic_id'] = topic_id
+    
     db["Clonegram_Tasks"].insert_one(document)
     query.edit_message_text("Your Clonegram Task has been set up successfully.")
-    context.user_data.clear()  
+    context.user_data.clear()
 
 def delete_clonegram_task(update: Update, context: CallbackContext, check_remaining=False) -> None:
     query = update.callback_query
@@ -167,8 +192,10 @@ def delete_clonegram_task(update: Update, context: CallbackContext, check_remain
     for task in tasks:
         source_chat_name = get_chat_name(context.bot, task['source_chat_id'])
         destination_chat_name = get_chat_name(context.bot, task['destination_chat_id'])
-        button_text = f"{source_chat_name} to {destination_chat_name}"
-        keyboard.append([InlineKeyboardButton(button_text, callback_data=f"clonegram_delete_{task['_id']}")])
+        task_info = f"{source_chat_name} to {destination_chat_name}"
+        if 'topic_id' in task:
+            task_info += f"({task['topic_id']})"
+        keyboard.append([InlineKeyboardButton(task_info, callback_data=f"clonegram_delete_{task['_id']}")])
 
     keyboard.append([InlineKeyboardButton("Back", callback_data=f"clonegram_back_to_main_menu")])
     reply_markup = InlineKeyboardMarkup(keyboard)

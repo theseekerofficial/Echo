@@ -27,7 +27,7 @@ def fetch_latest_commit(repo_url):
         latest_remote_commit = subprocess.check_output(["git", "ls-remote", repo_url, "HEAD"], text=True).split()[0]
         return latest_remote_commit
     except Exception as e:
-        print(f"Error fetching latest commit: {str(e)}")
+        logger.error(f"Error fetching latest commit: {str(e)}")
         return None
 
 def get_current_commit():
@@ -35,7 +35,7 @@ def get_current_commit():
         current_commit = subprocess.check_output(["git", "rev-parse", "HEAD"], text=True).strip()
         return current_commit
     except Exception as e:
-        print(f"Error getting current commit: {str(e)}")
+        logger.error(f"Error getting current commit: {str(e)}")
         return None
 def check_for_updates(repo_url):
     try:

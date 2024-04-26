@@ -26,10 +26,11 @@ def docspotter_command(update: Update, context: CallbackContext) -> None:
             [InlineKeyboardButton("Set Up Group(s) to Begin Spotting", callback_data='setup_group')],
             [InlineKeyboardButton("Setup F-Sub for Listening Group(s)", callback_data='setup_fsub')],
             [InlineKeyboardButton("Manage Index/Listen/F-Sub Chats", callback_data='manage_indexers')],
-            [InlineKeyboardButton("Delete Indexed Files", callback_data='delete_indexed_files')] 
+            [InlineKeyboardButton("Delete Indexed Files", callback_data='delete_indexed_files')],
+            [InlineKeyboardButton("Add/Edit Buttons for Files", callback_data='dc_setup_buttons_f_files')]
         ]
         reply_markup = InlineKeyboardMarkup(keyboard)
-        update.message.reply_text('Select Process Mode for Doc Spotter Module:', reply_markup=reply_markup)
+        update.message.reply_text('Doc Spotter Main Menu: 🔎', reply_markup=reply_markup)
     else:
         update.message.reply_text("Doc Spotter Plugin Disabled by the Person who deployed this Echo variant 💔")
 
@@ -135,7 +136,8 @@ def back_to_main_callback(update: Update, context: CallbackContext) -> None:
         [InlineKeyboardButton("Set Up Group(s) to Begin Spotting", callback_data='setup_group')],
         [InlineKeyboardButton("Setup F-Sub for Listening Group(s)", callback_data='setup_fsub')],
         [InlineKeyboardButton("Manage Index/Listen/F-Sub Chats", callback_data='manage_indexers')],
-        [InlineKeyboardButton("Delete Indexed Files", callback_data='delete_indexed_files')] 
+        [InlineKeyboardButton("Delete Indexed Files", callback_data='delete_indexed_files')],
+        [InlineKeyboardButton("Add/Edit Buttons for Files", callback_data='dc_setup_buttons_f_files')]
     ]
     reply_markup = InlineKeyboardMarkup(keyboard)
 
@@ -270,6 +272,27 @@ def setup_channel_callback(update: Update, context: CallbackContext) -> None:
     query.edit_message_text(text=text, reply_markup=reply_markup, parse_mode=ParseMode.HTML)
     context.user_data['awaiting_channel_id'] = True  
 
+def setup_buttons_callback(update: Update, context: CallbackContext) -> None:
+    query = update.callback_query
+    user_id = query.from_user.id
+    query.answer()
+    buttons_config_str = get_buttons_configuration(user_id)
+    btn_cfg_text = f"""<u>🔗 URL Buttons for Files (DS Sub Plugin)</u>
+
+<i>Now, send the buttons for your file(s). Use the ' - ' to separate button text from the URL, and ' | ' to place buttons side by side. To start a new line of buttons, Type in a new line.</i>
+
+For example:
+<code>Website - https://example.com | Help - https://example.com/help</code>
+<code>Contact - https://example.com/contact</code>
+
+<b>This will provide a 3 Buttons format. (Website & Help in 1st line, Contact in 2nd line)</b>
+
+♦️ <i>Current Button(s) list</i>;
+<code>{buttons_config_str}</code>"""
+    btn_cfg_edited_text = query.edit_message_text(text=btn_cfg_text, parse_mode=ParseMode.HTML)
+    context.user_data['btn_cfg_need_to_edit_msg_id'] = btn_cfg_edited_text.message_id
+    context.user_data['awaiting_button_config'] = True
+
 def is_bot_admin_in_channel(bot, chat_id) -> bool:
     try:
         chat = bot.get_chat(chat_id)
@@ -345,6 +368,32 @@ def handle_text(update: Update, context: CallbackContext) -> None:
                 update.message.reply_text("❌ The provided ID does not belong to a chat where I'm an admin. Please provide a valid chat ID where I am an admin.")
         else:
             update.message.reply_text("❌ Please try again! Provide a valid chat ID starting with -100.") 
+
+    elif user_data.get('awaiting_button_config'):
+        try:
+            try:
+                update.message.delete()
+            except Exception as e:
+                logger.error(f"Failed to delete user message: {e}")
+            button_lines = text.split('\n')
+            for line in button_lines:
+                buttons = line.split('|')
+                for btn in buttons:
+                    parts = btn.split('-')
+                    if len(parts) != 2 or not parts[0].strip() or not parts[1].strip():
+                        raise ValueError("Invalid button format detected")
+                        
+            save_buttons_configuration(update.effective_user.id, text)
+            need_to_edit_msg_id = context.user_data['btn_cfg_need_to_edit_msg_id']
+            context.bot.edit_message_text(chat_id=update.effective_chat.id, message_id=need_to_edit_msg_id, text="Your button(s) list saved successfully ✅", parse_mode=ParseMode.HTML)
+            user_data['awaiting_button_config'] = False
+            context.user_data.clear()
+        except Exception as e:
+            try:
+                update.message.delete()
+            except Exception as e:
+                logger.error(f"Failed to delete user message: {e}")
+            update.message.reply_text("Invalid format. Please send your URL buttons in the correct format and try again.", parse_mode=ParseMode.HTML)
     else:
         pass  
 
@@ -382,6 +431,20 @@ def store_fsub_chat_id(user_id: int, chat_id: str):
     if not exists:
         collection.insert_one({"user_id": user_id, "chat_id": chat_id})
         logger.info(f"🔔 New Fsub chat set: {chat_id} by user {user_id}")
+
+def save_buttons_configuration(user_id: int, button_config_str):
+    collection = db["URL_Buttons_Sets"]
+    # Store button sets with user ID
+    collection.update_one({'user_id': user_id}, {'$set': {'buttons_raw': button_config_str}}, upsert=True)
+    logger.info(f"Buttons set saved for user {user_id} 🔗")
+
+def get_buttons_configuration(user_id):
+    collection = db["URL_Buttons_Sets"]
+    user_buttons_data = collection.find_one({'user_id': user_id})
+    if user_buttons_data:
+        return user_buttons_data['buttons_raw']
+    else:
+        return None  
 
 # Process new file messages to extract and store file metadata
 def process_new_file(update: Update, context: CallbackContext) -> None:
@@ -469,6 +532,7 @@ def setup_ds_dispatcher(dispatcher):
     dispatcher.add_handler(CallbackQueryHandler(setup_fsub_callback, pattern='^setup_fsub$'))
     dispatcher.add_handler(CallbackQueryHandler(manage_indexers_callback, pattern='^dsi_back_to_indexers$'))
     dispatcher.add_handler(CallbackQueryHandler(back_to_main_callback, pattern='^back_to_main$'))
+    dispatcher.add_handler(CallbackQueryHandler(setup_buttons_callback, pattern='^dc_setup_buttons_f_files$'))
     dispatcher.add_handler(MessageHandler(Filters.text & ~Filters.command & Filters.chat_type.private, handle_text), group=2)
     dispatcher.add_handler(CallbackQueryHandler(delete_indexed_files_callback, pattern='^delete_indexed_files$'))
     dispatcher.add_handler(MessageHandler(Filters.document, process_new_file), group=2)

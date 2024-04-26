@@ -1,8 +1,12 @@
 # moreinfo_handler.py
+import logging
 from telegram import Update
 from bot import creator_credits
 from telegram.ext import CallbackContext
 from modules.encrypted_data import encrypted_creator_info, decrypt
+
+logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 def more_info(update, context):
     user_id = update.message.from_user.id
@@ -41,5 +45,4 @@ def more_info(update, context):
     if decrypted_creator_info is not None and creator_credits in decrypted_creator_info:
         update.message.reply_text(decrypted_creator_info)
     else:
-        # Handle the case where decryption fails
-        print("Respect to the Creator. Decryption verification failed.")
+        logger.warning("Respect to the Creator. Decryption verification failed.")
