@@ -494,7 +494,7 @@ def extract_file_info(message):
     file_name = getattr(file, 'file_name', 'Unknown')
     file_size = getattr(file, 'file_size', 0)
     mime_type = getattr(file, 'mime_type', 'Unknown')
-    caption = message.caption if message.caption else 'No caption'
+    caption = message.caption if message.caption else ''
 
     return file_id, file_name, file_size, file_type, mime_type, caption
 

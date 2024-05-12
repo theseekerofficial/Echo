@@ -61,6 +61,9 @@ from plugins.telegraph.telegraph_up import setup_dispatcher as setup_telegraph_u
 from plugins.doc_spotter.doc_spotter_executor import setup_ds_executor_dispatcher, send_file_to_user
 from plugins.gemini.gemini import handle_gemini_command, handle_mygapi_command, handle_delmygapi_command, handle_showmygapi_command, analyze4to_handler
 
+from super_plugins.guardian.guardian import setup_guardian
+from super_plugins.guardian.rules.rules_executor import send_rules_to_pm
+
 creator_credits = """🎨 Creator and Developer of Echo 🎨
 
 🔰 Creator Information:
@@ -142,6 +145,7 @@ def send_post_restart_message(bot: Bot):
 def start(update: Update, context: CallbackContext) -> None:
     chat_id = update.message.chat_id
     user = update.message.from_user
+    got_user_id = user.id
     chat = update.message.chat
     args = context.args  
 
@@ -203,6 +207,15 @@ def start(update: Update, context: CallbackContext) -> None:
             else:
                 context.bot.send_message(chat_id=chat_id, text="The request seems to be invalid.")
                 return
+
+        elif args[0].startswith('show_rules_'):
+            chat_id = args[0].split('_')[-1]
+            try:
+                chat_id = int(chat_id)
+                send_rules_to_pm(chat_id, got_user_id, update, context)
+            except Exception as e:
+                update.message.reply_text(f"Invalid chat ID provided. - {e}")
+            return
                 
     if chat.type == 'private':
         start_caption = '🕊*Step into the world of Echo, where modern Telegram experiences are crafted. Let Echo be your guide to a new dimension of communication and convenience. Welcome to the Echo experience!*\n\n*Echo is your trusty sidekick. Need a nudge? /setreminder is your jam.*'
@@ -235,7 +248,7 @@ class FilterBotAdded(BaseFilter):
 
 def welcome_message(update, context):
     chat_id = update.effective_chat.id
-    context.bot.send_message(chat_id=chat_id, text="🔷 Thanks for having me in your group. Send /start to register this group in my database.")
+    context.bot.send_message(chat_id=chat_id, text="🔷 Thanks for having me in your group. Send /start to register this group in my database.\n\n🛡️ Make me an admin with necessary permissions in your group and send /reload to initiate Guardian Super Plugin in your group")
 
 # HTTP server code
 class SimpleHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
@@ -524,6 +537,7 @@ bot_commands = [
     BotCommand("editreminders", "Make a mistake? Edit your reminders now before it's too late ⚙️"),
     BotCommand("delreminder", "Delete your reminders♻️"),
     BotCommand("settimezone", "Set your time zone⌚"),
+    BotCommand("guardian", "Super Group Modorator | Takecare your group with Guardian 🛡️"),
     BotCommand("gemini", "Meet you personal AI Assistant, Google Gemini🤖"),
     BotCommand("chatbot", "Chat with Echo's Chatbot🗨️"),
     BotCommand("mygapi", "Setup your Gemini API🧩"),
@@ -671,6 +685,8 @@ if __name__ == '__main__':
     register_fileflex_handlers(dp)
 
     setup_codecapsule_handlers(dp)
+
+    setup_guardian(dp)
     
     bot_info = updater.bot.get_me()
     bot_name = bot_info.first_name
@@ -686,7 +702,7 @@ if __name__ == '__main__':
     dp.job_queue.run_repeating(check_and_restart_auto, interval=600, first=10)
     
     # Starting Echo
-    updater.start_polling()
+    updater.start_polling(allowed_updates=Update.ALL_TYPES)
 
     logger.info(f"{bot_name} [@{bot_username}] Started Successfully ✅. Have Some fun with Echo ✨")
     logger.info(f"PRODUCT OF TSSC | Creator: ꓄ꃅꍟ ꌗꍟꍟꀘꍟꋪ [@MrUnknown114]")

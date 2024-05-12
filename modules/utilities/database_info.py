@@ -12,7 +12,7 @@ def fetch_db_stats():
     
     message = "*🗄 Database Information:*\n"
     
-    for db_name in ["Echo", "Echo_Doc_Spotter", "Echo_Clonegram", "Echo_FileFlex"]:
+    for db_name in ["Echo", "Echo_Doc_Spotter", "Echo_Clonegram", "Echo_FileFlex", "Echo_Guardian"]:
         db = client[db_name]
         db_stats = db.command("dbstats")
         document_counts = sum(db[col].count_documents({}) for col in db.list_collection_names())

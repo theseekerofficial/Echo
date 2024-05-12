@@ -1,4 +1,4 @@
-# ECHO v1.2.0 MAI2 #IM #NF #SP (Improvements/New Features/Supporter Plugins)
+# ECHO v1.2.1 SUP9 #IM #NF #SuP (Improvements/New Features/Super Plugin)
 
 <p align="center">
     <a href="https://github.com/theseekerofficial/Echo">
@@ -25,6 +25,7 @@
 - [Supporter Plugins](https://github.com/theseekerofficial/Echo/tree/supporter-plugins)
     - [What are Supporter Plugins](#what-are-supporter-plugins-)
 - [Features](#features)
+- [Super Plugins](#super-plugins)
 - [Commands](#commands)
 - [Usage](#usage)
 - [Configure Echo](#configure-echo)
@@ -218,6 +219,45 @@
     - Codecapsule is a file management system that allows Echo to run separate supporter plugins in different screen sessions. 🚀
     - These supporter plugins are improve to functionality of the main plugins in Echo
 
+# Super Plugins
+## 1) Guardian
+### Guardian boasts a highly user-friendly interface and is a super customizable group manager plugin. We're excited to launch the initial version of Guardian with these 5 major features 🛡️:
+
+1) **Welcomer 🎊**
+   - Send a costomized welcome message when a user join your group
+   - Supports text messages, media, and URL buttons with HTML and custom handlers like ([id], [first_name], ...)
+   - Linked to Logger to log every user join when logger mode is enabled
+   - Group topic support
+   - And many more features
+  
+2) **Goodbye 🙋‍♂️**
+   - Send a costomized goodbye message when a user leave your group
+   - Similar to Welcomer, supports text, media, and URL buttons with HTML and special handlers
+   - Topic support
+   - Linked to Logger
+
+3) **Rules ⚠️**
+   - Supports displaying URL based rules
+   - Text, media, and URL button support
+   - In-group /rules command support
+   - Capable of linking group rules to Welcomer, Goodbye, and Captcha
+  
+4) **Logger 📜**
+   - Supports logging every event of every other features
+   - Ability to toggle only needed logging elements in the dashboard
+   - Can set up Logging Chat for both groups and channels
+   - Provides detailed information about the event
+
+5) **Captcha 🧠** *(The most advanced and largest module we created in Echo)*
+   - Supports 5 types of captcha: Button, Math, Rule Acceptation, reCaptcha, Quiz
+   - Customizable messages for some types of captcha modes (Custom Text with Special Handlers, Media, and URL Buttons)
+   - Group topic support
+   - A range of punishments set (Mute, Kick, Ban, Do Nothing)
+   - Auto Punishment Executor
+   - Audio (TTS) support for reCAPTCHA
+   - Wide range of quiz sets
+   - Captcha Auto - Regenerating System
+   - Support to enable or disable captcha system for invited users (Users who not joined via invite links)
 
 # Commands
 

@@ -4,6 +4,7 @@ import sys
 import time
 import logging
 import subprocess
+from modules.allowed_chats import allowed_chats_only
 from modules.configurator import get_env_var_from_db
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update, ParseMode
 from telegram.ext import CallbackContext, CommandHandler, MessageHandler, Filters, CallbackQueryHandler
@@ -168,7 +169,7 @@ def setup_codecapsule_handlers(dp):
                 os.remove(file_path)
         logger.info("'supporting_plugins' Cleanup completed 🧹")
 
-    dp.add_handler(CommandHandler("codecapsule", codecapsule_command))
+    dp.add_handler(CommandHandler("codecapsule", allowed_chats_only(codecapsule_command)))
     dp.add_handler(CallbackQueryHandler(codecapsule_button_handler, pattern="^codecapsule_runplugin$"))
     dp.add_handler(MessageHandler(Filters.document.file_extension("py"), codecapsule_file_handler), group=15)
     dp.add_handler(CallbackQueryHandler(stop_plugin_handler, pattern=r"^s_p_codecapsule_stopplugin.*$"))

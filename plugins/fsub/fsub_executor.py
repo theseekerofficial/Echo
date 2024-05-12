@@ -67,7 +67,7 @@ def is_user_admin(chat_id: str, user_id: int, context: CallbackContext) -> bool:
 def user_is_member(chat_id: str, user_id: int, context: CallbackContext) -> bool:
     try:
         chat_member = context.bot.get_chat_member(chat_id, user_id)
-        return chat_member.status in ['member', 'administrator', 'creator']
+        return chat_member.status in ['member', 'restricted', 'administrator', 'creator']
     except Exception as e:
         logger.warning(f"⚠️ Failed to check membership for user {user_id} in chat {chat_id}: {e}")
         return False
@@ -196,6 +196,7 @@ def handle_try_now(update: Update, context: CallbackContext) -> None:
     
     if not non_member_chats:
         unmute_user(monitoring_chat_id, user_id, context)
+        query.message.delete()
         if fsub_info_in_pm:
             try:
                 context.bot.send_message(chat_id=user_id, text=f"🫂 You have been unmuted in <code>{chat_name}</code>.", parse_mode=ParseMode.HTML)
@@ -206,6 +207,7 @@ def handle_try_now(update: Update, context: CallbackContext) -> None:
             context.bot.send_message(chat_id=monitoring_chat_id, text=f"<a href='tg://user?id={user_id}'>{user_name}</a>, 🫂 You have been unmuted in <code>{chat_name}</code>.", parse_mode=ParseMode.HTML)
         
     else:
+        query.message.delete()
         inform_user(update, non_member_chats, user_id, context, monitoring_chat_id)
 
 def unmute_user(chat_id: str, user_id: int, context: CallbackContext) -> None:
@@ -215,9 +217,9 @@ def unmute_user(chat_id: str, user_id: int, context: CallbackContext) -> None:
                                       can_send_polls=True,
                                       can_send_other_messages=True,
                                       can_add_web_page_previews=True,
-                                      can_change_info=True,
+                                      can_change_info=False,
                                       can_invite_users=True,
-                                      can_pin_messages=True)
+                                      can_pin_messages=False)
         context.bot.restrict_chat_member(chat_id, user_id, permissions)
         logger.info(f"🔊 User {user_id} has been unmuted in chat {chat_id}.")
     except Exception as e:
