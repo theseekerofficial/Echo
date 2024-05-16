@@ -52,6 +52,18 @@
    - Automatically backup source database for the pre-setup period
    - Can not run directly, only should run via an Echo Client
 
+## *Difference between non_us_version (Non-User Session Version) vs normal version*
+### non_us_version
+   - Not Using user session strings. So no risking losing your telegram account
+   - Both Bots must be an admins of the source channel.
+   - Can work at high speed. Recommended: 3 files for 1 sec
+   - ⚠️ Remove 1st line comment (# Rename this file as....) and remove "_non_us_version" prefix from the file name before send it to Echo Client 
+
+### Normal Version
+   - Uses User Sessions, have some risk about losing user account
+   - User account is no need to be an admin in the channel. Simply join your user account and start indexing files from any channel.
+   - Can work at normal speed. To reduce flood wait and account bans. Recommended: 1 file for 1 sec 
+
 # Commands
 
 ## TeleFileDex.py

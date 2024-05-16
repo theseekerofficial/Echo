@@ -1,3 +1,4 @@
+# ------------------------------------------------- Rename this file as TeleCloner.py and remove this line before send to Echo Client -------------------------------------------------
 import os
 import sys
 import time
@@ -10,7 +11,7 @@ from pyrogram.types import Message, InlineKeyboardMarkup, InlineKeyboardButton, 
 api_id = ''  # Your api_id
 api_hash = ''  # Your api_hash
 bot_token = ''  # Your bot token. ⚠️ Remember, do not enter your Echo Client Bot Token here. Enter a new bot token here
-user_session_string = ''  # Your user session string
+worker_bot_token = ''  # Enter another new bot token
 destination_chats = ''  # Comma-separated destination chat IDs
 do_forward = True # Set True if you want to forward messages. Set False if you want to send messages instead of forwarding (Recommended: True)
 
@@ -41,7 +42,7 @@ start_time = None
 is_paused = False
 
 bot = Client("bot", api_id, api_hash, bot_token=bot_token)
-user_client = Client("session_name", api_id=api_id, api_hash=api_hash, session_string=user_session_string)
+worker_bot = Client("session_name", api_id, api_hash, bot_token=worker_bot_token)
 
 if __name__ == "__main__":
     if os.getenv('RUNNING_THROUGH_CODECAPSULE') != 'true':
@@ -50,7 +51,7 @@ if __name__ == "__main__":
 
 async def fetch_and_send_content(channel_id, starting_message_id, user_id, end_message_id=None, progress_message=None, user_name=''):
     global indexing_active, start_time, is_paused
-    async with user_client:
+    async with worker_bot:
         current_message_id = starting_message_id
         total_messages = abs(end_message_id - starting_message_id) if end_message_id else starting_message_id
         file_count = 0
@@ -196,7 +197,7 @@ async def help_command(client, message):
         - Forward a message from any channel to start cloning.
     - Click "Stop Cloning 🚫" anytime to halt the cloning process.
 
-    ⚠️ Your User session must be an member or an admin (Not nesessory to be an admin) in source channel to start the index process.
+    ⚠️ Both Your bots must be an admin in the source channel to start the indexing process.
     """
     await message.reply(help_text)
 
