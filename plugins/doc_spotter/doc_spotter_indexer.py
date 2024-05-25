@@ -1,3 +1,4 @@
+# plugins/doc_spotter/doc_spotter_indexer.py
 import os
 import logging
 from pymongo import MongoClient
@@ -23,7 +24,7 @@ def docspotter_command(update: Update, context: CallbackContext) -> None:
     if doc_spotter_plugin_enabled:
         keyboard = [
             [InlineKeyboardButton("Index Files", callback_data='index_files')],
-            [InlineKeyboardButton("Set Up Group(s) to Begin Spotting", callback_data='setup_group')],
+            [InlineKeyboardButton("Set Up Listening Groups", callback_data='setup_group')],
             [InlineKeyboardButton("Setup F-Sub for Listening Group(s)", callback_data='setup_fsub')],
             [InlineKeyboardButton("Manage Index/Listen/F-Sub Chats", callback_data='manage_indexers')],
             [InlineKeyboardButton("Delete Indexed Files", callback_data='delete_indexed_files')],
@@ -34,7 +35,6 @@ def docspotter_command(update: Update, context: CallbackContext) -> None:
     else:
         update.message.reply_text("Doc Spotter Plugin Disabled by the Person who deployed this Echo variant 💔")
 
-# Implement the manage_indexers callback
 def manage_indexers_callback(update: Update, context: CallbackContext) -> None:
     query = update.callback_query
     query.answer()
@@ -47,7 +47,6 @@ def manage_indexers_callback(update: Update, context: CallbackContext) -> None:
     reply_markup = InlineKeyboardMarkup(keyboard)
     query.edit_message_text(text="Now Choose an option to proceed", reply_markup=reply_markup)
 
-# Implement the manage_index_channels callback
 def manage_index_channels_callback(update: Update, context: CallbackContext) -> None:
     query = update.callback_query
     query.answer()
@@ -158,7 +157,6 @@ def setup_fsub_callback(update: Update, context: CallbackContext) -> None:
     query.edit_message_text(text=text, reply_markup=reply_markup, parse_mode=ParseMode.HTML)
     context.user_data['awaiting_fsub_chat_id'] = True 
 
-# Implement the channel selection callback with Yes/No options for deletion
 def channel_selected_callback(update: Update, context: CallbackContext) -> None:
     query = update.callback_query
     channel_id = query.data.split('_')[2]  
@@ -198,7 +196,6 @@ def fsub_selected_callback(update: Update, context: CallbackContext) -> None:
     reply_markup = InlineKeyboardMarkup(keyboard)
     query.edit_message_text(text=confirmation_message, reply_markup=reply_markup)
 
-# Implement the deletion callback
 def delete_channel_callback(update: Update, context: CallbackContext) -> None:
     query = update.callback_query
     channel_id = query.data.split('_')[3]  
@@ -208,7 +205,6 @@ def delete_channel_callback(update: Update, context: CallbackContext) -> None:
         logger.info(f"🗑️ Indexed channel deleted: {channel_id} by user {update.effective_user.id}")
     else:
         query.answer("Failed to remove channel or channel not found.")
-    # Refresh the list of channels
     manage_index_channels_callback(update, context)
 
 def delete_group_callback(update: Update, context: CallbackContext) -> None:
@@ -220,7 +216,6 @@ def delete_group_callback(update: Update, context: CallbackContext) -> None:
         logger.info(f"🗑️ Listening group deleted: {group_id} by user {update.effective_user.id}")
     else:
         query.answer("Failed to remove group or group not found.")
-    # Refresh the list of groups
     manage_listening_groups_callback(update, context)
 
 def delete_fsub_callback(update: Update, context: CallbackContext) -> None:
@@ -239,7 +234,9 @@ def setup_group_callback(update: Update, context: CallbackContext) -> None:
     query.answer()
     text = """<b>🔧 Setup Instructions</b>
 
-1️⃣ <b>Add me to your listning group as an admin.</b> 🛠️
+📌Topics are also supported. Send your topic ID along with your chat ID. Do not forget to put a space between chat id and topic id. Example: <code>-100123456789 123</code>
+
+1️⃣ <b>Add me to your listening group as an admin.</b> 🛠️
 2️⃣ <b>Then, send me your group's ID.</b> 🆔 (It should start with -100, e.g., -1001654958246)"""
     keyboard = [[InlineKeyboardButton("Back", callback_data='back_to_main')]]
     reply_markup = InlineKeyboardMarkup(keyboard)
@@ -250,15 +247,22 @@ def index_files_callback(update: Update, context: CallbackContext) -> None:
     query = update.callback_query
     query.answer()
     keyboard = [
-        [InlineKeyboardButton("Setup a channel for indexing", callback_data='setup_channel')],
+        [InlineKeyboardButton("File ID - Method 1 (Quick)", callback_data='setup_channel')],
+        [InlineKeyboardButton("MSG ID - Method 2 (Recommended)", callback_data='index_channel_method_2')],
         [InlineKeyboardButton("Back", callback_data='back_to_main')]
     ]
     reply_markup = InlineKeyboardMarkup(keyboard)
-    query.edit_message_text(text="Let's Index some files huh?", reply_markup=reply_markup)
+    query.edit_message_text(text="""<b><i>Choose a method from below to index your channel,</i></b>
+    
+⚡ Method 1 - <i>Utilize File ID to process the user requests.</i> It will work even if the bot is not in the source chat after the index. However, indexed files may become unusable or unable to be sent to the user after some time. <code>May not work across the bots. if you change the bot-indexed file may not work for that bot</code> (there are downsides of using File ID)
+
+💎 Method 2 - <i>Utilize Message ID and Chat ID to process requests.</i> This method does not expire over time like Method 1, but if you delete the file from the source chat, the bot will be unable to send the file to the requested user. As long as you keep your files safe in the source chat, this method works fine. <code>Working across the bots. You can safely change the bots and the indexed files work perfectly for that bot too</code>
+
+For long-term use, the recommended method is <code>Method 2</code>.""", reply_markup=reply_markup,  parse_mode=ParseMode.HTML)
 
 def setup_channel_callback(update: Update, context: CallbackContext) -> None:
     query = update.callback_query
-    query.answer()
+    query.answer("This method is quice and has less respond time, but indexed files may not work after sometime.", show_alert=True)
     text = """<b>🔧 Setup Instructions</b>
 
 1️⃣ <b>Add me to your source channel as an admin.</b> 🛠️
@@ -325,6 +329,15 @@ def is_bot_admin_in_chat(bot, chat_id) -> bool:
         logging.error(f"Failed to get bot's status in the chat {chat_id}: {e}")
         return False
 
+def index_channel_method_2_callback(update: Update, context: CallbackContext) -> None:
+    query = update.callback_query
+    query.answer("This method is great if your source chat files are not deleted. If the source chat file is deleted, this method cannot access it.", show_alert=True)
+    keyboard = [[InlineKeyboardButton("Back", callback_data='back_to_main')]]
+    reply_markup = InlineKeyboardMarkup(keyboard)
+    msg = query.edit_message_text(text="Now send a Temp Chat ID starts with '-100' for act as In-between transfer platform.\n\nMake sure bot is an admin with delete files and post message\n\n<code>Can be a Group chat or a Channel, Both accepted.</code>", reply_markup=reply_markup, parse_mode=ParseMode.HTML)
+    context.user_data['awaiting_temp_chat_id'] = True
+    context.user_data['temp_chat_id_setup_msg_id'] = msg.message_id
+
 def handle_text(update: Update, context: CallbackContext) -> None:
     user_data = context.user_data
     text = update.message.text.strip()
@@ -345,18 +358,28 @@ def handle_text(update: Update, context: CallbackContext) -> None:
             update.message.reply_text("❌Please try again! Provide a valid chat ID starting with -100.")
 
     elif user_data.get('awaiting_group_id'):
-        if text.startswith('-100'):
-            if is_bot_admin_in_group(context.bot, text):
-                success = store_group_id(user_id, text)
-                if success:
-                    update.message.reply_text(f"👂Listening Group <code>{text}</code> saved successfully. From now on, I'll listen to messages sent to this group.", parse_mode=ParseMode.HTML)
-                    user_data['awaiting_group_id'] = False
-                else:
-                    update.message.reply_text(f"⚠️The Group ID <code>{text}</code> is already configured by another user. So you cannot add that. If you think this was a mistake please the contact bot owner.", parse_mode=ParseMode.HTML)
-            else:
-                update.message.reply_text("❌ The provided ID does not belong to a group where I'm an admin. Please provide a valid group ID where I am an admin.")
+        parts = text.split()
+        if len(parts) == 1 and parts[0].startswith('-100'):
+            chat_id = parts[0]
+            topic_id = None
+        elif len(parts) == 2 and parts[0].startswith('-100'):
+            chat_id, topic_id = parts[0], parts[1]
         else:
-            update.message.reply_text("❌Please try again! Provide a valid group ID starting with -100.")
+            update.message.reply_text("❌ Please provide a valid chat ID (starting with -100) and an optional topic ID.")
+            return
+
+        if is_bot_admin_in_group(context.bot, chat_id):
+            success = store_group_id(user_id, chat_id, topic_id)
+            if success:
+                reply_text = f"👂Listening Group <code>{chat_id}</code> saved successfully."
+                if topic_id:
+                    reply_text += f"\n\nTopic ID <code>{topic_id}</code> is also saved."
+                update.message.reply_text(reply_text, parse_mode=ParseMode.HTML)
+                user_data['awaiting_group_id'] = False
+            else:
+                update.message.reply_text(f"⚠️The Group ID <code>{chat_id}</code> is already configured by another user. So you cannot add that. If you think this was a mistake, please contact the bot owner.", parse_mode=ParseMode.HTML)
+        else:
+            update.message.reply_text("❌ The provided ID does not belong to a group where I'm an admin. Please provide a valid group ID where I am an admin.")
 
     elif user_data.get('awaiting_fsub_chat_id'):
         if text.startswith('-100'):
@@ -394,6 +417,50 @@ def handle_text(update: Update, context: CallbackContext) -> None:
             except Exception as e:
                 logger.error(f"Failed to delete user message: {e}")
             update.message.reply_text("Invalid format. Please send your URL buttons in the correct format and try again.", parse_mode=ParseMode.HTML)
+            
+    elif user_data.get('awaiting_temp_chat_id'):
+        if text.startswith('-100'):
+            if is_bot_admin_in_chat(context.bot, text):
+                user_data['temp_chat_id_m2'] = text
+                chat_id = update.message.chat_id
+                message_id = context.user_data['temp_chat_id_setup_msg_id']
+                try:
+                    update.message.delete()
+                except Exception as e:
+                    logger.error(f"Failed to delete user message: {e}")
+                msg = context.bot.edit_message_text(chat_id=chat_id, message_id=message_id, text="Now send the chat id of the need to index channel.")
+                context.user_data['temp_chat_id_setup_msg_id'] = msg.message_id
+                context.user_data.pop('awaiting_temp_chat_id', None)
+                user_data['awaiting_m2_index_chat_id'] = True
+            else:
+                update.message.reply_text("❌ Please provide a valid chat ID where I am an admin.")
+        else:
+            update.message.reply_text("❌ Please try again! Provide a valid chat ID starting with -100.")
+
+    elif user_data.get('awaiting_m2_index_chat_id'):
+        if text.startswith('-100'):
+            if is_bot_admin_in_channel(context.bot, text):
+                chat_info = context.bot.get_chat(text)
+                chat_name = chat_info.title
+                success = store_index_channel_method_2(user_id, user_data['temp_chat_id_m2'], text)
+                if success:
+                    chat_id = update.message.chat_id
+                    message_id = context.user_data['temp_chat_id_setup_msg_id']
+                    try:
+                        update.message.delete()
+                    except Exception as e:
+                        logger.error(f"Failed to delete user message: {e}")
+                    msg = context.bot.edit_message_text(chat_id=chat_id, message_id=message_id, text=f"New Channel {chat_name} saved for index using method 2 🧬")
+                    context.user_data.pop('awaiting_index_chat_id', None)
+                    context.user_data.pop('temp_chat_id_setup_msg_id', None)
+                else:
+                    update.message.reply_text("Hmm... Look like another user already configured the temp chat or source channel before you provided.\n\nIf you think this was a mistake contact Echo Owner")
+                    context.user_data.clear()
+            else:
+                update.message.reply_text("❌ Please provide a valid CHANNEL ID where I am an admin.")
+        else:
+            update.message.reply_text("❌ Please try again! Provide a valid chat ID starting with -100.")
+    
     else:
         pass  
 
@@ -409,20 +476,20 @@ def store_channel_id(user_id: int, channel_id: str):
         logger.info(f"📡 New indexed channel set: {channel_id} by user {user_id}")
         return True
 
-def store_group_id(user_id: int, group_id: str):
-    """Store each new group ID in a separate document with safety check."""
+def store_group_id(user_id: int, group_id: str, topic_id: str = None):
     collection = db["Listening_Groups"]
-    # Check if this group_id is already configured by another user
     exists = collection.find_one({"group_id": group_id})
     if exists and exists["user_id"] != user_id:
-        # If exists and user_id is different, do not store/update and inform the user
         logger.info(f"🔄 Group ID {group_id} is already configured by another user. Stopped duplicating")
         return False
     elif not exists:
-        # If not exists, insert new document
-        collection.insert_one({"user_id": user_id, "group_id": group_id})
+        document = {"user_id": user_id, "group_id": group_id}
+        if topic_id:
+            document["topic_id"] = topic_id
+        collection.insert_one(document)
         logger.info(f"👥 New listening group set: {group_id} by user {user_id}")
         return True
+    return False
 
 def store_fsub_chat_id(user_id: int, chat_id: str):
     collection = db["Fsub_Chats"]
@@ -446,60 +513,88 @@ def get_buttons_configuration(user_id):
     else:
         return None  
 
-# Process new file messages to extract and store file metadata
 def process_new_file(update: Update, context: CallbackContext) -> None:
     message = update.message if update.message is not None else update.channel_post
     if message is None or message.chat.type != 'channel':
-        return  # Exit if no message or if the message is not from a channel
+        return
 
     chat_id = str(message.chat.id)
 
-    # Retrieve the user_id associated with this channel_id
     indexed_channel = db["Indexed_Channels"].find_one({"channel_id": chat_id})
     if indexed_channel is None:
-        return  # Exit if the channel is not indexed
+        return
 
-    user_id = indexed_channel["user_id"]  # Get the user_id who indexed this channel
-
-    file_info = extract_file_info(message)
-    if file_info:
-        # Use the retrieved user_id to correctly name the collection
-        store_file_info(str(user_id), *file_info)
-
-def is_channel_indexed(chat_id):
-    collection = db["Indexed_Channels"]
-    return collection.find_one({"channel_id": chat_id}) is not None
-
-def extract_file_info(message):
-    file, file_type = None, None
-    if message.document:
-        file = message.document
-        file_type = 'document'
-    elif message.photo:
-        file = message.photo[-1]
-        file_type = 'photo'
-    elif message.video:
-        file = message.video
-        file_type = 'video'
-    elif message.audio:
-        file = message.audio
-        file_type = 'audio'
-    elif message.animation:  
-        file = message.animation
-        file_type = 'gif'
+    user_id = indexed_channel["user_id"]
+    if "temp_chat_id" in indexed_channel:
+        temp_chat_id = indexed_channel["temp_chat_id"]
     else:
-        return None
+        temp_chat_id = None
 
-    file_id = file.file_id
-    file_name = getattr(file, 'file_name', 'Unknown')
-    file_size = getattr(file, 'file_size', 0)
-    mime_type = getattr(file, 'mime_type', 'Unknown')
-    caption = message.caption if message.caption else ''
+    if message.document or message.photo or message.video or message.audio or message.animation:
+        proceed_using_method_2 = True if "temp_chat_id" in indexed_channel else False
+        if proceed_using_method_2:
+            use_method_2 = True
+            file_info = extract_file_info(message, use_method_2)
+            store_file_info_using_method_2(
+                str(user_id), *file_info, proceed_using_method_2, temp_chat_id
+            )
+        else:
+            use_method_2 = False
+            file_info = extract_file_info(message, use_method_2)
+            store_file_info(
+                str(user_id), *file_info, proceed_using_method_2
+            )
 
-    return file_id, file_name, file_size, file_type, mime_type, caption
+def extract_file_info(message, use_method_2):
+    file, file_type = None, None
+    if use_method_2:
+        if message.document:
+            file = message.document
+        elif message.photo:
+            file = message.photo[-1]
+        elif message.video:
+            file = message.video
+        elif message.audio:
+            file = message.audio
+        elif message.animation:
+            file = message.animation
+        
+        file_name = getattr(file, 'file_name', 'Unknown')
+        msg_id = message.message_id
+        chat_id = message.chat_id
+        file_size = getattr(file, 'file_size', 0)
+        mime_type = getattr(file, 'mime_type', 'Unknown')
+        caption = message.caption if message.caption else ''
 
-# Store file information in MongoDB
-def store_file_info(user_id, file_id, file_name, file_size, file_type, mime_type, caption):
+        return file_name, msg_id, chat_id, file_size, mime_type, caption
+    else:
+        if message.document:
+            file = message.document
+            file_type = 'document'
+        elif message.photo:
+            file = message.photo[-1]
+            file_type = 'photo'
+        elif message.video:
+            file = message.video
+            file_type = 'video'
+        elif message.audio:
+            file = message.audio
+            file_type = 'audio'
+        elif message.animation:  
+            file = message.animation
+            file_type = 'gif'
+        else:
+            return None
+    
+        file_id = file.file_id
+        file_name = getattr(file, 'file_name', 'Unknown')
+        file_size = getattr(file, 'file_size', 0)
+        mime_type = getattr(file, 'mime_type', 'Unknown')
+        caption = message.caption if message.caption else ''
+
+        return file_id, file_name, file_size, file_type, mime_type, caption
+
+def store_file_info(user_id, file_id, file_name, file_size, file_type, mime_type, caption, proceed_using_method_2):
     collection_name = f"DS_collection_{user_id}"
     collection = db[collection_name]
     collection.insert_one({
@@ -508,10 +603,42 @@ def store_file_info(user_id, file_id, file_name, file_size, file_type, mime_type
         "file_size": file_size,
         "file_type": file_type,
         "mime_type": mime_type,
-        "caption": caption
+        "caption": caption,
+        "proceed_using_method_2": proceed_using_method_2
     })
 
-# Setup bot handlers
+def store_file_info_using_method_2(user_id, file_name, msg_id, chat_id, file_size, mime_type, caption, proceed_using_method_2, temp_chat_id):
+    collection_name = f"DS_collection_{user_id}"
+    collection = db[collection_name]
+    collection.insert_one({
+        "file_name": file_name,
+        "msg_id": msg_id,
+        "chat_id": chat_id,
+        "file_size": file_size,
+        "mime_type": mime_type,
+        "caption": caption,
+        "proceed_using_method_2": proceed_using_method_2,
+        "transfer_temp_chat_id": temp_chat_id
+    })
+
+def store_index_channel_method_2(user_id: int, temp_chat_id: str, index_chat_id: str):
+    collection = db["Indexed_Channels"]
+
+    indexed_channel = collection.find_one({"channel_id": index_chat_id})
+    if indexed_channel and indexed_channel["user_id"] != user_id:
+        return False
+
+    if indexed_channel and indexed_channel["user_id"] == user_id:
+        return True
+        
+    collection.insert_one({
+        "user_id": user_id,
+        "temp_chat_id": temp_chat_id,
+        "channel_id": index_chat_id
+    })
+    logger.info(f"📡 New indexed channel set with method 2: {index_chat_id} using temp chat {temp_chat_id} by user {user_id}")
+    return True
+
 def setup_ds_dispatcher(dispatcher):
     dispatcher.add_handler(token_system.token_filter(CommandHandler("docspotter", docspotter_command)))
     dispatcher.add_handler(token_system.token_filter(CommandHandler("erasefiles", start_file_deletion)))
@@ -533,8 +660,9 @@ def setup_ds_dispatcher(dispatcher):
     dispatcher.add_handler(CallbackQueryHandler(manage_indexers_callback, pattern='^dsi_back_to_indexers$'))
     dispatcher.add_handler(CallbackQueryHandler(back_to_main_callback, pattern='^back_to_main$'))
     dispatcher.add_handler(CallbackQueryHandler(setup_buttons_callback, pattern='^dc_setup_buttons_f_files$'))
-    dispatcher.add_handler(MessageHandler(Filters.text & ~Filters.command & Filters.chat_type.private, handle_text), group=2)
+    dispatcher.add_handler(CallbackQueryHandler(index_channel_method_2_callback, pattern='^index_channel_method_2$'))
     dispatcher.add_handler(CallbackQueryHandler(delete_indexed_files_callback, pattern='^delete_indexed_files$'))
+    dispatcher.add_handler(MessageHandler(Filters.text & ~Filters.command & Filters.chat_type.private, handle_text), group=2)
     dispatcher.add_handler(MessageHandler(Filters.document, process_new_file), group=2)
     dispatcher.add_handler(MessageHandler(Filters.photo, process_new_file), group=2)
     dispatcher.add_handler(MessageHandler(Filters.video, process_new_file), group=2)

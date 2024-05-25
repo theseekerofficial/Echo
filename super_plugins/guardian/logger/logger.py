@@ -170,12 +170,14 @@ def handle_logger_action_selector(update: Update, context: CallbackContext):
         log_rules = log_settings.get('log_rules', False)
         log_min_chngs = log_settings.get('log_min_chngs', False)
         log_captcha = log_settings.get('log_captcha', False)
+        log_link_gen = log_settings.get('log_linkgen', False)
     else:
         log_welcomer = False
         log_goodbye = False
         log_rules = False
         log_min_chngs = False
         log_captcha = False
+        log_link_gen = False
 
 
     keyboard = [
@@ -183,7 +185,8 @@ def handle_logger_action_selector(update: Update, context: CallbackContext):
          InlineKeyboardButton(f"Goodbye [{'✅' if log_goodbye else '❌'}]", callback_data=f"log_toggle_goodbye_{chat_id}")],
         [InlineKeyboardButton(f"Rules [{'✅' if log_rules else '❌'}]", callback_data=f"log_toggle_rules_{chat_id}"),
          InlineKeyboardButton(f"Captcha [{'✅' if log_captcha else '❌'}]", callback_data=f"log_toggle_captcha_{chat_id}")],
-        [InlineKeyboardButton(f"Minor Changes [{'✅' if log_min_chngs else '❌'}]", callback_data=f"log_toggle_minchngs_{chat_id}")],
+        [InlineKeyboardButton(f"Link Gen [{'✅' if log_link_gen else '❌'}]", callback_data=f"log_toggle_linkgen_{chat_id}"),
+         InlineKeyboardButton(f"Minor Changes [{'✅' if log_min_chngs else '❌'}]", callback_data=f"log_toggle_minchngs_{chat_id}")],
         [InlineKeyboardButton("🔙 Back 🔙", callback_data=f"logger_back_to_main_menu_{chat_id}")]
     ]
 
@@ -192,9 +195,10 @@ def handle_logger_action_selector(update: Update, context: CallbackContext):
     log_ruls_text = 'Activated ✅' if log_rules else 'Deactivated ❌'
     log_captcha_text = 'Activated ✅' if log_captcha else 'Deactivated ❌'
     log_minchngs_text = 'Activated ✅' if log_min_chngs else 'Deactivated ❌'
+    log_linkgen_text = 'Activated ✅' if log_link_gen else 'Deactivated ❌'
     
     reply_markup = InlineKeyboardMarkup(keyboard)
-    message = f"<i>Select the elements you want to log in your {chat_name} group.</i>\n\n<b><i>Welcomer</i></b>:\n└ <code>{log_wlc_text}</code>\n<b><i>Goodbye</i></b>:\n└ <code>{log_gby_text}</code>\n<b><i>Rules</i></b>:\n└ <code>{log_ruls_text}</code>\n<b><i>Captcha</i></b>:\n└ <code>{log_captcha_text}</code>\n<b><i>Minor Chnages</i></b>:\n└ <code>{log_minchngs_text}</code>"
+    message = f"<i>Select the elements you want to log in your {chat_name} group.</i>\n\n<b><i>Welcomer</i></b>:\n└ <code>{log_wlc_text}</code>\n<b><i>Goodbye</i></b>:\n└ <code>{log_gby_text}</code>\n<b><i>Rules</i></b>:\n└ <code>{log_ruls_text}</code>\n<b><i>Captcha</i></b>:\n└ <code>{log_captcha_text}</code>\n<b><i>Link Gen</i></b>:\n└ <code>{log_linkgen_text}</code>\n<b><i>Minor Chnages</i></b>:\n└ <code>{log_minchngs_text}</code>"
     query.edit_message_text(text=message, reply_markup=reply_markup, parse_mode=ParseMode.HTML)
 
 def handle_logger_feature_toggle(update: Update, context: CallbackContext):
@@ -236,6 +240,6 @@ def setup_logger(dp):
     dp.add_handler(CallbackQueryHandler(handle_logger_toggle, pattern=r"^grd_logger_toggle_-(\d+)$"))
     dp.add_handler(CallbackQueryHandler(logger_setup_menu, pattern=r"^logger_back_to_main_menu_-(\d+)$"))
     dp.add_handler(CallbackQueryHandler(handle_logger_action_selector, pattern=r"^grd_logger_action_-(\d+)$"))
-    dp.add_handler(CallbackQueryHandler(handle_logger_feature_toggle, pattern=r"^log_toggle_(welcomer|goodbye|rules|captcha|minchngs)_-(\d+)$"))
+    dp.add_handler(CallbackQueryHandler(handle_logger_feature_toggle, pattern=r"^log_toggle_(welcomer|goodbye|rules|captcha|linkgen|minchngs)_-(\d+)$"))
     dp.add_handler(CallbackQueryHandler(handle_logger_delete, pattern=r"^grd_logger_delete_-(\d+)$"))
     dp.add_handler(MessageHandler(Filters.text & Filters.chat_type.private & ~Filters.command, chat_id_handler), group=21)

@@ -1,22 +1,30 @@
-# super_plugins/guardian/menu.py
 import os
 from loguru import logger
 from pymongo import MongoClient
 from telegram.ext import CallbackContext, CommandHandler, CallbackQueryHandler
-from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update, InlineQueryResultArticle, InputTextMessageContent, ParseMode
+from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update, ParseMode
 
 from .welcomer.welcomer import setup_welcomer
 from .goodbye.goodbye import setup_goodbye
 from .rules.rules import setup_rules
 from .logger.logger import setup_logger
 from .captcha.captcha import setup_captcha
+from .link_gen.link_gen import setup_link_gen
 
 from .logger.logger_executor import log_user_minor_changes
+
+ITEMS_PER_PAGE = 5
+
+def paginate(items, page, items_per_page=ITEMS_PER_PAGE):
+    start = page * items_per_page
+    end = start + items_per_page
+    return items[start:end]
 
 def show_group_menu(update: Update, context: CallbackContext):
     query = update.callback_query
     if query:
         user_id = query.from_user.id
+        page = int(query.data.split('_')[-1]) if 'page_' in query.data else 0
     else:
         user_id = update.message.from_user.id
         if update.message.chat.type != "private":
@@ -25,6 +33,7 @@ def show_group_menu(update: Update, context: CallbackContext):
             reply_markup = InlineKeyboardMarkup(keyboard)
             update.message.reply_text(message, reply_markup=reply_markup)
             return
+        page = 0
     
     client = MongoClient(os.getenv("MONGODB_URI"))
     db = client['Echo_Guardian']
@@ -32,20 +41,31 @@ def show_group_menu(update: Update, context: CallbackContext):
 
     count = collection.count_documents({'admin_ids': user_id})
     if count > 0:
-        groups = collection.find({'admin_ids': user_id})
+        groups = list(collection.find({'admin_ids': user_id}))
+        paginated_groups = paginate(groups, page)
+        
         keyboard = [
             [InlineKeyboardButton(group['group_name'], callback_data=f"manage_{group['chat_id']}")]
-            for group in groups
+            for group in paginated_groups
         ]
+
+        if len(groups) > ITEMS_PER_PAGE:
+            pagination_buttons = []
+            if page > 0:
+                pagination_buttons.append(InlineKeyboardButton("⫷ Previous ⫷", callback_data=f"gr_group_page_{page - 1}"))
+            if len(groups) > (page + 1) * ITEMS_PER_PAGE:
+                pagination_buttons.append(InlineKeyboardButton("⫸ Next ⫸", callback_data=f"gr_group_page_{page + 1}"))
+            keyboard.append(pagination_buttons)
+        
         reply_markup = InlineKeyboardMarkup(keyboard)
+        message_text = """<code>█▓▒▒░░░ Ｇｕａｒｄｉａｎ ░░░▒▒▓█</code>
+            
+👥 Choose a group chat:\n\n<i><b>⚡ If your group chat is not showing here make sure we both are admins in your target group chat. if still not showing, send /reload command in your group chat and try again</b></i>"""
+        
         if query:
-            query.edit_message_text("""<code>█▓▒▒░░░ Ｇｕａｒｄｉａｎ ░░░▒▒▓█</code>
-            
-👥 Choose a group chat:\n\n<i><b>⚡ If your group chat is not showing here make sure we both are admins in your target group chat. if still not showing, send /reload command in your group chat and try again</b></i>""", reply_markup=reply_markup, parse_mode=ParseMode.HTML)
+            query.edit_message_text(message_text, reply_markup=reply_markup, parse_mode=ParseMode.HTML)
         else:    
-            update.message.reply_text("""<code>█▓▒▒░░░ Ｇｕａｒｄｉａｎ ░░░▒▒▓█</code>
-            
-👥 Choose a group chat:\n\n<i><b>⚡ If your group chat is not showing here make sure we both are admins in your target group chat. if still not showing, send /reload command in your group chat and try again</b></i>""", reply_markup=reply_markup, parse_mode=ParseMode.HTML)
+            update.message.reply_text(message_text, reply_markup=reply_markup, parse_mode=ParseMode.HTML)
     else:
         update.message.reply_text("🤷 You are not an admin in any groups registered with this bot.\n\n<i><b>⚡ If your group chat is not showing in here make sure we both are admins in your target group chat. if still not showing, send /reload command in your group chat and try again</b></i>", parse_mode=ParseMode.HTML)
 
@@ -93,8 +113,10 @@ def setup_menu(dp):
     dp.add_handler(CallbackQueryHandler(group_button_callback, pattern=r"^manage_-(\d+)$"))
     dp.add_handler(CallbackQueryHandler(group_button_callback, pattern=r"^grd_back_to_primary_menu_-(\d+)$"))
     dp.add_handler(CallbackQueryHandler(show_group_menu, pattern=r"^grd_back_to_main_main_prime_menu$"))
+    dp.add_handler(CallbackQueryHandler(show_group_menu, pattern=r"^gr_group_page_(\d+)$"))
     setup_welcomer(dp)
     setup_goodbye(dp)
     setup_rules(dp)
     setup_logger(dp)
     setup_captcha(dp)
+    setup_link_gen(dp)

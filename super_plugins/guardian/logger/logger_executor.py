@@ -190,3 +190,29 @@ def log_captcha_process_stats(user, chat, info_text, context: CallbackContext):
             except Exception as e:
                 logger.error(f"Failed to log new user join in chat {log_chat}. Error: {e}")
 
+def log_linkgen_process_stats(user, chat, info_text, context: CallbackContext):
+    chat_id = chat.id
+    group_chat_name = chat.title
+    user_name = user.first_name
+    user_id = user.id
+    user_link = f"<a href='tg://user?id={user_id}'>{user_name}</a>"
+
+    collection = db[str(chat_id)]
+    logger_config = collection.find_one({'identifier': 'logger'})
+
+    if logger_config and logger_config.get('logger_state', False) and logger_config.get('log_linkgen', False):
+        log_chat = logger_config.get('log_chat', None)
+        if log_chat:
+
+            log_message = (
+                f"🔗 #Link_Gen_Status 🧬\n\n"
+                f"🟤 <i>Chat Name</i>: <b>{group_chat_name}</b> [<code>{chat_id}</code>]\n"
+                f"👤 <i>User Name</i>: {user_link} [<code>{user_id}</code>]\n"
+                f"{info_text}"
+            )
+            
+            try:
+                context.bot.send_message(chat_id=log_chat, text=log_message, parse_mode=ParseMode.HTML, disable_web_page_preview=True)
+            except Exception as e:
+                logger.error(f"Failed to log new user join in chat {log_chat}. Error: {e}")
+

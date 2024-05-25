@@ -1,4 +1,4 @@
-# ECHO v1.2.1 SUP9 #IM #NF #SuP (Improvements/New Features/Super Plugin)
+# ECHO v1.2.2 XS7 #IM #NF (Improvements/New Features)
 
 <p align="center">
     <a href="https://github.com/theseekerofficial/Echo">
@@ -22,11 +22,11 @@
 
 ## Readme Contents
 - [Introduction](#introduction)
-- [Supporter Plugins](https://github.com/theseekerofficial/Echo/tree/supporter-plugins)
-    - [What are Supporter Plugins](#what-are-supporter-plugins-)
 - [Features](#features)
 - [Super Plugins](#super-plugins)
 - [Commands](#commands)
+- [Supporter Plugins](https://github.com/theseekerofficial/Echo/tree/supporter-plugins)
+    - [What are Supporter Plugins](#what-are-supporter-plugins-)
 - [Usage](#usage)
 - [Configure Echo](#configure-echo)
 - [Deployment](#deployment)
@@ -258,6 +258,12 @@
    - Wide range of quiz sets
    - Captcha Auto - Regenerating System
    - Support to enable or disable captcha system for invited users (Users who not joined via invite links)
+
+6) **Link Generator 🔗**
+   - Generate a invite link instantly using /link command
+   - Set custom user limits, expire durations and enable approval mode based on admins need
+   - Revoke generated invite links easily
+   - Set a Public Invite link for members of the group. When members send /link command they will see the public invite link
 
 # Commands
 

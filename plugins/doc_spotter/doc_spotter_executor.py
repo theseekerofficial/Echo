@@ -11,15 +11,13 @@ from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update, InputMe
 from plugins.doc_spotter.doc_spotter_fsub import is_user_member_of_fsub_chats, prompt_to_join_fsub_chats
 from telegram.ext import CallbackContext, CommandHandler, Filters, MessageHandler, Updater, CallbackQueryHandler
 
-# Setup logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
 
-# Setup MongoDB connection
 client = MongoClient(os.getenv("MONGODB_URI"))
 db = client["Echo_Doc_Spotter"]
 echo_db = client["Echo"]
-imdb = IMDb()  # IMDb instance
+imdb = IMDb() 
 
 DS_IMDB_ACTIVATE_str = get_env_var_from_db('DS_IMDB_ACTIVATE')
 DS_IMDB_ACTIVATE = DS_IMDB_ACTIVATE_str.lower() == 'true' if DS_IMDB_ACTIVATE_str else False
@@ -54,17 +52,25 @@ def prompt_user_to_start_bot_in_pm(update: Update, context: CallbackContext):
     update.message.reply_text("Hmm... Looks like you didn't start me in PM (Private Message). Please go and start me in PM, so we can start your file-seeking journey!💥", reply_markup=reply_markup)
 
 def listen_to_groups(update: Update, context: CallbackContext):
-    if not get_doc_spotter_plugin_enabled():
-        update.message.reply_text("Doc Spotter Plugin Disabled by the person who deployed this Echo variant💔")
-        return
-
     message_text = update.message.text.lower()
     chat_id = update.message.chat.id
     user_id = find_user_by_group(chat_id)
     message_sender_user_id = update.message.from_user.id
     m_user = update.message.from_user
-
+    info_db_collection = db['Listening_Groups']
+    topic_id_exist = info_db_collection.find_one({"group_id": str(chat_id)})
+    message_thread_id_to_check = update.message.message_thread_id
+    if message_thread_id_to_check is None:
+        message_thread_id_to_check = 1
+    
     if not db["Listening_Groups"].find_one({"group_id": str(chat_id)}):
+        return
+
+    if 'topic_id' in topic_id_exist and int(topic_id_exist['topic_id']) != message_thread_id_to_check:
+        return
+    
+    if not get_doc_spotter_plugin_enabled():
+        update.message.reply_text("Doc Spotter Plugin Disabled by the person who deployed this Echo variant💔")
         return
     
     if not has_user_started_bot(update, message_sender_user_id):
@@ -103,7 +109,6 @@ def listen_to_groups(update: Update, context: CallbackContext):
                         movie_id = movie.movieID
                         movie_details = imdb.get_movie(movie_id)
 
-                        # Attempt to use the full-size cover URL for a higher resolution image
                         photo_url = movie_details.get('full-size cover url', movie_details.get('cover url', None))
 
                         if photo_url:
@@ -123,17 +128,14 @@ def listen_to_groups(update: Update, context: CallbackContext):
                             
                             display_page_buttons(update, context, results, 0, user_id, imdb_info=caption, photo_url=photo_url)
                         else:
-                            # If no photo URL is available, use the default image
                             raise Exception("No photo URL found.")
                     else:
-                        # If no movies are found, use the default image
                         raise Exception("No movies found.")
                 except Exception as e:
-                    # In case of any error, default to the file list with the default image and caption
-                    logging.error(f"🚫 Error fetching IMDb data: {e}")  # Log the error
+                    logging.error(f"🚫 Error fetching IMDb data: {e}")
+                    context.bot.delete_message(chat_id=update.message.chat.id, message_id=loading_message.message_id)
                     display_page_buttons(update, context, results, 0, user_id)
             else:
-                # IMDb feature is deactivated, send default image and message
                 context.bot.delete_message(chat_id=update.message.chat.id, message_id=loading_message.message_id)
                 display_page_buttons(update, context, results, 0, user_id)
         else:
@@ -158,7 +160,15 @@ def display_page_buttons(update, context, results, page, user_id, imdb_info=None
     total_pages = (len(results) + PAGE_SIZE - 1) // PAGE_SIZE
     start_index = page * PAGE_SIZE
     end_index = min(start_index + PAGE_SIZE, len(results))
+    info_collection = db['Listening_Groups']
     original_group_id = update.effective_chat.id
+    topic_id_exist = info_collection.find_one({"group_id": str(chat_id)})
+    if topic_id_exist and 'topic_id' in topic_id_exist:
+        topic_id = topic_id_exist['topic_id']
+        if topic_id == "1":
+            topic_id = None
+    else:
+        topic_id = None
 
     bot_username = context.bot.get_me().username
     buttons = []
@@ -188,10 +198,8 @@ def display_page_buttons(update, context, results, page, user_id, imdb_info=None
             doc_id = f"dse_{result['_id']}_{message_sender_user_id}"  
             buttons.append([InlineKeyboardButton(text=file_name_display, callback_data=doc_id)])
 
-    # Include the page count display
     page_count_button = InlineKeyboardButton(f"{page + 1}/{total_pages}", callback_data="noop")
     
-    # Navigation buttons
     nav_buttons = []
     if page > 0:
         nav_buttons.append(InlineKeyboardButton("👈 Prev", callback_data=f"prev_{page - 1}_{user_id}_{message_sender_user_id}"))
@@ -199,33 +207,28 @@ def display_page_buttons(update, context, results, page, user_id, imdb_info=None
     if page < total_pages - 1:
         nav_buttons.append(InlineKeyboardButton("Next 👉", callback_data=f"next_{page + 1}_{user_id}_{message_sender_user_id}"))
     
-    # Add navigation buttons if they exist
     if nav_buttons:
-        buttons.append(nav_buttons)  # Add as a separate row
+        buttons.append(nav_buttons)
     reply_markup = InlineKeyboardMarkup(buttons)
 
     if DS_IMDB_ACTIVATE and imdb_info and photo_url:
-      # Determine which image to send
-      if not photo_url:  # If no IMDb photo, use default image
-          photo_path = os.path.join('assets', 'doc_spotter.jpg')  # Update this path as necessary
+      if not photo_url:
+          photo_path = os.path.join('assets', 'doc_spotter.jpg')
           caption = imdb_info if imdb_info else "Here is what I found in the database:"
           with open(photo_path, 'rb') as photo:
-              context.bot.send_photo(chat_id=chat_id, photo=photo, caption=caption, reply_markup=reply_markup)
+              context.bot.send_photo(chat_id=chat_id, photo=photo, caption=caption, reply_markup=reply_markup, message_thread_id=topic_id)
       else:
-          # If IMDb info is too long, send it as a separate text message
           if imdb_info and len(imdb_info) > 1024:
-              message = context.bot.send_message(chat_id=chat_id, text=imdb_info[:1024] + "... (continued)")
+              message = context.bot.send_message(chat_id=chat_id, text=imdb_info[:1024] + "... (continued)", message_thread_id=topic_id)
               imdb_message_id = message.message_id
-              context.bot.send_photo(chat_id=chat_id, photo=photo_url, caption="Here is what I found in the database:", reply_markup=reply_markup, reply_to_message_id=imdb_message_id)
+              context.bot.send_photo(chat_id=chat_id, photo=photo_url, caption="Here is what I found in the database:", reply_markup=reply_markup, reply_to_message_id=imdb_message_id, message_thread_id=topic_id)
           else:
-              # Send IMDb info with the photo and buttons
-              context.bot.send_photo(chat_id=chat_id, photo=photo_url, caption=imdb_info, reply_markup=reply_markup)
+              context.bot.send_photo(chat_id=chat_id, photo=photo_url, caption=imdb_info, reply_markup=reply_markup, message_thread_id=topic_id)
     else:
-        # Send default image with a standard message
-        photo_path = os.path.join('assets', 'doc_spotter.jpg')  # Update this path as necessary
+        photo_path = os.path.join('assets', 'doc_spotter.jpg')
         caption = "Here is what I found in the database:"
         with open(photo_path, 'rb') as photo:
-            context.bot.send_photo(chat_id=chat_id, photo=photo, caption=caption, reply_markup=reply_markup)
+            context.bot.send_photo(chat_id=chat_id, photo=photo, caption=caption, reply_markup=reply_markup, message_thread_id=topic_id)
     logging.info(f"✅ User {update.effective_user.id} received IMDB info and poster for '{update.message.text}' in chat {update.message.chat.id}")
 
 def get_user_buttons(user_id):
@@ -247,34 +250,58 @@ def send_file_to_user(chat_id, doc_id, original_group_id, context):
     
     if not user_id:
         logging.error(f"Could not find user ID for group ID: {original_group_id}")
-        context.bot.send_message(chat_id=chat_id, text="Sorry, there was an error processing your request. Could not determine user ID.")
+        context.bot.send_message(chat_id=chat_id, text="Sorry, there was an error processing your request. Contact the Doc Spotter Setuped User to resolve this issue")
         return
     
     collection_name = f"DS_collection_{user_id}"
     collection = db[collection_name]
 
     try:
-        # Ensure the doc_id is a valid ObjectId
         file_document = collection.find_one({"_id": ObjectId(doc_id)})
 
         if file_document:
-            file_id = file_document.get('file_id')
-            file_name = file_document.get('file_name')
-            file_type = file_document.get('file_type')
-            caption = file_document.get('caption', '')
-            custom_buttons = get_user_buttons(user_id)
+            if file_document.get('proceed_using_method_2'):
+                transfer_temp_chat_id = file_document.get('transfer_temp_chat_id')
+                if transfer_temp_chat_id:
+                    source_chat_id = file_document.get('chat_id')
+                    message_id = file_document.get('msg_id')
+                    
+                    try:
+                        forwarded_message = context.bot.forward_message(
+                            chat_id=int(transfer_temp_chat_id),
+                            from_chat_id=int(source_chat_id),
+                            message_id=int(message_id)
+                        )
+                    except Exception as e:
+                        context.bot.send_message(chat_id=chat_id, text=f"Requested file is being deleted or not available in source chat | Error: {e}")
+                        collection.delete_one({'_id': ObjectId(doc_id)})
+                        return
+                        
+                    forwarded_file_id = get_file_id_from_forwarded_message(forwarded_message)
+                    try:
+                        context.bot.delete_message(chat_id=transfer_temp_chat_id, message_id=forwarded_message.message_id)
+                    except:
+                        logger.warning(f"Faild to delete temp file in [{transfer_temp_chat_id}] check is the bot have correct permission(s)")
+                    if forwarded_file_id:
+                        send_forwarded_file(chat_id, forwarded_file_id, file_document, context, user_id)
+                        return
+            else:
+                file_id = file_document.get('file_id')
+                file_name = file_document.get('file_name')
+                file_type = file_document.get('file_type')
+                caption = file_document.get('caption', '')
+                custom_buttons = get_user_buttons(user_id)
 
-            reply_markup = InlineKeyboardMarkup(custom_buttons) if custom_buttons else None
-            
-            # Send the file based on its type
-            if file_type == 'photo':
-                context.bot.send_photo(chat_id=chat_id, photo=file_id, caption=caption, reply_markup=reply_markup)
-            elif file_type == 'video':
-                context.bot.send_video(chat_id=chat_id, video=file_id, caption=caption, reply_markup=reply_markup)
-            elif file_type == 'audio':
-                context.bot.send_audio(chat_id=chat_id, audio=file_id, caption=caption, reply_markup=reply_markup)
-            else:  
-                context.bot.send_document(chat_id=chat_id, document=file_id, caption=caption, reply_markup=reply_markup)
+                reply_markup = InlineKeyboardMarkup(custom_buttons) if custom_buttons else None
+                
+                if file_type == 'photo':
+                    context.bot.send_photo(chat_id=chat_id, photo=file_id, caption=caption, reply_markup=reply_markup)
+                elif file_type == 'video':
+                    context.bot.send_video(chat_id=chat_id, video=file_id, caption=caption, reply_markup=reply_markup)
+                elif file_type == 'audio':
+                    context.bot.send_audio(chat_id=chat_id, audio=file_id, caption=caption, reply_markup=reply_markup)
+                else:  
+                    context.bot.send_document(chat_id=chat_id, document=file_id, caption=caption, reply_markup=reply_markup)
         else:
             context.bot.send_message(chat_id=chat_id, text="Sorry, the requested file could not be found.")
     except Exception as e:
@@ -282,7 +309,6 @@ def send_file_to_user(chat_id, doc_id, original_group_id, context):
         context.bot.send_message(chat_id=chat_id, text="Sorry, there was an error processing your request.")
         
 def format_file_size(size_in_bytes):
-    # Convert file size from bytes to a readable format (KB, MB, GB)
     if size_in_bytes < 1024:
         return f"{size_in_bytes}B"
     elif size_in_bytes < 1024**2:
@@ -293,7 +319,6 @@ def format_file_size(size_in_bytes):
         return f"{size_in_bytes / (1024**3):.2f}GB"
 
 def extract_quality(file_name):
-    # Extract quality information from the file name
     qualities = ["144p", "240p", "360p", "480p", "540p", "720p", "1080p", "2160p", "4K", "8K"]
     for quality in qualities:
         if quality.lower() in file_name.lower():
@@ -321,16 +346,14 @@ def file_callback_handler(update: Update, context: CallbackContext):
 
     parts = callback_data.split("_")
     
-    # Dynamically get the bot's name and username
     bot_name = context.bot.get_me().first_name
     bot_username = context.bot.get_me().username
 
     if callback_data.startswith("dse_"):
-        doc_id = parts[1]  # Adjusted to match new callback data format
-        message_sender_user_id = int(parts[2])  # Ensure this is an int for comparison
+        doc_id = parts[1]
+        message_sender_user_id = int(parts[2])
 
         if user_id != message_sender_user_id:
-            # Show an inline alert to the user
             query.answer("Mind your own business. Why don't you search for something of your own? 🚨", show_alert=True)
             return
         
@@ -338,26 +361,54 @@ def file_callback_handler(update: Update, context: CallbackContext):
         result = db[collection_name].find_one({"_id": ObjectId(doc_id)})
 
         if result:
-            file_id = result['file_id']
-            caption = result.get('caption', '')
-            custom_buttons = get_user_buttons(s_user_id)
-            reply_markup = InlineKeyboardMarkup(custom_buttons) if custom_buttons else None
-            
-            try:
-                if result.get('file_type') in ['photo', 'image']: 
-                    context.bot.send_photo(chat_id=user_id, photo=file_id, caption=caption, reply_markup=reply_markup)
-                elif result.get('file_type') == 'video':
-                    context.bot.send_video(chat_id=user_id, video=file_id, caption=caption, reply_markup=reply_markup)
-                elif result.get('file_type') == 'audio':
-                    context.bot.send_audio(chat_id=user_id, audio=file_id, caption=caption, reply_markup=reply_markup)
-                else:  
-                    context.bot.send_document(chat_id=user_id, document=file_id, caption=caption, reply_markup=reply_markup)
+            if result.get('proceed_using_method_2'):
+                transfer_temp_chat_id = result.get('transfer_temp_chat_id')
+                if transfer_temp_chat_id:
+                    i_source_chat_id = result.get('chat_id')
+                    message_id = result.get('msg_id')
+                    
+                    try:
+                        forwarded_message = context.bot.forward_message(
+                            chat_id=int(transfer_temp_chat_id),
+                            from_chat_id=int(i_source_chat_id),
+                            message_id=int(message_id)
+                        )
+                    except Exception as e:
+                        context.bot.send_message(chat_id=chat_id, text=f"Requested file is being deleted or not available in source chat | Error: {e}")
+                        db[collection_name].delete_one({'_id': ObjectId(doc_id)})
+                        return
+
+                    alert_message = f"Check PM of {bot_name} [@{bot_username}]. Your file will be there 📨"
+                    query.answer(alert_message, show_alert=True)      
+                    forwarded_file_id = get_file_id_from_forwarded_message(forwarded_message)
+                    try:
+                        context.bot.delete_message(chat_id=transfer_temp_chat_id, message_id=forwarded_message.message_id)
+                    except:
+                        logger.warning(f"Faild to delete temp file in [{transfer_temp_chat_id}] check is the bot have correct permission(s)")
+                    if forwarded_file_id:
+                        send_forwarded_file(user_id, forwarded_file_id, result, context, s_user_id)
+                        return
+            else:
+                file_id = result['file_id']
+                caption = result.get('caption', '')
+                custom_buttons = get_user_buttons(s_user_id)
+                reply_markup = InlineKeyboardMarkup(custom_buttons) if custom_buttons else None
                 
-                alert_message = f"Check PM of {bot_name} [@{bot_username}]. Your file will be there 📨"
-                query.answer(alert_message, show_alert=False)  
-            except Exception as e:
-                logging.error(f"Error sending file: {e}")
-                query.answer("Failed to send the file.", show_alert=True)
+                try:
+                    if result.get('file_type') in ['photo', 'image']: 
+                        context.bot.send_photo(chat_id=user_id, photo=file_id, caption=caption, reply_markup=reply_markup)
+                    elif result.get('file_type') == 'video':
+                        context.bot.send_video(chat_id=user_id, video=file_id, caption=caption, reply_markup=reply_markup)
+                    elif result.get('file_type') == 'audio':
+                        context.bot.send_audio(chat_id=user_id, audio=file_id, caption=caption, reply_markup=reply_markup)
+                    else:  
+                        context.bot.send_document(chat_id=user_id, document=file_id, caption=caption, reply_markup=reply_markup)
+                    
+                    alert_message = f"Check PM of {bot_name} [@{bot_username}]. Your file will be there 📨"
+                    query.answer(alert_message, show_alert=False)  
+                except Exception as e:
+                    logging.error(f"Error sending file: {e}")
+                    query.answer("Failed to send the file.", show_alert=True)
         else:
             query.answer("File not found.", show_alert=True)
             
@@ -369,13 +420,42 @@ def file_callback_handler(update: Update, context: CallbackContext):
             user_id_from_callback = int(user_id)
             message_sender_user_id_from_callback = int(message_sender_user_id)
             if query.from_user.id == message_sender_user_id_from_callback:
-                # Proceed with pagination since the user IDs match
                 handle_pagination(update, context, target_page, user_id_from_callback, message_sender_user_id_from_callback)
             else:
-                # User IDs do not match; send a warning message
                 query.answer("Mind your own business. Why don't you search for something of your own? 🚨", show_alert=True)
         else:
             query.answer("Pagination error.", show_alert=True)
+
+def get_file_id_from_forwarded_message(forwarded_message):
+    if forwarded_message.photo:
+        return forwarded_message.photo[-1].file_id
+    elif forwarded_message.video:
+        return forwarded_message.video.file_id
+    elif forwarded_message.audio:
+        return forwarded_message.audio.file_id
+    elif forwarded_message.document:
+        return forwarded_message.document.file_id
+    return None
+
+def send_forwarded_file(chat_id, file_id, file_document, context, user_id):
+    file_type = file_document.get('file_type')
+    caption = file_document.get('caption', '')
+    custom_buttons = get_user_buttons(user_id)
+
+    reply_markup = InlineKeyboardMarkup(custom_buttons) if custom_buttons else None
+
+    try:
+        if file_type == 'photo':
+            context.bot.send_photo(chat_id=chat_id, photo=file_id, caption=caption, reply_markup=reply_markup)
+        elif file_type == 'video':
+            context.bot.send_video(chat_id=chat_id, video=file_id, caption=caption, reply_markup=reply_markup)
+        elif file_type == 'audio':
+            context.bot.send_audio(chat_id=chat_id, audio=file_id, caption=caption, reply_markup=reply_markup)
+        else:
+            context.bot.send_document(chat_id=chat_id, document=file_id, caption=caption, reply_markup=reply_markup)
+    except Exception as e:
+        logging.error(f"Error sending forwarded file: {e}")
+        context.bot.send_message(chat_id=chat_id, text=f"Sorry, there was an error processing your request. | Inform the Echo Owner about this error - {e}")
 
 def handle_pagination(update, context, target_page, user_id, message_sender_user_id):
     query = update.callback_query
@@ -386,10 +466,8 @@ def handle_pagination(update, context, target_page, user_id, message_sender_user
     results = list(db[collection_name].find(search_criteria))
 
     if results:
-        # Pass the `query.from_user.id` as `message_sender_user_id`
         reply_markup = generate_buttons_for_page(update, context, results, target_page, user_id, message_sender_user_id)
 
-        # Proceed to update the message or send a new message based on the results
         if 'imdb_info' in context.user_data:
             imdb_info = context.user_data['imdb_info']
             if imdb_info and len(imdb_info) > 1024:
@@ -438,10 +516,8 @@ def generate_buttons_for_page(update, context, results, page, user_id, message_s
             doc_id = f"dse_{str(result['_id'])}_{message_sender_user_id}"
             buttons.append([InlineKeyboardButton(text=file_name_display, callback_data=doc_id)])
 
-    # Include the page count display
     page_count_button = InlineKeyboardButton(f"{page + 1}/{total_pages}", callback_data="noop")
     
-    # Navigation buttons
     nav_buttons = []
     if page > 0:
         nav_buttons.append(InlineKeyboardButton("👈 Prev", callback_data=f"prev_{page - 1}_{user_id}_{message_sender_user_id}"))
@@ -449,9 +525,8 @@ def generate_buttons_for_page(update, context, results, page, user_id, message_s
     if page < total_pages - 1:
         nav_buttons.append(InlineKeyboardButton("Next 👉", callback_data=f"next_{page + 1}_{user_id}_{message_sender_user_id}"))
     
-    # Add navigation buttons if they exist
     if nav_buttons:
-        buttons.append(nav_buttons)  # Add as a separate row
+        buttons.append(nav_buttons)
     reply_markup = InlineKeyboardMarkup(buttons)
     return reply_markup
 

@@ -538,6 +538,8 @@ bot_commands = [
     BotCommand("delreminder", "Delete your reminders♻️"),
     BotCommand("settimezone", "Set your time zone⌚"),
     BotCommand("guardian", "Super Group Modorator | Takecare your group with Guardian 🛡️"),
+    BotCommand("reload", "Update the admin list and group settings for guardian plugin ⬆️"),
+    BotCommand("link", "Genarate and manage invite links in your group chat 🔗"),
     BotCommand("gemini", "Meet you personal AI Assistant, Google Gemini🤖"),
     BotCommand("chatbot", "Chat with Echo's Chatbot🗨️"),
     BotCommand("mygapi", "Setup your Gemini API🧩"),
@@ -687,7 +689,7 @@ if __name__ == '__main__':
     setup_codecapsule_handlers(dp)
 
     setup_guardian(dp)
-    
+
     bot_info = updater.bot.get_me()
     bot_name = bot_info.first_name
     bot_username = bot_info.username

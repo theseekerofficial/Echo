@@ -266,7 +266,8 @@ def edit_env_callback(update: Update, context: CallbackContext):
     context.user_data['edit_env_key'] = full_key
     context.user_data['awaiting_env_value'] = True
 
-    query.edit_message_text(text=f"Now send your new value for {full_key}!")
+    msg = query.edit_message_text(text=f"Now send your new value for {full_key}!")
+    context.user_data['configurator_need_to_edit_msg'] = msg.message_id
 
 def handle_new_env_value(update: Update, context: CallbackContext):
     user_id = update.message.from_user.id
@@ -291,8 +292,14 @@ def handle_new_env_value(update: Update, context: CallbackContext):
                 [InlineKeyboardButton("Back", callback_data='config_envs')]]
     reply_markup = InlineKeyboardMarkup(keyboard)
 
-    update.message.reply_text(text=text_message, reply_markup=reply_markup, parse_mode=ParseMode.HTML, disable_web_page_preview=True)
-
+    try:
+        update.message.delete()
+    except:
+        logger.warning(f"⚠️ Failed to delete message")
+    
+    need_to_edit_msg = context.user_data['configurator_need_to_edit_msg']
+    context.bot.edit_message_text(text=text_message, parse_mode=ParseMode.HTML, message_id=need_to_edit_msg, chat_id=update.effective_chat.id, reply_markup=reply_markup)
+    context.user_data.pop('configurator_need_to_edit_msg', None)
     del context.user_data['edit_env_key']
 
 def show_config_envs(query, page=0):

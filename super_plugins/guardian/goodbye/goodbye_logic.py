@@ -114,10 +114,10 @@ def parse_buttons(buttons_str, chat, context):
     button_rows = buttons_str.strip().split('\n')
     keyboard = []
     for row in button_rows:
-        row_buttons = row.split('|')
+        row_buttons = row.split(' | ')
         keyboard_row = []
         for button in row_buttons:
-            parts = button.strip().split('-')
+            parts = button.strip().split(' - ')
             if len(parts) == 2:
                 button_text, button_url = parts[0].strip(), parts[1].strip()
                 keyboard_row.append(InlineKeyboardButton(button_text, url=button_url))
