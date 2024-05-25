@@ -256,8 +256,8 @@ async def clone_command(client, message: Message):
 
         user_id = message.from_user.id
         user_name = message.from_user.first_name or message.from_user.username
-        end_message_id = target_message_id if target_message_id and start_message_id > target_message_id else None
         codex_identifier = "C@K$y1vRpB@^nT*8wsrK!1hUGpTsf6UdpNN"
+        end_message_id = target_message_id if target_message_id and start_message_id > target_message_id else None
 
         progress_message = await message.reply(
             "Initializing Cloning...",

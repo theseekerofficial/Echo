@@ -1,4 +1,3 @@
-# ------------------------------------------------- Rename this file as TeleFileDex.py and remove this line before send to Echo Client -------------------------------------------------
 import os
 import sys
 import time
@@ -17,7 +16,7 @@ db = mongo_client['Echo_Doc_Spotter'] # Do not change
 api_id = ''  # Your api_id
 api_hash = ''  # Your api_hash
 bot_token = ''  # Your bot token. ⚠️ Remember, do not enter your Echo Client Bot Token here. Enter a new bot token here
-worker_bot_token = ''  # Enter another new bot token
+user_session_string = ''  # Your user session string
 
 # Rate Limit Control System
 small_sleep_interval = 1  # Time in seconds to sleep between every two files (Adjust as needed | Remember about TG Rate Limits)
@@ -25,6 +24,9 @@ large_sleep_interval = 300  # Time in seconds to sleep after every 150 files ind
 
 # Allowed controller user IDs
 controller_ids = {}  # Set User IDs, who can use TeleFileDex Supporter Plugin | Separate Multiple by comma (e.g. 123456789,987654321,192837465)
+
+# Add a Group or Channel Chat ID for this variable. Make sure to your Echo Client (Not this Supporter Plugin Bot) is an admin in the chat
+Transfer_Temp_Chat_ID = ''
 
 # Do not edit anything below this line
 #----------------------------------------------------------------------------------------------------------------------------------------------------
@@ -38,7 +40,7 @@ start_time = None
 is_paused = False
 
 bot = Client("bot", api_id, api_hash, bot_token=bot_token)
-worker_bot = Client("session_name", api_id, api_hash, bot_token=worker_bot_token)
+user_client = Client("session_name", api_id=api_id, api_hash=api_hash, session_string=user_session_string)
 
 if __name__ == "__main__":
     if os.getenv('RUNNING_THROUGH_CODECAPSULE') != 'true':
@@ -47,7 +49,7 @@ if __name__ == "__main__":
 
 async def fetch_and_store_file_info(channel_id, starting_message_id, user_id, end_message_id=None, progress_message=None, user_name=''):
     global indexing_active, start_time, is_paused
-    async with worker_bot:
+    async with user_client:
         current_message_id = starting_message_id
         total_messages = abs(end_message_id - starting_message_id) if end_message_id else starting_message_id
         file_count = 0
@@ -75,10 +77,10 @@ async def fetch_and_store_file_info(channel_id, starting_message_id, user_id, en
                     message = await bot.get_messages(channel_id, current_message_id)
                 except (ChannelInvalid, ChannelPrivate):
                     try:
-                        print("Can not access message using main bot client, try using worker bot client")
-                        message = await worker_bot.get_messages(channel_id, current_message_id)
+                        print("Can not access message using bot client, try using user client")
+                        message = await user_client.get_messages(channel_id, current_message_id)
                     except Exception as e:
-                        print(f"Failed to fetch with worker bot client: {e}")
+                        print(f"Failed to fetch with user client: {e}")
                         break
 
                 if message:
@@ -87,42 +89,50 @@ async def fetch_and_store_file_info(channel_id, starting_message_id, user_id, en
 
                     if message.document:
                         file_info = {
-                            "file_id": message.document.file_id,
+                            "msg_id": message.id,
                             "file_name": message.document.file_name,
+                            "chat_id": message.chat.id,
                             "file_size": message.document.file_size,
-                            "file_type": "document",
                             "mime_type": message.document.mime_type,
-                            "caption": message.caption
+                            "caption": message.caption,
+                            "proceed_using_method_2": True,
+                            "transfer_temp_chat_id": str(Transfer_Temp_Chat_ID)
                         }
                         is_media_message = True
                     elif message.video:
                         file_info = {
-                            "file_id": message.video.file_id,
+                            "msg_id": message.id,
                             "file_name": message.video.file_name,
+                            "chat_id": message.chat.id,
                             "file_size": message.video.file_size,
-                            "file_type": "video",
                             "mime_type": message.video.mime_type,
-                            "caption": message.caption
+                            "caption": message.caption,
+                            "proceed_using_method_2": True,
+                            "transfer_temp_chat_id": str(Transfer_Temp_Chat_ID)
                         }
                         is_media_message = True
                     elif message.photo:
                         file_info = {
-                            "file_id": message.photo.file_id,
+                            "msg_id": message.id,
                             "file_name": message.caption if message.caption else "Unknown",
-                            "file_size": message.photo.file_size,
-                            "file_type": "photo",
+                            "chat_id": message.chat.id,
+                            "file_size": message.photo.file_size if hasattr(message.photo, 'file_size') else 0,
                             "mime_type": "image/jpeg",
-                            "caption": message.caption
+                            "caption": message.caption,
+                            "proceed_using_method_2": True,
+                            "transfer_temp_chat_id": str(Transfer_Temp_Chat_ID)
                         }
                         is_media_message = True
                     elif message.audio:
                         file_info = {
-                          "file_id": message.audio.file_id,
-                          "file_name": message.audio.file_name,
-                          "file_size": message.audio.file_size,
-                          "file_type": "audio",
-                          "mime_type": message.audio.mime_type,
-                          "caption": message.caption
+                            "msg_id": message.id,
+                            "file_name": message.audio.file_name,
+                            "chat_id": message.chat.id,
+                            "file_size": message.audio.file_size,
+                            "mime_type": message.audio.mime_type,
+                            "caption": message.caption,
+                            "proceed_using_method_2": True,
+                            "transfer_temp_chat_id": str(Transfer_Temp_Chat_ID)
                         }
                         is_media_message = True
 
@@ -140,6 +150,7 @@ async def fetch_and_store_file_info(channel_id, starting_message_id, user_id, en
                     await asyncio.sleep(small_sleep_interval)
 
                 if message and (message.id == 1 or (end_message_id is not None and current_message_id <= end_message_id)):
+                    codex_identifier = "k$#jCojZ8siWWEdEy1^lu%2YsmA1cH5y0LG"
                     print("Reached the end or the target of the channel.")
                     break
 
@@ -151,7 +162,6 @@ async def fetch_and_store_file_info(channel_id, starting_message_id, user_id, en
             await asyncio.sleep(e.value + 900)
         finally:
             indexing_active = False
-            codex_identifier = "k$#jCojZ8siWWEdEy1^lu%2YsmA1cH5y0LG"
             progress_data["indexing_active"] = False
             progress_task.cancel()  
             try:
@@ -194,7 +204,7 @@ async def help_command(client, message):
         - send a chat ID and message ID using /index cmd (e.g. `/index {chat_id} {msg_id}` | `/index -100123456789 123`)
     - Click "Stop Indexing 🚫" anytime to halt the indexing process.
 
-    ⚠️ Both Your bots must be an admin in the source channel to start the indexing process.
+    ⚠️ Your User session must be an member or an admin (Not nesessory to be an admin) in source channel to start the index process.
     """
     await message.reply(help_text)
 

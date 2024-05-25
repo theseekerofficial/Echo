@@ -1,4 +1,4 @@
-# ECHO v1.2.0 MAI2 #IM #NF #SP (Improvements/New Features/Supporter Plugins)
+# Supporter Plugins v1.1.3 MAI2 #IM (Improvements)
 
 <p align="center">
     <a href="https://github.com/theseekerofficial/Echo">
@@ -63,6 +63,12 @@
    - Uses User Sessions, have some risk about losing user account
    - User account is no need to be an admin in the channel. Simply join your user account and start indexing files from any channel.
    - Can work at normal speed. To reduce flood wait and account bans. Recommended: 1 file for 1 sec 
+
+## *What is `TeleFileDex_Method_2.py`?*
+   - Use this supporter plugin to index files in a channel using Method 2 in Echo Clients. Method 2 uses MSG ID and Chat ID to process `Doc Spotter` tasks instead of File ID. This method is more effcian and long availability high than File ID method (Method 1).
+   - There is an new variable as `Transfer_Temp_Chat_ID` for this version. Remember to fill it with a chat id (Group or Channel) where your Echo Client (Not this Supporter Plugin running bot) is an admin with nesessory permission. 
+   - Remeber to rename this file as `TeleFileDex.py` before send in to an Echo Client.
+   - _But if you want to index files using File ID method simply use `TeleFileDex.py` instead of this file_
 
 # Commands
 
